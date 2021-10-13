@@ -112,3 +112,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+finals/finals2000A.all.csv
