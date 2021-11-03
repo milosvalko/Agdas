@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QLabel
 from time import sleep
 from warning import Warning
 from classes import Fall, projectFile,  rawFile, dropFile, estim, matr_db, res_final
-from CONFIG import getFG5X, matrDatabase, statistic, separator
+from CONFIG import getFG5X, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind
 import sqlite3 as sql
 from datetime import datetime, timedelta
 from time import time
@@ -25,7 +25,7 @@ class Compute(QtWidgets.QDialog,PATH):
     def __init__(self, path, stationData, instrumentData, processingResults, gravityCorrections, header2, rawlines, header1, projDirPath, setFile):
         super().__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('picture/logo.svg'))
+        self.setWindowIcon(QIcon(logo_picture))
 
         # set values to widgets
         self.gravimeter.addItems(['FG5X','FG5'])
@@ -200,9 +200,9 @@ class Compute(QtWidgets.QDialog,PATH):
             xpole=time*(xInt[1]-xInt[0])/24+xInt[0]
 
             self.dg.append(-19.139*sin(2*fi)*(xpole*cos(lam)-ypole*sin(lam)))
-        print(self.dg)
+        # print(self.dg)
         self.poleCorrIERS.setText('<{}; {}>'.format(str(round(min(self.dg),2)), str(round(max(self.dg),2))))
-        print(self.dg)
+        # print(self.dg)
 
 
     def defineSets(self):
@@ -273,10 +273,10 @@ class Compute(QtWidgets.QDialog,PATH):
         frminss=self.FG5X['frminss']
         self.frmaxss=self.FG5X['frmaxss']
 
-
         # create estim file with head
         if self.files.isChecked():
-            estimfile=estim(path=self.projDirPath, name=self.stationData['ProjName'])
+            estim=res_final(path=self.projDirPath, header=headers['estim'].format(';'), name=self.stationData['ProjName']+'_'+'estim')
+            estim_grad = res_final(path=self.projDirPath, header=headers['estim_grad'].format(';'), name=self.stationData['ProjName']+'_'+'estimgrad')
 
         # create database for save every measuring
         self.matr_connection=matr_db(self.projDirPath+'/data.db')
@@ -343,6 +343,7 @@ class Compute(QtWidgets.QDialog,PATH):
             fall.setFrRange(int(self.frminT.toPlainText()),int(self.frmaxT.toPlainText()))
             # fall.setFrRange(frmin,frmax)
             fall.setFRssRange(self.frmaxss,frminss)
+            fall.setKpar(self.kpar.isChecked())
             fall.LST()
             fall.effectiveHeight()
             fall.effectiveHeightTop()
@@ -362,16 +363,23 @@ class Compute(QtWidgets.QDialog,PATH):
             self.resgradsum4[i, :]=fall.resgrad4
             self.m0grad4Sig.append(fall.m0grad4)
 
-
-
-
-
-
-
             #===========================================================================#
             if self.files.isChecked():
-                estimfile.printResult(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad)
+                estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad)
+                estim.printResult(line=roundList(estim_line, round_line_ind['estim']))
 
+                #Create line of estimgrad file
+                estim_grad_line = [drop['Set'], drop['Drp']]
+                estim_grad_line.extend(fall.x_grad[0])
+                if self.kpar.isChecked() == False:
+                    estim_grad_line.extend(['-','-'])
+                estim_grad_line.extend(fall.x[0])
+                if self.kpar.isChecked() == False:
+                    estim_grad_line.extend(['-','-'])
+                estim_grad_line.extend(fall.xgrad4[0][:3])
+                estim_grad_line.append(fall.stdGradX[2])
+
+                estim_grad.printResult(line = roundList(estim_grad_line, round_line_ind['estim_grad']))
 
 
             # matrix of all measuring
@@ -402,7 +410,7 @@ class Compute(QtWidgets.QDialog,PATH):
                 matr_drop=[drop['Set'], drop['Drp'], drop['Year']+':'+str(date.month).zfill(2)+':'+str(date.day).zfill(2)+' '+drop['Time'], fall.g0_Gr, - fall.gradient*fall.Grad,
             float(drop['Tide'])*10,float(drop['Load'])*10,float(drop['Baro'])*10,Polar*10, fall.gTopCor, fall.g0,
             fall.h*1e-6, fall.Grad*1e-6,fall.xgrad4[0][2], fall.std, fall.xef[0][3], accepted, res]
-                # print(fall.std)
+
                 # print(fall.m02)
             except UnboundLocalError:
                 Warning(error='Choose polar correction',icon='critical', title='Warning')
@@ -449,9 +457,9 @@ class Compute(QtWidgets.QDialog,PATH):
         # close connection with database
         # self.matr_connection.close()
         if self.graph_save.isChecked():
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[atm], xLabel='Time /h', yLabel='Correction /μGal', title='Atmosferic correction',path= self.projDirPath+'/Graphs', name='atm_corr.png', hist=False, mark=['b+'], columns_name=['c1', 'c2'])
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[baro], xLabel='Time /h', yLabel='Recorder pressure /hPa', title='Atmosferic pressure',path= self.projDirPath+'/Graphs', name='atm_press.png', hist=False, mark=['b+'], columns_name=['c1', 'c2'])
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[tides], xLabel='Time /h', yLabel='Tides /μGal', title='Tidal acceleration',path= self.projDirPath+'/Graphs', name='tides.png', hist=False, mark=['b+'], columns_name=['c1', 'c2'])
+            graph(project=self.stationData['ProjName'], x=[time_gr], y=[atm], xLabel='Time /h', yLabel='Correction /μGal', title='Atmosferic correction',path= self.projDirPath+'/Graphs', name='atm_corr.png', hist=False, mark=['b+'], columns_name=['atm_corr'])
+            graph(project=self.stationData['ProjName'], x=[time_gr], y=[baro], xLabel='Time /h', yLabel='Recorder pressure /hPa', title='Atmosferic pressure',path= self.projDirPath+'/Graphs', name='atm_press.png', hist=False, mark=['b+'], columns_name=['atm_press'])
+            graph(project=self.stationData['ProjName'], x=[time_gr], y=[tides], xLabel='Time /h', yLabel='Tides /μGal', title='Tidal acceleration',path= self.projDirPath+'/Graphs', name='tides.png', hist=False, mark=['b+'], columns_name=['tides'])
             self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
 
         if self.statistics.isChecked():
@@ -464,7 +472,10 @@ class Compute(QtWidgets.QDialog,PATH):
 
         # print results with gradient to estim file
         if self.files.isChecked():
+            # try:
             self.writeDropsFile()
+            # except AttributeError:
+            #     Warning(error='Cannot write file due statistic is not computed',icon='critical', title='Warning')
 
             try:
                 self.write_res_final()
@@ -474,24 +485,43 @@ class Compute(QtWidgets.QDialog,PATH):
 
         #Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
-        #Set time of run calculation   ahoj
+        #Set time of run calculation
         self.calc_time.setText('Calculation time: {:.2f} s'.format(time()-self.t))
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
+
+    def estimLine(self, X, std, set, drop, m0):
+        """
+        Print result of drop to estim file
+        """
+        dropResult=[set, drop, m0[0]]
+        for i in range(len(X)):
+            dropResult.append(X[i])
+            dropResult.append(std[i])
+
+        if self.kpar.isChecked() == False:
+            dropResult.extend(['-','-','-','-'])
+
+
+        return dropResult
+
+
 
     def writeDropsFile(self):
 
         r=self.matr_connection.get('SELECT Set1, Drop1, Date, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, CorToEffHeight, Accepted from results')
-        a=res_final(path=self.projDirPath, header=' Set; Drop; Date; g"(t=0s); STD; TOD; Tide; Load; Baro; Polar; g(TOD); g(Ef.H); Ef.H1; c.EfH; Acc', name=self.stationData['ProjName']+'_'+'drops')
+        a=res_final(path=self.projDirPath, header=headers['drops'].format(';'), name=self.stationData['ProjName']+'_'+'drops')
 
 
-        ind=[[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2],[10,2],[11,2],[12,3],[13,3]]
+
         for i in r:
             k=list(i[:4])
+
             k.append(self.stdodchpadu[i[0]-1])
+
             for j in range(4, len(i)):
                 k.append(i[j])
 
-            k=roundList(k, ind)
+            k=roundList(k, round_line_ind['drops'])
             a.printResult(line=k)
 
     def printMatlog(self):
@@ -502,8 +532,7 @@ class Compute(QtWidgets.QDialog,PATH):
         a=a.read().splitlines()
         press=[a[i].split()[18] for i in range(4,len(a))]
 
-
-        a=res_final(path=self.projDirPath, header='Campaign; Set; Year; Month; Day; Hour; Minute; Second; MJD; VGG_inp; g; g_std; STD-Start;STD-Final;Accepted; Top height; Pressure; VGG; T-stat', name=self.stationData['ProjName']+'_'+'matlogsets')
+        a=res_final(path=self.projDirPath, header=headers['matlog'].format(';'), name=self.stationData['ProjName']+'_'+'matlogsets')
         it=0
         for i in r:
             tst=abs((t.cdf(self.vv[it]/self.mm, len(r)-1)-0.5)*200)
@@ -517,8 +546,9 @@ class Compute(QtWidgets.QDialog,PATH):
 
 
     def print_allanFile(self):
-        file=open(self.projDirPath+'/Files/'+self.stationData['ProjName']+'_allan.csv', 'w')
-        file.write('n;ALLAN1;STD1;ALLAN2;STD2;ALLAN3;STD3\n')
+
+        file=res_final(path=self.projDirPath, header=headers['allan'].format(';'), name=self.stationData['ProjName']+'_'+'allan')
+        # file.write('n;ALLAN1;STD1;ALLAN2;STD2;ALLAN3;STD3\n')
         tau=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500]
 
         r=self.matr_connection.get('select gTopCor, Gradient from results where Accepted = 1')
@@ -530,14 +560,11 @@ class Compute(QtWidgets.QDialog,PATH):
         a2=allan(self.normres, tau)
         a3=allan(grad, tau)
 
-        # print(len(a1))
-        # print(len(a2))
-        # print(len(a3))
-
 
 
         for i in range(len(a1)):
-            file.write('{};{};{};{};{};{};{}'.format(tau[i], a1[i][0], a1[i][1], a2[i][0], a2[i][1], a3[i][0], a3[i][1])+'\n')
+            line=[tau[i], a1[i][0], a1[i][1], a2[i][0], a2[i][1], a3[i][0], a3[i][1]]
+            file.printResult(line=roundList(line, round_line_ind['allan']))
 
 
 
@@ -545,6 +572,7 @@ class Compute(QtWidgets.QDialog,PATH):
     def compute_normres(self):
         self.logWindow.append(separator)
         self.logWindow.append('Compute allan standart deviation')
+        QtCore.QCoreApplication.processEvents()
 
 
         r=self.matr_connection.get('select max(Set1) from results')
@@ -617,22 +645,23 @@ class Compute(QtWidgets.QDialog,PATH):
 
         tinc=np.linspace(self.tt[0], self.tt[self.FG5X['frmaxplot']], self.FG5X['nforfft'])
 
-        a=res_final(path=self.projDirPath, header='Fringe; z [m];Time [s];Time Top [s];Value [nm];Filtered value [nm]', name=self.stationData['ProjName']+'_'+'residuals_final')
-        by_sets=res_final(path=self.projDirPath, header='Fringe; Time [s];Time Top [s];Value [nm]', name=self.stationData['ProjName']+'_'+'residuals_sets')
+        a=res_final(path=self.projDirPath, header=headers['residuals_final'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_final')
+        by_sets=res_final(path=self.projDirPath, header=headers['residuals_sets'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_sets')
 
-
+        # data for round value to print into file
+        round_ind_bysets=[[1,5],[2,5],[3,5]]
+        round_ind_bysets.extend([[i,6] for i in range(4, len(self.meanResSets[:, it])+1)])
         for it in range(self.FG5X['frmaxplot']):
 
 
             z=(it)*self.Lambda/2*1e-9*prescale
-            a.printResult(line=[it+1, z, self.tt[it], self.tt[it]-v0mg0mkor, self.meanRes[0, it], '-'])
+            line=[it+1, z, self.tt[it], self.tt[it]-v0mg0mkor, self.meanRes[0, it], '-']
+            a.printResult(line=roundList(line, round_line_ind['residuals_final']))
 
             line=[it+1, z, self.tt[it], self.tt[it]-v0mg0mkor]
             line.extend(self.meanResSets[:, it])
-            # for i in range(int(self.processingResults['setsCollected'])):
-            #     line.append(self.meanResSets[i, it-1])
 
-            by_sets.printResult(line=line)
+            by_sets.printResult(line=roundList(line, round_ind_bysets))
 
 
 
@@ -642,6 +671,7 @@ class Compute(QtWidgets.QDialog,PATH):
     def rejectBySigma(self):
         self.logWindow.append(separator)
         self.logWindow.append('Reject drops with rejsigma>3*std')
+        QtCore.QCoreApplication.processEvents()
 
 
         mean=self.matr_connection.get(statistic['mean:vxv'])
@@ -697,6 +727,7 @@ class Compute(QtWidgets.QDialog,PATH):
         """
         self.logWindow.append(separator)
         self.logWindow.append('Compute mean residuals by sets')
+        QtCore.QCoreApplication.processEvents()
 
         self.meanResSets=np.zeros((int(self.processingResults['setsCollected']), self.frmaxss))
         self.meanRes=np.zeros((1,self.frmaxss))
@@ -731,6 +762,7 @@ class Compute(QtWidgets.QDialog,PATH):
         """
         self.logWindow.append(separator)
         self.logWindow.append('Fourier transformation')
+        QtCore.QCoreApplication.processEvents()
 
         # split tt on nforfft parts
         tin=np.linspace(self.tt[self.FG5X['frmin']-1], self.tt[self.FG5X['frmax']-1], self.FG5X['nforfft'])
@@ -801,10 +833,10 @@ class Compute(QtWidgets.QDialog,PATH):
             yfdamm=np.interp(tins, fr, yfdMean[0,:])
 
             # np.savetxt()
-
-            a=res_final(path=self.projDirPath, header='Frequency [Hz];Avr res [nm];Avr spec [nm]', name=self.stationData['ProjName']+'_'+'spectrum')
+            a=res_final(path=self.projDirPath, header=headers['spectrum'].format(';'), name=self.stationData['ProjName']+'_'+'spectrum')
             for i in range(len(tins)):
-                a.printResult(line=['{:.4f}'.format(tins[i]), '{:.4f}'.format(yffas[i]), '{:.4f}'.format(yfdamm[i])])
+                line=[i+1, tins[i], yffas[i], yfdamm[i]]
+                a.printResult(line=roundList(line, round_line_ind['spectrum']))
 
 
 
@@ -814,6 +846,7 @@ class Compute(QtWidgets.QDialog,PATH):
     def sensitivity(self):
         self.logWindow.append(separator)
         self.logWindow.append('Compute sensitivity')
+        QtCore.QCoreApplication.processEvents()
 
         sens_tn=self.FG5X['sens_tn']
         sens_tx=self.FG5X['sens_tx']
@@ -867,11 +900,28 @@ class Compute(QtWidgets.QDialog,PATH):
 
 
     def Graph_EffHeight_CorToEffHeight(self, project):
-        res1=self.matr_connection.get('select EffHeight, CorToEffHeight from results')
-        res=[i[0] for i in res1]
-        res2=[i[1] for i in res1]
-        x=range(0,len(res))
 
+        #Get data from database
+        res1=self.matr_connection.get('select EffHeight, CorToEffHeight from results')
+        #Open result file
+        # file=open(self.projDirPath+'/Graphs/'+project+'_'+'effective_height_corr.csv', 'w')
+        file=res_final(path=self.projDirPath, header='Drop; EffHeight; CorToEffHeight', name=self.stationData['ProjName']+'_'+'effective_height_corr', files='/Graphs/')
+
+
+        #Create lists print graph and print lines of result file
+        res=[]
+        res2=[]
+        x=range(0,len(res1))
+        for i in x:
+            res.append(res1[i][0])
+            res2.append(res1[i][1])
+
+            line=[i+1, res[i], res2[i]]
+            file.printResult(line=roundList(line, round_line_ind['effHeightCorr_Graph']))
+
+        # file.close()
+
+        #Print graph
         t=x
         data1=res
         data2=res2
@@ -891,15 +941,16 @@ class Compute(QtWidgets.QDialog,PATH):
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
-        # ax1.legend('a')
-        # ax2.legend('b')
-        # plt.show()
         fig.savefig(self.projDirPath+'/Graphs/'+project+'_'+'effective_height.png', dpi=250)
+
+
+
 
     def end(self):
         self.logWindow.append(separator)
         self.logWindow.append('Done')
-        self.logWindow.append('Time of run computing: {} s'.format(round(time()-t)))
+        # self.logWindow.append('Time of run computing: {} s'.format(round(time()-t)))
+        QtCore.QCoreApplication.processEvents()
 
 
 

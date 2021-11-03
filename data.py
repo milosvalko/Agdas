@@ -1,15 +1,16 @@
 from PyQt5 import uic,QtWidgets
 from PyQt5.QtSql import QSqlDatabase,QSqlQuery,QSqlQueryModel
 from PyQt5.QtGui import QIcon
+from CONFIG import logo_picture
 
 PATH, _ = uic.loadUiType('gui/data.ui')
 
 class Data(QtWidgets.QDialog,PATH):
 
-    def __init__(self, matr=r'c:\Users\Jakub\Desktop\pecny\pyAgdasGui\data\res'):
+    def __init__(self, matr):
         super().__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('picture/logo.svg'))
+        self.setWindowIcon(QIcon(logo_picture))
 
         self.matr_db=matr
 

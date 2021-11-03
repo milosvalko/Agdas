@@ -5,6 +5,8 @@ from functions import printDict
 import csv
 import sqlite3 as sql
 from CONFIG import matrDatabase
+from warning import Warning
+
 
 class Fall():
 
@@ -15,13 +17,38 @@ class Fall():
 
 
     def setFringe(self, times):
+        """Short summary.
+
+        Parameters
+        ----------
+        times : type
+            Description of parameter `times`.
+            -Convert fringe in list from string to float
+        Returns
+        -------
+        type
+            -Set to class variable
+
+
         """
-        Convert fringe in list from string to float
-        """
+
         self.fringe=np.float_((times))
         # self.fringe=[float(i) for i in times]
 
     def setLambda(self,Lambda):
+        """Short summary.
+
+        Parameters
+        ----------
+        Lambda : type
+            Description of parameter `Lambda`.
+            -
+        Returns
+        -------
+        type
+            Description of returned object.
+            -Set to class variable
+        """
         self.Lambda=float(Lambda)
 
     def setScaleFactor(self, scaleFactor):
@@ -50,7 +77,27 @@ class Fall():
         self.frmaxss=frmaxss
         self.frminss=frminss-1
 
+    def setKpar(self, kpar):
+        self.kpar = kpar
+
     def computeLST(self, A, z):
+        """Short summary.
+
+        Parameters
+        ----------
+        A : type
+            Description of parameter `A`.
+            -matrix A
+        z : type
+            Description of parameter `z`.
+            -vector of meassurement
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
 
         x=np.linalg.lstsq(A,z,rcond=None) # solution of LST
         covar = np.matrix(np.dot(A.T, A)).I # covariance matrix
@@ -61,6 +108,7 @@ class Fall():
 
         res=np.subtract(z,np.matmul(A,x[0])) # res=z-A*X
 
+
         return x, covar, m02, std, stdX, res
 
     def LST(self):
@@ -70,16 +118,17 @@ class Fall():
         For computing LST with zero gradient call method - LST(grad=False)
         """
 
+
         # count of fringe use for computing
         nfringe=len(self.fringe)
 
         # initialization of z, tt, A
         z1=np.zeros(nfringe) # vector of z coordinates
         self.tt=np.zeros(nfringe) # vector of fringe time
-        A_grad1=np.zeros((nfringe,9)) # matrix to LST with gradient
-        A1=np.zeros((nfringe,9)) # matrix to LST without gradient
-        A4=np.zeros((nfringe, 5)) # matrix to LST with modulation
 
+        A1=np.zeros((nfringe,7 + 2*self.kpar))# matrix to LST without gradient
+        A_grad1=np.zeros((nfringe,7+ 2*self.kpar))# matrix to LST with gradient
+        A4=np.zeros((nfringe, 3+ 2*self.kpar)) # matrix to LST with modulation
 
         # loop for all fringes
         for i in range(0,nfringe):
@@ -104,25 +153,38 @@ class Fall():
             z_v0=self.tt[i]
             z_g0=(self.tt[i]**2)/2
 
+            # A matrix elements
             z_a1=np.sin(arg1)*np.cos(arg2)
             z_a2=np.cos(arg1)*np.cos(arg2)
             z_a3=np.sin(arg1)*np.sin(arg2)
             z_a4=np.cos(arg1)*np.sin(arg2)
-            z_a5=np.sin(2*np.pi*z1[i]/self.Lpar)
-            z_a6=np.cos(2*np.pi*z1[i]/self.Lpar)
+
+            if self.kpar:
+                z_a5=np.sin(2*np.pi*z1[i]/self.Lpar)
+                z_a6=np.cos(2*np.pi*z1[i]/self.Lpar)
+
+                line=[z_z0, z_v0, z_g0, z_a3, z_a1, z_a4, z_a2, z_a5, z_a6]
+
+                line_grad=[z_z0, z_v0_grad, z_g0_grad, z_a3, z_a1, z_a4, z_a2, z_a5, z_a6]
+
+                A4[i,3]=z_a5
+                A4[i,4]=z_a6
+
+            else:
+                line=[z_z0, z_v0, z_g0, z_a3, z_a1, z_a4, z_a2]
+                line_grad=[z_z0, z_v0_grad, z_g0_grad, z_a3, z_a1, z_a4, z_a2]
 
             # line of A matrix
             # line=[z_z0, z_v0, z_g0, z_a1, z_a2, z_a3, z_a4, z_a5, z_a6]
-            line_grad=[z_z0, z_v0_grad, z_g0_grad, z_a3, z_a1, z_a4, z_a2, z_a5, z_a6]
 
-            line=[z_z0, z_v0, z_g0, z_a3, z_a1, z_a4, z_a2, z_a5, z_a6]
+
+
 
             A_grad1[i,:]=line_grad
 
             A4[i,0]=1
             A4[i,1]=self.tt[i]
-            A4[i,3]=z_a5
-            A4[i,4]=z_a6
+
 
             A1[i,:]=line
 
@@ -130,35 +192,26 @@ class Fall():
         A_grad=A_grad1[self.frmin:self.frmax,:]
         A=A1[self.frmin:self.frmax,:]
         z=z1[self.frmin:self.frmax]
-        A2=A[:,:7]
+        A2=A[:,:7+2*self.kpar]
 
         # A4=np.zeros([self.frmax-self.frmin+1,5])
         # A4[:,0:2]=A1[:,0:2]
 
-        x, covar, self.m02, self.std, self.stdX, res = self.computeLST(A=A,z=z)
+        #Fit without gradient
+        self.x, covar, self.m02, self.std, self.stdX, res = self.computeLST(A=A,z=z)
 
+        #Fit with gradient
         self.x_grad, covar_grad, self.m02_grad, stdstd, self.std_grad, res_grad = self.computeLST(A=A_grad, z=z)
+
 
         self.xef, xefCovar, xefM02, xefStd, stdXX, xefRes = self.computeLST(A2, z)
 
+        # [print(i) for i in x[0]]
+        # [print(i) for i in self.x_grad[0]]
+        # [print(i) for i in self.xef[0]]
+        # print('----')
 
 
-
-
-        # LST
-        # x=np.linalg.lstsq(A,z,rcond=None) # solution of LST
-        # covar = np.matrix(np.dot(A.T, A)).I # covariance matrix
-        # self.m02=x[1]/(self.frmax-self.frmin-A.shape[1]-1) # m02=res*res'/(frmax-frmin-k)
-        # std=np.sqrt(np.multiply(np.diag(covar),self.m02)) # standart derivations of x
-        # self.std=np.dot(std,std)
-        # res=np.subtract(z,np.matmul(A,x[0])) # res=z-A*X
-
-        # LST with gradient
-        # self.x_grad=np.linalg.lstsq(A_grad,z,rcond=None)
-        # covar_grad = np.matrix(np.dot(A_grad.T, A_grad)).I
-        # self.m02_grad=self.x_grad[1]/(self.frmax-self.frmin-A.shape[1]-1) # m02=res*res'/(frmax-frmin-k)
-        # self.std_grad=np.sqrt(np.multiply(np.diag(covar_grad),self.m02_grad))
-        # res_grad=np.subtract(z,np.matmul(A_grad,self.x_grad[0])) # res=z-A*X
 
         self.res_grad1=np.subtract(z1,np.matmul(A_grad1,self.x_grad[0])) # residuals for all fringes
 
@@ -166,15 +219,17 @@ class Fall():
         self.ssres=np.sqrt(np.dot(ress,ress)/(self.frmaxss-self.frminss+1)) # is drop accepted value
 
         # LST with modulation
-        A4[:,2]=[(x[0][1]/6*self.tt[i]**3+x[0][2]/24*self.tt[i]**4-(x[0][2]-self.x_grad[0][2])*self.tt[i]**2/(self.gradient*2))/1e6  for i in range(nfringe)]
+        A4[:,2]=[(self.x[0][1]/6*self.tt[i]**3+self.x[0][2]/24*self.tt[i]**4-(self.x[0][2]-self.x_grad[0][2])*self.tt[i]**2/(self.gradient*2))/1e6  for i in range(nfringe)]
         zgrad=np.zeros((nfringe))
-        zgrad[:]=[z1[i]-x[0][2]/2*self.tt[i]**2 for i in range(nfringe)]
-        modkor=np.matmul(A_grad1[:,3:], x[0][3:])
+        zgrad[:]=[z1[i]-self.x[0][2]/2*self.tt[i]**2 for i in range(nfringe)]
+        modkor=np.matmul(A_grad1[:,3:], self.x[0][3:])
         zgrad=np.subtract(zgrad, modkor.transpose())
         AA4=A4[self.frmin:self.frmax,:]
         zgrad4=zgrad[self.frmin:self.frmax]
 
-        self.xgrad4, covarXgrad4, self.m0grad4, stdGrad4, stdGradX, self.Resgrad4 = self.computeLST(A=AA4, z=zgrad4)
+        #Gradient estimation
+        self.xgrad4, covarXgrad4, self.m0grad4, stdGrad4, self.stdGradX, self.Resgrad4 = self.computeLST(A=AA4, z=zgrad4)
+
         # self.xgrad4=np.linalg.lstsq(AA4, zgrad4, rcond=None)
 
         # Cxgrad4 = np.matrix(np.dot(AA4.T, AA4)).I
@@ -186,10 +241,10 @@ class Fall():
         # printDict(dict(zip(self.keys,x[0])))
 
         self.g0_Gr = self.x_grad[0][2]
-        self.z0 = x[0][0]
-        self.v0 = x[0][1]
+        self.z0 = self.x[0][0]
+        self.v0 = self.x[0][1]
 
-        self.g0 = x[0][2]
+        self.g0 = self.x[0][2]
 
 
     def effectiveHeight(self):
@@ -496,8 +551,13 @@ class estim():
         except FileNotFoundError:
             pass
 
+        try:
+            self.f=open(path+'/Files/'+name+'_'+'estim.csv','w', newline='')
+        except PermissionError:
+            Warning(error='Close ' + name + '_estim.csv' + '!',icon='critical', title='Warning')
+            self.f=open(path+'/Files/'+name+'_'+'estim.csv','w', newline='')
 
-        self.f=open(path+'/Files/'+name+'_'+'estim.csv','w', newline='')
+
         self.f.write(header+'\n')
         self.f.write(units+'\n')
         # self.f.close()
@@ -522,15 +582,22 @@ class estim():
 
 class res_final():
 
-    def __init__(self, path, header, name):
+    def __init__(self, path, header, name, files='/Files/'):
+
+        # try:
+        #     os.remove(path+files+name+'.csv')
+        # except FileNotFoundError:
+        #     pass
+        # except PermissionError:
+        #     Warning(error='Close ' + name + '.csv' + '!',icon='critical', title='Warning')
+        #     os.remove(path+files+name+'.csv')
 
         try:
-            os.remove(path+'/Files/'+name+'.csv')
-        except FileNotFoundError:
-            pass
+            self.f=open(path+files+name+'.csv','w', newline='')
+        except PermissionError:
+            Warning(error='Close ' + name + '.csv' + '!',icon='critical', title='Warning')
+            self.f=open(path+files+name+'.csv','w', newline='')
 
-
-        self.f=open(path+'/Files/'+name+'.csv','w', newline='')
         self.f.write(header+'\n')
         # self.f.write(units+'\n')
 

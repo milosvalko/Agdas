@@ -1,3 +1,5 @@
+from time import time as tm
+()
 # import matplotlib.pyplot as plt
 import sqlite3 as sql
 # import os, csv
@@ -14,14 +16,34 @@ from glob import glob
 from statistics import mean
 from CONFIG import matrDatabase
 from math import floor
+import inspect
+import sys
+
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+
+from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QSplashScreen, QProgressBar, QTextBrowser, QLineEdit, QVBoxLayout
+
+import queue
+
+q1=queue.Queue(5)
+
+q1.put(1)
+q1.put(2)
+q1.put(3)
+q1.put(4)
+q1.put(5)
+
+
+
+for i in range(6,17):
+    q1.get()
+    q1.put(i)
+    print(q1.queue)
 
 
 
 
-try:
-    a
-except NameError:
-    print('neni')
 
 
 
@@ -31,12 +53,19 @@ except NameError:
 
 
 
-def roundList(l, index):
-    for j in index:
-        a='{:.'+str(j[1])+ 'f}'
-        l[j[0]]=a.format(l[j[0]])
 
-    return l
+
+
+
+
+
+
+# def roundList(l, index):
+#     for j in index:
+#         a='{:.'+str(j[1])+ 'f}'
+#         l[j[0]]=a.format(l[j[0]])
+#
+#     return l
 
 
 

@@ -2,6 +2,7 @@ import sys
 from PyQt5 import uic,QtWidgets
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtGui import QIcon
+from CONFIG import logo_picture
 
 
 PATH, _ = uic.loadUiType('gui/sumarize.ui')
@@ -14,7 +15,7 @@ class Sumarize(QtWidgets.QDialog,PATH):
     def __init__(self,rawheader, stationData, instrumentData, processingResults, gravityCorrections):
         super().__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('picture/logo.svg'))
+        self.setWindowIcon(QIcon(logo_picture))
 
         self.rawheader = rawheader
         self.stationData = stationData

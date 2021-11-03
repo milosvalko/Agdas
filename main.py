@@ -4,11 +4,13 @@ from PyQt5 import uic,QtWidgets
 from newProject import NewProject
 from compute import Compute
 from warning import Warning
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTreeView
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTreeView, QSplashScreen
+from PyQt5.QtGui import QIcon, QPixmap, QMovie
 from data import Data
 from viewgraphs import Graphs
-from CONFIG import logo, wel
+from CONFIG import logo, wel, logo_picture
+from time import sleep
 
 PATH, _ = uic.loadUiType('gui/main.ui')
 
@@ -18,10 +20,11 @@ class Main(QtWidgets.QMainWindow, PATH):
     """
     def __init__(self):
         super().__init__()
+        self.splashScreen()
         print(logo)
         print(wel)
         self.setupUi(self)
-        self.setWindowIcon(QIcon('picture/logo.png'))
+        self.setWindowIcon(QIcon(logo_picture))
 
         # show opened/closed picture
         pixmap = QPixmap('picture/unchecked.png')
@@ -37,6 +40,15 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.openProject.triggered.connect(self.open_project)
 
         # self.Import_data.triggered.connect(self.importdata)
+
+    def splashScreen(self):
+        splash_pix = QPixmap(logo_picture)
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        splash.show()
+        splash.showMessage("<h1><font color='white'>Welcome to the Agdas!</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
+        sleep(1)
+        splash.hide()
 
     def open_project(self):
 
@@ -62,6 +74,7 @@ class Main(QtWidgets.QMainWindow, PATH):
             Warning(error='Import data behind',icon='critical', title='Warning')
 
     def viewData(self):
+
         try:
             Data(self.newProjectWin.pathDir)
         except AttributeError:
