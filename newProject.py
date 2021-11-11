@@ -1,5 +1,5 @@
 import sys, os
-from PyQt5 import uic,QtWidgets
+from PyQt5 import  uic, QtWidgets
 from glob import glob
 from classes import projectFile, rawFile
 from warning import Warning
@@ -7,7 +7,9 @@ from sumarize import Sumarize
 from PyQt5.QtGui import QIcon
 from CONFIG import logo_picture
 
-PATH, _ = uic.loadUiType('gui/newProject.ui')
+
+# PATH, _ = uic.loadUiType('gui/newProject.ui')
+PATH, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'gui/newProject.ui'))
 
 class NewProject(QtWidgets.QDialog,PATH):
     """

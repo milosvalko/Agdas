@@ -9,8 +9,9 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTreeView, QSplashScr
 from PyQt5.QtGui import QIcon, QPixmap, QMovie
 from data import Data
 from viewgraphs import Graphs
-from CONFIG import logo, wel, logo_picture
+from CONFIG import logo, wel, logo_picture, warning_window
 from time import sleep
+
 
 PATH, _ = uic.loadUiType('gui/main.ui')
 
@@ -46,7 +47,7 @@ class Main(QtWidgets.QMainWindow, PATH):
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
         splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         splash.show()
-        splash.showMessage("<h1><font color='white'>Welcome to the Agdas!</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
+        # splash.showMessage("<h1><font color='white'>Welcome to the Agdas!</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
         sleep(1)
         splash.hide()
 
@@ -71,20 +72,20 @@ class Main(QtWidgets.QMainWindow, PATH):
         processingResults=self.newProjectWin.processingResults, gravityCorrections=self.newProjectWin.gravityCorrections,
         header2=self.newProjectWin.header2,rawlines=self.newProjectWin.rawlines, header1=self.newProjectWin.header1, projDirPath=self.newProjectWin.pathDir, setFile=self.newProjectWin.setFile)
         except AttributeError:
-            Warning(error='Import data behind',icon='critical', title='Warning')
+            Warning(error=warning_window['import_data'],icon='critical', title='Warning')
 
     def viewData(self):
 
         try:
             Data(self.newProjectWin.pathDir)
         except AttributeError:
-            Warning(error='Import data behind',icon='critical', title='Warning')
+            Warning(error=warning_window['import_data'],icon='critical', title='Warning')
 
     def viewgraphs(self):
         try:
             Graphs(self.newProjectWin.pathDir+'/Graphs')
         except AttributeError:
-            Warning(error='Import data behind',icon='critical', title='Warning')
+            Warning(error=warning_window['import_data'],icon='critical', title='Warning')
 
     def closeproject(self):
         try:
@@ -93,7 +94,7 @@ class Main(QtWidgets.QMainWindow, PATH):
             pixmap=pixmap.scaled(16,16)
             self.check.setPixmap(pixmap)
         except AttributeError:
-            Warning(error='The project does not exist',icon='critical', title='Warning')
+            Warning(error=warning_window['project'],icon='critical', title='Warning')
         # self.__del__()
 
 

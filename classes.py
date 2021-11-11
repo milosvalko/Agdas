@@ -6,6 +6,7 @@ import csv
 import sqlite3 as sql
 from CONFIG import matrDatabase
 from warning import Warning
+import matplotlib.pyplot as plt
 
 
 class Fall():
@@ -649,3 +650,121 @@ class matr_db():
         Close connection with database
         """
         self.matr_db.close()
+
+class Graph():
+
+    def __init__(self, path, name, project, x_label, y_label, title, show):
+        #Create graph
+        self.gr = plt
+
+        self.path = path
+        self.name = name
+        self.project = project
+        self.show=show
+        self.x_label = x_label
+        self.y_label = y_label
+        self.title = title
+
+    def plotXY(self, x, y, mark, columns_name):
+        #Plot XY data
+        self.x=x
+        self.y=y
+        self.columns_name=columns_name
+
+        for i in range(len(x)):
+            self.gr.plot(x[i],y[i], mark[i])
+
+    def saveSourceData(self):
+        #Save source data to csv file
+        err=False
+        try:
+            self.x.append(self.x_err)
+            self.y.append(self.y_err)
+            self.columns_name.append('err')
+            err=True
+        except:
+            pass
+
+        hist=False
+        try:
+            self.x.append(self.hist_data)
+            # self.columns_name.append('hist')
+            hist=True
+        except:
+            pass
+
+
+        #Write graph source data to file
+        try:
+            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w')
+        except PermissionError:
+            Warning(error='Close ' +self.project+'_'+self.name+'.csv' + '!',icon='critical', title='Warning')
+            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w')
+
+        h=''
+        for i in self.columns_name:
+            h+=i+'_x'
+            h+=';'
+            h+=i+'_y'
+            h+=';'
+        if err:
+            h+='err'+';'
+        if hist:
+            h+='hist'
+        d.write(h+'\n')
+        n=max([len(i) for i in self.x])
+
+        for i in range(n):
+            l=[]
+            for j in range(len(self.y)):
+
+                try:
+                    l.append(self.x[j][i])
+                except IndexError:
+                    self.x[j].append('')
+                    l.append(self.x[j][i])
+
+                try:
+                    l.append(self.y[j][i])
+                except IndexError:
+                    self.y[j].append('')
+                    l.append(self.y[j][i])
+
+            ll=''
+            for k in l:
+                ll+=str(k)
+                ll+=';'
+
+            if err:
+                ll+=str(self.yerr[i])+';'
+            if hist:
+                ll+=str(self.hist_data[i])
+            ll+='\n'
+
+            d.write(ll)
+
+        d.close()
+
+    def histogram(self, hist_data):
+        #Create histogram to plot
+        self.hist_data=hist_data
+        self.gr.hist(hist_data, edgecolor='black')
+
+    def error_bar(self, x_err, y_err, yerr, color_err):
+        #Create error bar
+        self.x_err=x_err
+        self.y_err = y_err
+        self.yerr=yerr
+
+        self.gr.errorbar(x_err,y_err,yerr,marker='o', color=color_err, ms=10, linestyle='',capsize=5)
+
+
+    def save(self):
+        #Save plot to direction as png
+        self.gr.xlabel(self.x_label)
+        self.gr.ylabel(self.y_label)
+        self.gr.title(self.title)
+        self.gr.savefig(self.path+'/'+self.project+'_'+self.name)
+        if self.show:
+            self.gr.show()
+        self.gr.close()

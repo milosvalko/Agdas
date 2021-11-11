@@ -110,7 +110,9 @@ headers={
     'spectrum' : 'Frequency [Hz]{0}Avr res [nm]{0}Avr spec [nm]',
     'estim_grad' : """   {0}    {0}Fit with gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Fit without gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Gradient estimation{0}{0}
                         Set{0}Drop{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}vgg{0}vgg-std
-                        {0}    {0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2/mm{0}nm.s-2/mm"""
+                        {0}    {0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2/mm{0}nm.s-2/mm""",
+    'resgradsum' : 'Fringe{0}z [m]{0}Time [s]{0}Time TOP [s]{0}Resgradsum4_mean [nm]{0}Filtered mean [nm]'
+
 }
 
 round_line_ind={
@@ -121,5 +123,15 @@ round_line_ind={
     'spectrum' : [[1,4],[2,4],[3,4]],
     'estim' : [[2,3], [3,4], [4,6], [5,4], [6,6], [7,3], [8,3], [9,4], [10,4], [11,4], [12,4], [13,4], [14,4], [15,4], [16,4]],
     'effHeightCorr_Graph' : [[1,5],[2,5]],
-    'estim_grad' : [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5], [14, 5], [15, 5], [16, 5], [17, 5], [18, 5], [19, 5], [20, 5], [21, 5], [22, 5], [23, 5]]
+    'estim_grad' : [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5], [14, 5], [15, 5], [16, 5], [17, 5], [18, 5], [19, 5], [20, 5], [21, 5], [22, 5], [23, 5]],
+    'resgradsum' : [[1,5],[2,5],[3,5],[4,5],[5,5]]
+}
+
+warning_window={
+    'import_data' : 'Import data behind',
+    'project' : 'The project does not exist',
+    'internet' : 'Internet connection fail',
+    'split_set' : 'Choose count of sets',
+    'pole_corr' : 'Choose polar correction',
+    'cannot_wrtite_file' : 'Cannot write file due statistic is not computed',
 }

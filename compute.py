@@ -3,8 +3,8 @@ from PyQt5 import uic,QtWidgets, QtCore
 from PyQt5.QtWidgets import QLabel
 from time import sleep
 from warning import Warning
-from classes import Fall, projectFile,  rawFile, dropFile, estim, matr_db, res_final
-from CONFIG import getFG5X, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind
+from classes import Fall, projectFile,  rawFile, dropFile, estim, matr_db, res_final, Graph
+from CONFIG import getFG5X, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, warning_window
 import sqlite3 as sql
 from datetime import datetime, timedelta
 from time import time
@@ -133,7 +133,7 @@ class Compute(QtWidgets.QDialog,PATH):
         try:
             urllib.request.urlretrieve(url, os.getcwd()+'/finals/finals2000A.all.csv')
         except urllib.error.URLError:
-            Warning(error='Internet connection fail',icon='critical', title='Warning')
+            Warning(error=warning_window['internet'],icon='critical', title='Warning')
 
         # open and load file from IERS
         file=open( os.getcwd()+'/finals/finals2000A.all.csv', 'r')
@@ -252,7 +252,7 @@ class Compute(QtWidgets.QDialog,PATH):
             try:
                 self.defineSets()
             except ValueError:
-                Warning(error='Choose count of sets',icon='critical', title='Warning')
+                Warning(error=warning_window['split_set'],icon='critical', title='Warning')
                 self.run.setStyleSheet("background-color :#f0f0f0;")
                 return
 
@@ -413,7 +413,7 @@ class Compute(QtWidgets.QDialog,PATH):
 
                 # print(fall.m02)
             except UnboundLocalError:
-                Warning(error='Choose polar correction',icon='critical', title='Warning')
+                Warning(error=warning_window['pole_corr'],icon='critical', title='Warning')
                 break
 
             # matr_withoutGradient=[drop['Set'], drop['Drp'], ]
@@ -457,9 +457,27 @@ class Compute(QtWidgets.QDialog,PATH):
         # close connection with database
         # self.matr_connection.close()
         if self.graph_save.isChecked():
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[atm], xLabel='Time /h', yLabel='Correction /μGal', title='Atmosferic correction',path= self.projDirPath+'/Graphs', name='atm_corr.png', hist=False, mark=['b+'], columns_name=['atm_corr'])
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[baro], xLabel='Time /h', yLabel='Recorder pressure /hPa', title='Atmosferic pressure',path= self.projDirPath+'/Graphs', name='atm_press.png', hist=False, mark=['b+'], columns_name=['atm_press'])
-            graph(project=self.stationData['ProjName'], x=[time_gr], y=[tides], xLabel='Time /h', yLabel='Tides /μGal', title='Tidal acceleration',path= self.projDirPath+'/Graphs', name='tides.png', hist=False, mark=['b+'], columns_name=['tides'])
+            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[atm], xLabel='Time /h', yLabel='Correction /μGal', title='Atmosferic correction',path= self.projDirPath+'/Graphs', name='atm_corr.png', hist=False, mark=['b+'], columns_name=['atm_corr'])
+            g=Graph(path=self.projDirPath+'/Graphs', name='atm_corr', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label = 'Correction /μGal', title='Atmosferic correction')
+            g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
+            g.saveSourceData()
+            g.save()
+
+
+            g=Graph(path=self.projDirPath+'/Graphs', name='atm_press', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label='Recorder pressure /hPa', title='Atmosferic pressure')
+            g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
+            g.saveSourceData()
+            g.save()
+
+            g=Graph(path=self.projDirPath+'/Graphs', name='tides', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label='Tides /μGal', title='Tidal acceleration')
+            g.plotXY(x=[time_gr], y=[tides], mark=['b+'], columns_name=['tides'])
+            g.saveSourceData()
+            g.save()
+
+
+
+            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[baro], xLabel='Time /h', yLabel='Recorder pressure /hPa', title='Atmosferic pressure',path= self.projDirPath+'/Graphs', name='atm_press.png', hist=False, mark=['b+'], columns_name=['atm_press'])
+            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[tides], xLabel='Time /h', yLabel='Tides /μGal', title='Tidal acceleration',path= self.projDirPath+'/Graphs', name='tides.png', hist=False, mark=['b+'], columns_name=['tides'])
             self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
 
         if self.statistics.isChecked():
@@ -481,7 +499,7 @@ class Compute(QtWidgets.QDialog,PATH):
                 self.write_res_final()
 
             except AttributeError:
-                Warning(error='Cannot write file due statistic is not computed',icon='critical', title='Warning')
+                Warning(error=warning_window['cannot_wrtite_file'],icon='critical', title='Warning')
 
         #Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
@@ -647,6 +665,8 @@ class Compute(QtWidgets.QDialog,PATH):
 
         a=res_final(path=self.projDirPath, header=headers['residuals_final'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_final')
         by_sets=res_final(path=self.projDirPath, header=headers['residuals_sets'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_sets')
+        resgradsum=res_final(path=self.projDirPath, header=headers['resgradsum'].format(';'), name=self.stationData['ProjName']+'_'+'resgradsum')
+
 
         # data for round value to print into file
         round_ind_bysets=[[1,5],[2,5],[3,5]]
@@ -660,8 +680,10 @@ class Compute(QtWidgets.QDialog,PATH):
 
             line=[it+1, z, self.tt[it], self.tt[it]-v0mg0mkor]
             line.extend(self.meanResSets[:, it])
-
             by_sets.printResult(line=roundList(line, round_ind_bysets))
+
+            line = [it +1, z, self.tt[it], self.tt[it]-v0mg0mkor, self.resgradsum4Mean[0,it], '-']
+            resgradsum.printResult(roundList(line, round_line_ind['resgradsum']))
 
 
 
@@ -714,10 +736,9 @@ class Compute(QtWidgets.QDialog,PATH):
                 # print(j)
             it+=1
 
-        # if grad4Acc>0:
-        #     self.resgradsum4Mean=self.resgradsum4Mean/grad4Acc
-        # # print(grad4Acc)
-        # np.savetxt('res4.txt', self.resgradsum4Mean, delimiter=';')
+
+        self.resgradsum4Mean=self.resgradsum4Mean/grad4Acc
+
 
         self.matr_connection.commit()
 
