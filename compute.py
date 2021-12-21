@@ -1,7 +1,7 @@
 import sys, glob, os, urllib.request, csv
 from PyQt5 import uic,QtWidgets, QtCore
 from PyQt5.QtWidgets import QLabel
-from time import sleep
+from time import sleep, time
 from warning import Warning
 from classes import Fall, projectFile,  rawFile, dropFile, estim, matr_db, res_final, Graph
 from CONFIG import getFG5X, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, warning_window
@@ -11,9 +11,10 @@ from time import time
 import matplotlib.pyplot as plt
 from PyQt5.QtGui import QIcon, QPixmap
 from math import sin, cos, pi, sqrt, floor
-from functions import graph, allan, roundList
+from functions import  allan, roundList, date_to_mjd
 import numpy as np
 from scipy.stats import t
+
 
 
 
@@ -126,7 +127,7 @@ class Compute(QtWidgets.QDialog,PATH):
 
     def downloadPole(self):
         '''
-        Download pole coordinates from IERS and compute corrections for every drop
+        Download pole coordinates from IERS and compute corrections for each drop
         '''
 
         url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
@@ -281,10 +282,11 @@ class Compute(QtWidgets.QDialog,PATH):
         # create database for save every measuring
         self.matr_connection=matr_db(self.projDirPath+'/data.db')
 
+
         # measuring time of run computing
         self.t=time()
         #count of the drops
-        ndrop=self.numDrop.value()
+        self.ndrop=self.numDrop.value()
 
 
         atm=[]
@@ -292,14 +294,14 @@ class Compute(QtWidgets.QDialog,PATH):
         baro=[]
         tides=[]
         # self.all_xef=[]
-        self.allRes=np.zeros((ndrop, self.frmaxss)) # numpy array for residuals of all drops
-        self.v0=[]
-        self.g0=[]
-        self.resgradsum4=np.zeros((ndrop,int(self.processingResults['totalFringes'])))
-        self.ssresAr=[]
-        self.m0grad4Sig=[]
+        self.allRes=np.zeros((self.ndrop, self.frmaxss)) # numpy array for residuals of all drops
+        self.v0=[] #list of v0 values
+        self.g0=[] #list of g0 values
+        self.resgradsum4=np.zeros((self.ndrop,int(self.processingResults['totalFringes']))) #All residuals from gradient estimation fit
+        self.ssresAr=[] #Standart deviations of fits with gradient
+        self.m0grad4Sig=[] #Standart deviations of gradient estimation fit
         # loop for all drops
-        for i in range(0,ndrop):
+        for i in range(0,self.ndrop):
 
             #===========================================================================#
             #create drop dictionary with data from dropfile
@@ -329,6 +331,7 @@ class Compute(QtWidgets.QDialog,PATH):
             #===========================================================================#
             # compute of LST
             fall=Fall()
+            #Setters
             fall.setFringe(raw['ftime'])
             fall.setLambda(Lambda)
             fall.setScaleFactor(self.processingResults['scaleFactor'])
@@ -344,6 +347,7 @@ class Compute(QtWidgets.QDialog,PATH):
             # fall.setFrRange(frmin,frmax)
             fall.setFRssRange(self.frmaxss,frminss)
             fall.setKpar(self.kpar.isChecked())
+            #Compute fit by least squere method
             fall.LST()
             fall.effectiveHeight()
             fall.effectiveHeightTop()
@@ -357,6 +361,7 @@ class Compute(QtWidgets.QDialog,PATH):
             self.v0.append(fall.x_grad[0][1]*1e-6)
             self.g0.append(fall.x_grad[0][2])
             # self.all_xef.append(fall.xef[0])
+            # print(fall.x)
 
             #===========================================================================#
             # if self.FG5X['kalphagrad']>
@@ -382,7 +387,7 @@ class Compute(QtWidgets.QDialog,PATH):
                 estim_grad.printResult(line = roundList(estim_grad_line, round_line_ind['estim_grad']))
 
 
-            # matrix of all measuring
+
             date=datetime(int(drop['Year']), 1, 1) + timedelta(int(drop['DOY']) - 1)
 
 
@@ -404,27 +409,35 @@ class Compute(QtWidgets.QDialog,PATH):
 
             # transfer residuals to string
             res=', '.join(str(r) for r in fall.res_grad1[0:self.frmaxss])
+            date_database =  drop['Year']+':'+str(date.month).zfill(2)+':'+str(date.day).zfill(2)+' '+drop['Time']
+            day_ = drop['Time'].split(':')
+            day_ = (int(day_[-1])/3600 + int(day_[1])/60 + int(day_[0]))/24 + date.day
+            date_mjd = date_to_mjd(int(drop['Year']), date.month, day_)
 
             # line for database
             try:
-                matr_drop=[drop['Set'], drop['Drp'], drop['Year']+':'+str(date.month).zfill(2)+':'+str(date.day).zfill(2)+' '+drop['Time'], fall.g0_Gr, - fall.gradient*fall.Grad,
+                matr_drop=[i+1, drop['Set'], drop['Drp'], date_database, date_mjd, fall.x_grad[0][0], fall.x_grad[0][1],fall.x_grad[0][3],fall.x_grad[0][4],fall.x_grad[0][5],fall.x_grad[0][6],fall.x_grad[0][7],fall.x_grad[0][8], fall.g0_Gr, - fall.gradient*fall.Grad,
             float(drop['Tide'])*10,float(drop['Load'])*10,float(drop['Baro'])*10,Polar*10, fall.gTopCor, fall.g0,
-            fall.h*1e-6, fall.Grad*1e-6,fall.xgrad4[0][2], fall.std, fall.xef[0][3], accepted, res]
+            fall.h*1e-6, fall.Grad*1e-6,fall.xgrad4[0][2], fall.std, fall.xef[0][3], fall.ssres, accepted, res]
 
                 # print(fall.m02)
             except UnboundLocalError:
                 Warning(error=warning_window['pole_corr'],icon='critical', title='Warning')
                 break
 
-            # matr_withoutGradient=[drop['Set'], drop['Drp'], ]
+            except IndexError:
+                matr_drop=[i+1, drop['Set'], drop['Drp'], date_database, date_mjd, fall.x_grad[0][0], fall.x_grad[0][1],fall.x_grad[0][3],fall.x_grad[0][4],fall.x_grad[0][5],fall.x_grad[0][6],0.0,0.0, fall.g0_Gr, - fall.gradient*fall.Grad,
+            float(drop['Tide'])*10,float(drop['Load'])*10,float(drop['Baro'])*10,Polar*10, fall.gTopCor, fall.g0,
+            fall.h*1e-6, fall.Grad*1e-6,fall.xgrad4[0][2], fall.std, fall.xef[0][3], fall.ssres, accepted, res]
 
+            # matr_withoutGradient=[drop['Set'], drop['Drp'],
             # send line to database
             self.matr_connection.insert(matrDatabase['insert'].format(*matr_drop))
 
             # send message to logging window
-            mess=('Drop: {} >> g: {:.2f} m0: {:.2f}'.format(str(i+1).rjust(len(str(ndrop))), round(fall.g0_Gr,2), round(fall.m02_grad[0],2)))
+            mess=('Drop: {} >> g: {:.2f} m0: {:.2f}'.format(str(i+1).rjust(len(str(self.ndrop))), round(fall.g0_Gr,2), round(fall.m02_grad[0],2)))
             self.logWindow.append(mess)
-            self.progressBar.setValue(float((i+1)*100/ndrop))
+            self.progressBar.setValue(float((i+1)*100/self.ndrop))
 
 
             # data for atmsorefic graphs
@@ -447,39 +460,13 @@ class Compute(QtWidgets.QDialog,PATH):
         # print(self.resgradsum4)
         # commit data to database
         self.matr_connection.commit()
-        # if self.graphs.isChecked():
-        # np.savetxt('res4.txt', self.resgradsum4, delimiter=';')
-
-
-        # get data from datase
-        # self.matr=matr_connection.get('SELECT * FROM results')
 
         # close connection with database
         # self.matr_connection.close()
-        if self.graph_save.isChecked():
-            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[atm], xLabel='Time /h', yLabel='Correction /μGal', title='Atmosferic correction',path= self.projDirPath+'/Graphs', name='atm_corr.png', hist=False, mark=['b+'], columns_name=['atm_corr'])
-            g=Graph(path=self.projDirPath+'/Graphs', name='atm_corr', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label = 'Correction /μGal', title='Atmosferic correction')
-            g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
-            g.saveSourceData()
-            g.save()
-
-
-            g=Graph(path=self.projDirPath+'/Graphs', name='atm_press', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label='Recorder pressure /hPa', title='Atmosferic pressure')
-            g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
-            g.saveSourceData()
-            g.save()
-
-            g=Graph(path=self.projDirPath+'/Graphs', name='tides', project = self.stationData['ProjName'], show=False, x_label='Time /h', y_label='Tides /μGal', title='Tidal acceleration')
-            g.plotXY(x=[time_gr], y=[tides], mark=['b+'], columns_name=['tides'])
-            g.saveSourceData()
-            g.save()
 
 
 
-            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[baro], xLabel='Time /h', yLabel='Recorder pressure /hPa', title='Atmosferic pressure',path= self.projDirPath+'/Graphs', name='atm_press.png', hist=False, mark=['b+'], columns_name=['atm_press'])
-            # graph(project=self.stationData['ProjName'], x=[time_gr], y=[tides], xLabel='Time /h', yLabel='Tides /μGal', title='Tidal acceleration',path= self.projDirPath+'/Graphs', name='tides.png', hist=False, mark=['b+'], columns_name=['tides'])
-            self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
-
+        #Compute statistics
         if self.statistics.isChecked():
             self.rejectBySigma()
             self.meanResidualsBySets()
@@ -487,13 +474,14 @@ class Compute(QtWidgets.QDialog,PATH):
             self.fourier()
             self.compute_normres()
             self.print_allanFile()
+            # self.ressets_res()
 
         # print results with gradient to estim file
         if self.files.isChecked():
-            # try:
-            self.writeDropsFile()
-            # except AttributeError:
-            #     Warning(error='Cannot write file due statistic is not computed',icon='critical', title='Warning')
+            try:
+                self.writeDropsFile()
+            except AttributeError:
+                Warning(error='Cannot write file due statistic is not computed',icon='critical', title='Warning')
 
             try:
                 self.write_res_final()
@@ -501,11 +489,194 @@ class Compute(QtWidgets.QDialog,PATH):
             except AttributeError:
                 Warning(error=warning_window['cannot_wrtite_file'],icon='critical', title='Warning')
 
+        #Create graph
+        if self.graph_save.isChecked():
+            g=Graph(path=self.projDirPath+'/Graphs', name='atm_corr', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Time /h', y_label = 'Correction /μGal', title='Atmosferic correction')
+            g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
+            g.saveSourceData()
+            g.save()
+
+
+            g=Graph(path=self.projDirPath+'/Graphs', name='atm_press', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Recorder pressure /hPa', title='Atmosferic pressure')
+            g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
+            g.saveSourceData()
+            g.save()
+
+            g=Graph(path=self.projDirPath+'/Graphs', name='tides', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Tides /μGal', title='Tidal acceleration')
+            g.plotXY(x=[time_gr], y=[tides], mark=['b+'], columns_name=['tides'])
+            g.saveSourceData()
+            g.save()
+
+            self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
+            # self.graphGravityChange()
+            self.graphRes()
+            self.graphSetG()
+            self.graphParasitic()
+            self.graphHistogramAccDrops()
+            self.graphHistogramAccDropsNorm()
+            self.graphEffectiveHeights2()
+
+
         #Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
         #Set time of run calculation
         self.calc_time.setText('Calculation time: {:.2f} s'.format(time()-self.t))
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
+
+    # def ressets_res(self):
+    #
+    #     prescale=int(self.processingResults['multiplex'])*int(self.processingResults['scaleFactor'])
+    #
+    #     nset = self.matr_connection.get('select max(Set1) from results')
+    #     nset=nset[0][0]
+    #
+    #     tfit = self.meanResSets[1,:]
+    #
+    #     v0m=[]
+    #     g0m=[]
+    #     tkor=[]
+    #     self.zzh=np.zeros((self.FG5X['frmaxplot'], nset))
+    #     for i in range(nset):
+    #
+    #         a=self.matr_connection.get('select v0_withGR from results where Set1 = {}'.format(i+1))
+    #         v0m.append(np.median(a)*1e-9)
+    #
+    #         a=self.matr_connection.get('select g0_Gr from results where Set1 = {} '.format(i+1))
+    #         g0m.append(np.median(a)*1e-9)
+    #
+    #         tkor.append(-v0m[-1]/g0m[-1])
+    #
+    #         self.zzh[0,i]=0.5*9.809*(tfit[0]-tkor[-1])**2
+    #
+    #         for j in range(1,self.FG5X['frmaxplot']):
+    #
+    #             self.zzh[j, i]=self.zzh[0,i]+self.Lambda*1e-9/2*prescale*j
+    #
+    #     if self.files.isChecked():
+    #         a=a=res_final(path=self.projDirPath, header=False, name=self.stationData['ProjName']+'_'+'ressets_res')
+    #         for i in range(self.FG5X['frmaxplot']):
+    #             line=[i+1, tfit[i], tfit[i]-tkor[0], self.zzh[i,0]]
+    #
+    #             # a.printResult()
+
+    def graphGravityChange(self):
+        Y=[]
+        X=[]
+        l=[]
+        cn=[]
+        m=[]
+        lw=[]
+        tttt=range(self.FG5X['sens_bn'], self.FG5X['sens_bx']+1)
+
+        for i in range(len(self.dgr)):
+            # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
+            X.append(tttt)
+            Y.append(self.dgr[i,:])
+            l.append('Set ' + str(i+1))
+            cn.append('Set ' + str(i+1))
+            m.append('C'+str((i)%10)+ '-')
+            lw.append(0.3)
+
+        X.append(tttt)
+        Y.append(self.dgrm)
+        l.append('Mean')
+        cn.append('Mean')
+        m.append('k-')
+        lw.append(1)
+
+        g=Graph(path=self.projDirPath+'/Graphs', name='sensitivity_bottom', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Final Fringe #', y_label = '', title='Gravity change due to choice of the last fringe')
+        g.plotXY(x=[tttt], y=[[0 for i in range(len(tttt))]], mark=['b-'], columns_name='xx', legend ='', lw=[0.3])
+        g.plotXY(x=[[self.FG5X['frmax'], self.FG5X['frmax']]], y=[[-10, 10]], mark=['b-'], columns_name='xx', legend ='', lw=[0.3])
+        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend =l, lw=lw)
+        g.saveSourceData()
+        g.save()
+
+        del X
+        del Y
+
+    def graphSetG(self):
+
+        g0=1000*(floor(self.gfinal/1000))
+        x=[0, self.nset + 1]
+
+        res = self.matr_connection.get(statistic['mean:vxv'])
+        mean_by_set = [i[2]-g0 for i in res]
+
+        #Set gravity at top of the drop
+        g=Graph(path=self.projDirPath+'/Graphs', name='set_g', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Set #', y_label = 'Set gravity -{:.2f} /nm.s^(-2)'.format(g0), title='Set gravity at top of the drop')
+        g.plotXY(x=[x, x, x], y=[[self.gfinal - g0, self.gfinal - g0], [self.gfinal - g0 - self.gstd, self.gfinal - g0 - self.gstd], [self.gfinal - g0 + self.gstd, self.gfinal - g0 + self.gstd]], mark=['b-', 'g-', 'g-'], columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend =['Set g-values', 'Avegare g-value', '1σ range'])
+        g.error_bar(range(1, x[1]), mean_by_set, self.stodchmod, 'r')
+        g.saveSourceData()
+        g.save()
+
+        #Standart deviation for set g-values
+        g=Graph(path=self.projDirPath+'/Graphs', name='set_std', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Set #', y_label = 'Set standart deviation /nm.s^(-2)', title='Standart deviation for set g-values')
+        # g.plotXY(x=[x, x, x], y=[[gfinal-g0, gfinal-g0], [gfinal-g0-gstd, gfinal-g0-gstd], [gfinal-g0+gstd, gfinal-g0+gstd]], mark=['b-', 'g-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Set g-values', 'Avegare g-value', '1 range'])
+        g.error_bar(range(1, x[1]), self.stodch, self.stodchs, 'r')
+        g.saveSourceData()
+        g.save()
+
+
+    def graphRes(self):
+
+        rms = self.matr_connection.get('select n, ssres from results')
+        std = [r[1] for r in rms]
+        n = range(1, len(std) + 1)
+
+
+        g=Graph(path=self.projDirPath+'/Graphs', name='resid_RMS', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Drop #', y_label = 'Standart deviation /nm', title='Standart deviation of the residuals for each drop')
+        g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend =[])
+        g.saveSourceData()
+        g.save()
+
+        # acc = self.matr_connection.get('select Accepted from results')
+        # g=Graph(path=self.projDirPath+'/Graphs', name='resid_all', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Fringe #', y_label = 'Residual /nm', title='Residuals for each drop')
+        # x=range(1, self.frmaxss + 1)
+        # for i in range(len(acc)):
+        #     if acc[i][0] == 1:
+        #         # g.plotXY(x=[x], y=[self.allRes[i, :]], mark=['-k'], columns_name=[], legend =[])
+        #         g.gr.plot(x, self.allRes[i, :], '-k')
+        #
+        # # g.saveSourceData()
+        # g.save()
+
+    def graphParasitic(self):
+
+        res = self.matr_connection.get('select e_withGR, f_withGR from results where Accepted = 1')
+
+        e = [i[0] for i in res]
+        f = [i[1] for i in res]
+        x=range(1, len(e)+1)
+
+        g=Graph(path=self.projDirPath+'/Graphs', name='parasitic', project = self.stationData['ProjName'], show=self.open_graphs.isChecked(), x_label='Drop #', y_label = 'sin/cos amplitude /nm', title='Sine/Cosine amplitudes of the parasitic wave with L = {:.3f} m'.format(float(self.lpar.toPlainText())/1e9))
+        g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Sine component', 'Cosine component'])
+        g.saveSourceData()
+        g.save()
+
+    def graphHistogramAccDrops(self):
+
+        r=self.matr_connection.get('select gTopCor from results where Accepted = 1')
+        r=[i[0] for i in r]
+
+        g=Graph(path=self.projDirPath+'/Graphs', name='histogram', project = self.stationData['ProjName'], x_label='Drop gravity - final g/nm.s^{-2}', y_label='Frequency', title='Histogram of accepted drops', show=self.open_graphs.isChecked())
+        g.histogram(r, fit=True)
+        g.saveSourceData()
+        g.save()
+
+    def graphHistogramAccDropsNorm(self):
+        g=Graph(path=self.projDirPath+'/Graphs', name='histogram_norm', project = self.stationData['ProjName'], x_label='Drop gravity - final g/normalized nm.s^{-2}', y_label='Frequency', title='Histogram of accepted drops (normalized)', show=self.open_graphs.isChecked())
+        g.histogram(self.normres, fit=True)
+        g.saveSourceData()
+        g.save()
+
+    def graphEffectiveHeights2(self):
+
+        y=self.matr_connection.get('select EffHeight + CorToEffHeight from results')
+        y=[i[0] for i in y]
+        x=[i for i in range(1, self.ndrop+1)]
+        g=Graph(path=self.projDirPath+'/Graphs', name='effective_height2', project = self.stationData['ProjName'], x_label='Drop #', y_label='Effective measurement height /mm', title='Effective measurement height from top of the drop', show=self.open_graphs.isChecked())
+        g.plotXY(x=[x],y=[y],mark=['-b'],columns_name=['effective_height'])
+        g.save()
 
     def estimLine(self, X, std, set, drop, m0):
         """
@@ -550,6 +721,8 @@ class Compute(QtWidgets.QDialog,PATH):
         a=a.read().splitlines()
         press=[a[i].split()[18] for i in range(4,len(a))]
 
+        self.vgg_median_bysets=[]
+
         a=res_final(path=self.projDirPath, header=headers['matlog'].format(';'), name=self.stationData['ProjName']+'_'+'matlogsets')
         it=0
         for i in r:
@@ -557,7 +730,9 @@ class Compute(QtWidgets.QDialog,PATH):
 
             vgg=np.median(self.matr_connection.get('select vgg from results where Set1 = {}'.format(i[0])))
 
-            line=[self.stationData['ProjName'], i[0], int(i[1]), int(i[2]), int(i[3]), int(i[4]), int(i[5]), int(i[6]), 'mjd', self.stationData['gradient'], i[7], self.stodch[it], self.dglrms[it], self.dgrrms[it], i[8], self.stationData['actualHeight'], press[it], vgg, tst]
+            self.vgg_median_bysets.append(vgg)
+
+            line=[self.stationData['ProjName'], i[0], int(i[1]), int(i[2]), int(i[3]), int(i[4]), int(i[5]), int(i[6]), i[-1], self.stationData['gradient'], i[7], self.stodch[it], self.dglrms[it], self.dgrrms[it], i[8], self.stationData['actualHeight'], press[it], vgg, tst]
             a.printResult(line=line)
             it+=1
 
@@ -575,6 +750,7 @@ class Compute(QtWidgets.QDialog,PATH):
 
         # print(self.normres)
         a1=allan(gTopCor, tau)
+        np.savetxt('gTopCor.csv', gTopCor, delimiter = ';')
         a2=allan(self.normres, tau)
         a3=allan(grad, tau)
 
@@ -599,6 +775,7 @@ class Compute(QtWidgets.QDialog,PATH):
         # r=[i[0] for i in r]
         r=r[0][0]
         nset = (r)
+        self.nset = nset
 
         ksmooth=self.FG5X['ksmooth']
         self.stodch=[] #mean error of sets
@@ -610,12 +787,16 @@ class Compute(QtWidgets.QDialog,PATH):
         self.vv=[] # mean correction
         tst=[] # what is this
         self.normres=[]
+        self.stodchmod = []
+        self.stodchs = []
         for i in range(r):
             d=self.matr_connection.get('select gTopCor from results where Accepted = 1 and Set1 = {}'.format(i+1))
 
             count+=len(d)
             self.stodch.append(np.std(d)/np.sqrt(len(d)))
+            self.stodchs.append(self.stodch[-1]/np.sqrt(2*len(d)))
             stodchmod = self.stodch[-1]*self.stodch[-1]+ksmooth*ksmooth
+            self.stodchmod.append(sqrt(stodchmod))
             self.stdodchpadu.append(self.stodch[-1]*np.sqrt(len(d)))
             # print('STD {}'.format(stdodchpadu[-1]))
             weight.append(100/stodchmod)
@@ -639,6 +820,7 @@ class Compute(QtWidgets.QDialog,PATH):
 
         # if count>=1:
         gstd=np.std(self.vv)/np.sqrt(sumweight)
+        self.gstd = gstd
 
 
         gtop=self.matr_connection.get('select gTopCor, Set1 from results where Accepted = 1')
@@ -654,9 +836,9 @@ class Compute(QtWidgets.QDialog,PATH):
 
     def write_res_final(self):
         prescale=int(self.processingResults['multiplex'])*int(self.processingResults['scaleFactor'])
-        it=0
+        # it=0
 
-        self.FG5X['frmaxplot']
+        # self.FG5X['frmaxplot']
         v0m=np.median(self.v0)/1e3
         g0m=np.median(self.g0)/10e9
         v0mg0mkor=(-v0m/g0m)/10
@@ -667,10 +849,11 @@ class Compute(QtWidgets.QDialog,PATH):
         by_sets=res_final(path=self.projDirPath, header=headers['residuals_sets'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_sets')
         resgradsum=res_final(path=self.projDirPath, header=headers['resgradsum'].format(';'), name=self.stationData['ProjName']+'_'+'resgradsum')
 
+        a1000=res_final(path=self.projDirPath, header=headers['residuals_final1000'].format(';'), name=self.stationData['ProjName']+'_'+'residuals_final1000')
 
         # data for round value to print into file
         round_ind_bysets=[[1,5],[2,5],[3,5]]
-        round_ind_bysets.extend([[i,6] for i in range(4, len(self.meanResSets[:, it])+1)])
+        round_ind_bysets.extend([[i,6] for i in range(4, len(self.meanResSets[:, 0])+1)])
         for it in range(self.FG5X['frmaxplot']):
 
 
@@ -685,29 +868,39 @@ class Compute(QtWidgets.QDialog,PATH):
             line = [it +1, z, self.tt[it], self.tt[it]-v0mg0mkor, self.resgradsum4Mean[0,it], '-']
             resgradsum.printResult(roundList(line, round_line_ind['resgradsum']))
 
+            if (it+1)%10 == 5:
+                line=[it+1, z, self.tt[it], self.tt[it]-v0mg0mkor,  np.mean(self.resgradsum4Mean[0,it-4:it+6]), '-']
+                a1000.printResult(line=roundList(line, round_line_ind['residuals_final1000']))
+
 
 
 
 
 
     def rejectBySigma(self):
+        #Print to logWindow
         self.logWindow.append(separator)
         self.logWindow.append('Reject drops with rejsigma>3*std')
         QtCore.QCoreApplication.processEvents()
 
-
+        #Get mean and v*v by sets from database
         mean=self.matr_connection.get(statistic['mean:vxv'])
-        res=self.matr_connection.get('select Set1, Drop1, gTopCor, Accepted from results')
+        #Get gTopCor from databse
+        res=self.matr_connection.get('select Set1, Drop1, gTopCor, Accepted from results where Accepted = 1')
+
 
         n=int(self.processingResults['dropsInSet'])
+        #Get rejsigma from GUI,
         rejsigma=float(self.rejsigma.toPlainText())
 
+        #Median of
         resMed=np.median(self.ssresAr)
 
         m0grad4Med=np.median(self.m0grad4Sig)
         self.resgradsum4Mean=np.zeros((1,int(self.processingResults['totalFringes'])))
 
         kalpha=float(self.kalpha.toPlainText())
+        kalpha_2=float(self.kalpha_2.toPlainText())
 
         std=[]
         mean1=[]
@@ -721,11 +914,11 @@ class Compute(QtWidgets.QDialog,PATH):
             set_std=std[j[0]-1]
             set_mean=mean1[j[0]-1]
 
-            if self.m0grad4Sig[it] < 0.5*m0grad4Med or self.m0grad4Sig[it] > 1.5*m0grad4Med:
+            if self.m0grad4Sig[it] > (1+kalpha_2/100)*m0grad4Med:
                 self.resgradsum4Mean[0,:]+=self.resgradsum4[it,:]
                 grad4Acc+=1
 
-            if self.ssresAr[it] < (kalpha/100)*resMed or self.ssresAr[it] > (1+kalpha/100)*resMed:
+            if self.ssresAr[it] > (1+kalpha/100)*resMed:
                 update=matrDatabase['updateAcc'].format(j[0], j[1])
                 self.matr_connection.insert(update)
 
@@ -770,11 +963,13 @@ class Compute(QtWidgets.QDialog,PATH):
         for i in d:
             if i[0]==1:
 
-                self.meanResSets[i[1]-1, :] = self.meanResSets[i[1]-1, :] + self.allRes[it,:]/c[i[1]-1][0]
-                self.meanRes[0, :] = self.meanRes[0, :] + self.allRes[it, :]
+                self.meanResSets[i[1]-1, :] += self.allRes[it,:]/c[i[1]-1][0]
+                self.meanRes[0, :] += self.allRes[it, :]
             it+=1
 
         self.meanRes=self.meanRes/self.allAcc
+
+        # np.savetxt('meanres.csv', self.meanResSets, delimiter = ';')
 
 
     def fourier(self):
@@ -873,10 +1068,10 @@ class Compute(QtWidgets.QDialog,PATH):
         sens_tx=self.FG5X['sens_tx']
 
         dgl=np.zeros((int(self.processingResults['setsCollected']),  sens_tx-sens_tn+1))
-        dgr=np.zeros((int(self.processingResults['setsCollected']),  sens_tx-sens_tn+1))
+        self.dgr=np.zeros((int(self.processingResults['setsCollected']),  sens_tx-sens_tn+1))
 
         dglm=np.zeros((1, sens_tx-sens_tn+1))
-        dgrm=np.zeros((1, sens_tx-sens_tn+1))
+        self.dgrm=np.zeros((1, sens_tx-sens_tn+1))
 
         for i in range(int(self.processingResults['setsCollected'])):
 
@@ -894,13 +1089,13 @@ class Compute(QtWidgets.QDialog,PATH):
 
                 koef=np.polyfit(x, y, deg = 2)
 
-                dgr[i, j-1] = koef[0]*2
+                self.dgr[i, j-1] = koef[0]*2
 
             dglm = dglm + dgl[i, :]
-            dgrm = dgrm + dgr[i, :]
+            self.dgrm = self.dgrm + self.dgr[i, :]
 
         dglm=dglm/int(self.processingResults['setsCollected'])
-        dgrm=dgrm/int(self.processingResults['setsCollected'])
+        self.dgrm=self.dgrm/int(self.processingResults['setsCollected'])
         #==============================================================================
 
         rozd=self.FG5X['sensa_tn']-self.FG5X['sens_tn']
@@ -914,7 +1109,7 @@ class Compute(QtWidgets.QDialog,PATH):
         rozd=self.FG5X['sensa_bn']-self.FG5X['sens_bn']
         celk=self.FG5X['sensa_bx']-self.FG5X['sensa_bn']
 
-        dgrc=dgr[:, rozd:rozd+1+celk]
+        dgrc=self.dgr[:, rozd:rozd+1+celk]
 
         self.dgrrms=np.sqrt(np.sum(np.square(dgrc.transpose()), axis=0))/np.sqrt(celk+1)
         #==============================================================================
@@ -963,6 +1158,7 @@ class Compute(QtWidgets.QDialog,PATH):
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
         fig.savefig(self.projDirPath+'/Graphs/'+project+'_'+'effective_height.png', dpi=250)
+        plt.close(fig)
 
 
 

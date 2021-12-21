@@ -16,7 +16,8 @@ def getFG5X(ps):
     'sensa_bn' : 900*ps,
     'sensa_bx' : 1000*ps,
     'nforfft' : 4501,
-    'ksmooth' : 3
+    'ksmooth' : 3,
+    'sens_bx' : 1040*ps
     }
     FG5X['sens_bn'] = FG5X['frmaxss'] - FG5X['sens_tx']
     return FG5X
@@ -24,9 +25,19 @@ def getFG5X(ps):
 
 matrDatabase={
     'schema' : '''CREATE TABLE results (
+             n INTEGER,
              Set1 INTEGER,
              Drop1 INTEGER,
              Date TEXT,
+             mjd REAL,
+             z0_withGR REAL,
+             v0_withGR REAL,
+             a_withGR REAL,
+             b_withGR REAL,
+             c_withGR REAL,
+             d_withGR REAL,
+             e_withGR REAL,
+             f_withGR REAL,
              g0_Gr REAL,
              CorrToTop REAL,
              Tide REAL,
@@ -40,12 +51,23 @@ matrDatabase={
              Gradient REAL,
              std REAL,
              vgg REAL,
+             ssres REAL,
              Accepted INTEGER,
              Res TEXT)''',
     'insert' : '''INSERT INTO results (
+            n,
             Set1,
             Drop1,
             Date,
+            mjd,
+            z0_withGR,
+            v0_withGR,
+            a_withGR,
+            b_withGR,
+            c_withGR,
+            d_withGR,
+            e_withGR,
+            f_withGR,
             g0_Gr,
             CorrToTop,
             Tide,
@@ -59,14 +81,15 @@ matrDatabase={
             Gradient,
             std,
             vgg,
+            ssres,
             Accepted,
-            Res) values({},{},"{}",{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
+            Res) values({},{},{},"{}",{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
 
     'updateAcc' : '''UPDATE results
                 SET Accepted = 0
                 WHERE Set1 = {} and Drop1 = {}''',
 
-    'matlog' : '''select Set1, substr(Date,0,5), substr(Date, 6,2), substr(Date, 9,2), round(avg(substr(Date, 12,2))), round(avg(substr(Date, 15,2))), round(avg(substr(Date, 18,2))), avg(gTopCor), count(*)
+    'matlog' : '''select Set1, substr(Date,0,5), substr(Date, 6,2), substr(Date, 9,2), round(avg(substr(Date, 12,2))), round(avg(substr(Date, 15,2))), round(avg(substr(Date, 18,2))), avg(gTopCor), count(*), avg(mjd)
             from results
             where Accepted = 1
             group by Set1'''
@@ -74,9 +97,9 @@ matrDatabase={
 }
 
 statistic={
-    'mean:vxv':'''with tab as (select avg(gTopCor) as mean, Set1, Drop1 from results group by Set1),
+    'mean:vxv':'''with tab as (select avg(gTopCor) as mean, Set1, Drop1 from results where Accepted = 1 group by Set1),
 tab1 as (select r.Set1, r.Drop1, tab.mean as mean, r.gTopCor as g from results as r join tab on (tab.Set1 = r.Set1 ) WHERE r.Accepted =1)
-select Set1, Drop1, tab1.mean, sum((mean-g)*(mean-g)) as vxv from tab1 group by tab1.Set1'''
+select Set1, Drop1, tab1.mean, sum((mean-g)*(mean-g)) as vxv, count(*) from tab1  group by tab1.Set1'''
 }
 
 logo=r'''
@@ -106,6 +129,7 @@ headers={
     'matlog' : 'Campaign{0} Set{0} Year{0} Month{0} Day{0} Hour{0} Minute{0} Second{0} MJD{0} VGG_inp{0} g{0} g_std{0} STD-Start{0}STD-Final{0}Accepted{0} Top height{0} Pressure{0} VGG{0} T-stat',
     'allan' : 'n{0}ALLAN1{0}STD1{0}ALLAN2{0}STD2{0}ALLAN3{0}STD3',
     'residuals_final' : 'Fringe{0} z [m]{0}Time [s]{0}Time Top [s]{0}Value [nm]{0}Filtered value [nm]',
+    'residuals_final1000' : 'Fringe{0} z [m]{0} Time [s]{0} Time Top [s]{0} resid [nm]{0} Filtered resid [nm]',
     'residuals_sets' : 'Fringe{0} Time [s]{0}Time Top [s]{0}Value [nm]',
     'spectrum' : 'Frequency [Hz]{0}Avr res [nm]{0}Avr spec [nm]',
     'estim_grad' : """   {0}    {0}Fit with gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Fit without gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Gradient estimation{0}{0}
@@ -120,6 +144,7 @@ round_line_ind={
     'allan' : [[i, 5] for i in range(1,7)],
     'residuals_final' : [[1,8], [2, 5], [3, 5], [4, 6]],
     'residuals_sets' : [[1,5],[2,5],[3,5]],
+    'residuals_final1000' : [[1,8],[2,5],[3,5],[4,6],[5,6]],
     'spectrum' : [[1,4],[2,4],[3,4]],
     'estim' : [[2,3], [3,4], [4,6], [5,4], [6,6], [7,3], [8,3], [9,4], [10,4], [11,4], [12,4], [13,4], [14,4], [15,4], [16,4]],
     'effHeightCorr_Graph' : [[1,5],[2,5]],
@@ -135,3 +160,5 @@ warning_window={
     'pole_corr' : 'Choose polar correction',
     'cannot_wrtite_file' : 'Cannot write file due statistic is not computed',
 }
+
+# colors = ['b', 'g', 'r', ]

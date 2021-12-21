@@ -13,6 +13,7 @@ from CONFIG import logo, wel, logo_picture, warning_window
 from time import sleep
 
 
+
 PATH, _ = uic.loadUiType('gui/main.ui')
 
 class Main(QtWidgets.QMainWindow, PATH):
@@ -47,7 +48,7 @@ class Main(QtWidgets.QMainWindow, PATH):
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
         splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         splash.show()
-        # splash.showMessage("<h1><font color='white'>Welcome to the Agdas!</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
+        splash.showMessage("<h1><font color='white'>Welcome to the Agdas!</font></h1>", Qt.AlignTop | Qt.AlignCenter, Qt.black)
         sleep(1)
         splash.hide()
 

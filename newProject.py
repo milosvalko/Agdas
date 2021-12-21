@@ -33,7 +33,7 @@ class NewProject(QtWidgets.QDialog,PATH):
         Get files direction
         """
         self.path=QtWidgets.QFileDialog.getExistingDirectory()
-        self.path = r'c:\Users\Jakub\Desktop\pecny\data\files'
+        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\files_wetzel'
 
     def saveDir(self):
         """
@@ -47,8 +47,8 @@ class NewProject(QtWidgets.QDialog,PATH):
         # for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
         #     rawfile=rawFile(self.rawfilepath)
         #     print(rawfile.rawHeader1())
-        self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\res'
-        self.path = r'c:\Users\Jakub\Desktop\pecny\data\files'
+        # self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\res'
+        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\files_wetzel'
         try:
             for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
                 self.rawfile=rawFile(self.rawfilepath)
@@ -75,6 +75,9 @@ class NewProject(QtWidgets.QDialog,PATH):
 
         except AttributeError:
             Warning(error='Something is missing',icon='critical', title='Warning')
+
+        except IndexError:
+            Warning(error='Bad direction with files!',icon='critical', title='Warning')
 
 
         try:

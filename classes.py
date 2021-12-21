@@ -7,6 +7,8 @@ import sqlite3 as sql
 from CONFIG import matrDatabase
 from warning import Warning
 import matplotlib.pyplot as plt
+from scipy.stats import norm
+import subprocess
 
 
 class Fall():
@@ -599,7 +601,8 @@ class res_final():
             Warning(error='Close ' + name + '.csv' + '!',icon='critical', title='Warning')
             self.f=open(path+files+name+'.csv','w', newline='')
 
-        self.f.write(header+'\n')
+        if isinstance(header, str):
+            self.f.write(header+'\n')
         # self.f.write(units+'\n')
 
     def printResult(self, line):
@@ -656,6 +659,8 @@ class Graph():
     def __init__(self, path, name, project, x_label, y_label, title, show):
         #Create graph
         self.gr = plt
+        self.gr.rcParams['figure.dpi']=500
+        self.gr.rcParams['figure.figsize']=(11,4)
 
         self.path = path
         self.name = name
@@ -665,14 +670,21 @@ class Graph():
         self.y_label = y_label
         self.title = title
 
-    def plotXY(self, x, y, mark, columns_name):
+    def plotXY(self, x, y, mark, columns_name = [], legend = [], lw=0):
         #Plot XY data
         self.x=x
         self.y=y
         self.columns_name=columns_name
 
-        for i in range(len(x)):
-            self.gr.plot(x[i],y[i], mark[i])
+        if lw==0:
+            for i in range(len(x)):
+                self.gr.plot(x[i],y[i], mark[i], lw = 0.3)
+        else:
+            for i in range(len(x)):
+                self.gr.plot(x[i],y[i], mark[i], lw = lw[i])
+
+        if len(legend) > 0:
+            self.gr.legend(legend, loc = 'upper right')
 
     def saveSourceData(self):
         #Save source data to csv file
@@ -696,59 +708,77 @@ class Graph():
 
         #Write graph source data to file
         try:
-            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w')
+            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w', encoding='utf-8')
         except PermissionError:
             Warning(error='Close ' +self.project+'_'+self.name+'.csv' + '!',icon='critical', title='Warning')
-            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w')
+            d=open(self.path+'/'+self.project+'_'+self.name+'.csv', 'w', encoding='utf-8')
 
         h=''
-        for i in self.columns_name:
-            h+=i+'_x'
-            h+=';'
-            h+=i+'_y'
-            h+=';'
-        if err:
-            h+='err'+';'
-        if hist:
-            h+='hist'
-        d.write(h+'\n')
-        n=max([len(i) for i in self.x])
-
-        for i in range(n):
-            l=[]
-            for j in range(len(self.y)):
-
-                try:
-                    l.append(self.x[j][i])
-                except IndexError:
-                    self.x[j].append('')
-                    l.append(self.x[j][i])
-
-                try:
-                    l.append(self.y[j][i])
-                except IndexError:
-                    self.y[j].append('')
-                    l.append(self.y[j][i])
-
-            ll=''
-            for k in l:
-                ll+=str(k)
-                ll+=';'
-
+        try:
+            for i in self.columns_name:
+                h+=i+'_x'
+                h+=';'
+                h+=i+'_y'
+                h+=';'
             if err:
-                ll+=str(self.yerr[i])+';'
+                h+='err'+';'
             if hist:
-                ll+=str(self.hist_data[i])
-            ll+='\n'
+                h+='hist'
+            d.write(h+'\n')
 
-            d.write(ll)
+            n=max([len(i) for i in self.x])
+
+            for i in range(n):
+                l=[]
+                for j in range(len(self.y)):
+
+                    try:
+                        l.append(self.x[j][i])
+                    except IndexError:
+                        self.x[j].append('')
+                        l.append(self.x[j][i])
+
+                    try:
+                        l.append(self.y[j][i])
+                    except IndexError:
+                        self.y[j].append('')
+                        l.append(self.y[j][i])
+
+                ll=''
+                for k in l:
+                    ll+=str(k)
+                    ll+=';'
+
+                if err:
+                    ll+=str(self.yerr[i])+';'
+                if hist:
+                    ll+=str(self.hist_data[i])
+                ll+='\n'
+
+                d.write(ll)
+        except AttributeError:
+            pass
 
         d.close()
 
-    def histogram(self, hist_data):
+    def histogram(self, hist_data, fit):
         #Create histogram to plot
         self.hist_data=hist_data
-        self.gr.hist(hist_data, edgecolor='black')
+
+        #Count of histogram columns by Sturges rule
+        bins=np.floor(1+3.32*np.log(len(hist_data)))
+
+        self.gr.hist(hist_data, edgecolor='black', bins=int(bins))
+
+        if fit:
+            bins=np.linspace(min(hist_data), max(hist_data), 100)
+
+            mu, sigma = norm.fit(hist_data)
+
+            fit = norm.pdf(bins, mu, sigma)
+
+
+            self.gr.plot(bins, fit, 'r')
 
     def error_bar(self, x_err, y_err, yerr, color_err):
         #Create error bar
@@ -766,5 +796,7 @@ class Graph():
         self.gr.title(self.title)
         self.gr.savefig(self.path+'/'+self.project+'_'+self.name)
         if self.show:
-            self.gr.show()
+            # self.gr.show()
+            ret_code = subprocess.call(['start', self.path+'/'+self.project+'_'+self.name+'.png'], shell=True)
+
         self.gr.close()

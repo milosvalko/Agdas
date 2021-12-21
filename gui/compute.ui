@@ -498,8 +498,8 @@
     <widget class="QTextEdit" name="rejsigma">
      <property name="geometry">
       <rect>
-       <x>116</x>
-       <y>310</y>
+       <x>120</x>
+       <y>340</y>
        <width>81</width>
        <height>21</height>
       </rect>
@@ -519,7 +519,7 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>310</y>
+       <y>330</y>
        <width>81</width>
        <height>20</height>
       </rect>
@@ -606,6 +606,44 @@ p, li { white-space: pre-wrap; }
       <string>kpar</string>
      </property>
     </widget>
+    <widget class="QTextEdit" name="kalpha_2">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>310</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;50&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_14">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>310</y>
+       <width>101</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>K alfa2 %:</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="tab_3">
     <attribute name="title">
@@ -635,6 +673,19 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="text">
       <string>Save graphs</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="open_graphs">
+     <property name="geometry">
+      <rect>
+       <x>270</x>
+       <y>70</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Open graphs</string>
      </property>
     </widget>
    </widget>
@@ -702,7 +753,7 @@ p, li { white-space: pre-wrap; }
       <rect>
        <x>440</x>
        <y>610</y>
-       <width>191</width>
+       <width>221</width>
        <height>16</height>
       </rect>
      </property>
