@@ -151,3 +151,40 @@ def date_to_mjd(year,month,day):
     jd = B + C + D + day + 1720994.5
 
     return jd-2400000.5
+
+def rssq(x):
+    """
+    Return list of root-sum-of-squares by lines
+    """
+
+    res = []
+
+    for i in range(x.shape[0]):
+
+        square_sum = 0
+        for j in range(x.shape[1]):
+
+            square_sum += x[i,j]*x[i,j]
+
+        # print(np.sqrt(square_sum))
+        res.append(np.sqrt(square_sum))
+
+    return res
+
+def movingAverage(x, n=50):
+    """
+    Input:  x: list with data
+            n: range for moving average, with n = 50 will be average from 101 values
+    Output: res: moving averages
+            plot_range: range for plotting
+
+    """
+
+    res=[]
+    plot_range=[]
+    for i in range(n, len(x)-n):
+        m = np.mean(x[i-n:i+n+1])
+        res.append(m)
+        plot_range.append(i)
+
+    return res, plot_range

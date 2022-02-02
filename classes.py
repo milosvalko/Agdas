@@ -7,6 +7,7 @@ import sqlite3 as sql
 from CONFIG import matrDatabase
 from warning import Warning
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 from scipy.stats import norm
 import subprocess
 
@@ -83,7 +84,8 @@ class Fall():
     def setKpar(self, kpar):
         self.kpar = kpar
 
-    def computeLST(self, A, z):
+    @staticmethod
+    def computeLST(A, z, frmin, frmax):
         """Short summary.
 
         Parameters
@@ -104,15 +106,13 @@ class Fall():
 
         x=np.linalg.lstsq(A,z,rcond=None) # solution of LST
         covar = np.matrix(np.dot(A.T, A)).I # covariance matrix
-        m02=x[1]/(self.frmax-self.frmin-A.shape[1]-1) # m02=res*res'/(frmax-frmin-k)
+        m02=x[1]/(frmax-frmin-A.shape[1]-1) # m02=res*res'/(frmax-frmin-k)
         stdX=np.sqrt(np.multiply(np.diag(covar),m02)) # standart devivations of x
         std=np.dot(stdX,stdX)
-
-
         res=np.subtract(z,np.matmul(A,x[0])) # res=z-A*X
+        m0=np.sqrt(np.dot(res[frmin:frmax], res[frmin:frmax])/(frmax-frmin)*(covar[2,2]))
 
-
-        return x, covar, m02, std, stdX, res
+        return x, covar, m02, std, stdX, res, m0
 
     def LST(self):
         """
@@ -201,19 +201,13 @@ class Fall():
         # A4[:,0:2]=A1[:,0:2]
 
         #Fit without gradient
-        self.x, covar, self.m02, self.std, self.stdX, res = self.computeLST(A=A,z=z)
+        self.x, covar, self.m02, self.std, self.stdX, res, m0withouGR = Fall.computeLST(A=A,z=z, frmin=self.frmin, frmax=self.frmax)
 
         #Fit with gradient
-        self.x_grad, covar_grad, self.m02_grad, stdstd, self.std_grad, res_grad = self.computeLST(A=A_grad, z=z)
+        self.x_grad, covar_grad, self.m02_grad, stdstd, self.std_grad, res_grad, m0withgradient = Fall.computeLST(A=A_grad, z=z, frmin=self.frmin, frmax=self.frmax)
 
 
-        self.xef, xefCovar, xefM02, xefStd, stdXX, xefRes = self.computeLST(A2, z)
-
-        # [print(i) for i in x[0]]
-        # [print(i) for i in self.x_grad[0]]
-        # [print(i) for i in self.xef[0]]
-        # print('----')
-
+        self.xef, xefCovar, xefM02, xefStd, stdXX, xefRes, m00 = Fall.computeLST(A2, z, frmin=self.frmin, frmax=self.frmax)
 
 
         self.res_grad1=np.subtract(z1,np.matmul(A_grad1,self.x_grad[0])) # residuals for all fringes
@@ -231,13 +225,8 @@ class Fall():
         zgrad4=zgrad[self.frmin:self.frmax]
 
         #Gradient estimation
-        self.xgrad4, covarXgrad4, self.m0grad4, stdGrad4, self.stdGradX, self.Resgrad4 = self.computeLST(A=AA4, z=zgrad4)
+        self.xgrad4, covarXgrad4, self.m0grad4, stdGrad4, self.stdGradX, self.Resgrad4, self.m0gradient = Fall.computeLST(A=AA4, z=zgrad4, frmin=self.frmin, frmax=self.frmax)
 
-        # self.xgrad4=np.linalg.lstsq(AA4, zgrad4, rcond=None)
-
-        # Cxgrad4 = np.matrix(np.dot(AA4.T, AA4)).I
-        # Cxgrad4=np.linalg.inv(np.matmul(AA4.T, AA4))
-        # self.m0grad4=np.sqrt(np.dot(self.resgrad4[self.frmin:self.frmax], self.resgrad4[self.frmin:self.frmax])/(self.frmax-self.frmin)*(Cxgrad4[2,2]))
         self.resgrad4=np.subtract(zgrad,np.matmul(A4,self.xgrad4[0]))
 
         # printDict(dict(zip(self.keys,x_grad[0])))
@@ -585,8 +574,9 @@ class estim():
 
 class res_final():
 
-    def __init__(self, path, header, name, files='/Files/'):
+    def __init__(self, path, header, name, files='/Files/', delimiter = ','):
 
+        self.delimiter = delimiter
         # try:
         #     os.remove(path+files+name+'.csv')
         # except FileNotFoundError:
@@ -610,8 +600,11 @@ class res_final():
         # line=[i, z, t, tt, value, fil_value]
 
         # print(line)
-        writer=csv.writer(self.f,delimiter=';')
+        writer=csv.writer(self.f,delimiter=self.delimiter)
         writer.writerow(line)
+
+    def close(self):
+        self.f.close()
 
 
 class matr_db():
@@ -656,11 +649,11 @@ class matr_db():
 
 class Graph():
 
-    def __init__(self, path, name, project, x_label, y_label, title, show):
+    def __init__(self, path, name, project, x_label, y_label, title, show, winsize = (11,4)):
         #Create graph
         self.gr = plt
         self.gr.rcParams['figure.dpi']=500
-        self.gr.rcParams['figure.figsize']=(11,4)
+        self.gr.rcParams['figure.figsize']=winsize
 
         self.path = path
         self.name = name
@@ -669,6 +662,7 @@ class Graph():
         self.x_label = x_label
         self.y_label = y_label
         self.title = title
+
 
     def plotXY(self, x, y, mark, columns_name = [], legend = [], lw=0):
         #Plot XY data
@@ -766,9 +760,11 @@ class Graph():
         self.hist_data=hist_data
 
         #Count of histogram columns by Sturges rule
-        bins=np.floor(1+3.32*np.log(len(hist_data)))
+        # bins=np.floor(1+3.32*np.log(len(hist_data)))
+        bins=np.floor(1+5*np.log(len(hist_data)))
 
-        self.gr.hist(hist_data, edgecolor='black', bins=int(bins))
+        a=self.gr.hist(hist_data, edgecolor='black', bins=int(bins))
+
 
         if fit:
             bins=np.linspace(min(hist_data), max(hist_data), 100)
@@ -777,16 +773,21 @@ class Graph():
 
             fit = norm.pdf(bins, mu, sigma)
 
+            self.gr.plot(bins, fit*max(a[0])/max(fit), 'r')
 
-            self.gr.plot(bins, fit, 'r')
-
-    def error_bar(self, x_err, y_err, yerr, color_err):
+    def error_bar(self, x_err, y_err, yerr, color_err, ms=10, capsize=5):
         #Create error bar
         self.x_err=x_err
         self.y_err = y_err
         self.yerr=yerr
 
-        self.gr.errorbar(x_err,y_err,yerr,marker='o', color=color_err, ms=10, linestyle='',capsize=5)
+        self.gr.errorbar(x_err,y_err,yerr,marker='o', color=color_err, ms=ms, linestyle='',capsize=capsize, zorder=0)
+
+    def text(self, x, y, t, c):
+        #Text to plot
+        for i in range(len(x)):
+            self.gr.text(x[i], y[i], t[i], color=c[i])
+
 
 
     def save(self):
