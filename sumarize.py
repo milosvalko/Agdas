@@ -1,18 +1,18 @@
 import sys
-from PyQt5 import uic,QtWidgets
+from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtGui import QIcon
 from CONFIG import logo_picture
 
-
 PATH, _ = uic.loadUiType('gui/sumarize.ui')
 
 
-class Sumarize(QtWidgets.QDialog,PATH):
+class Sumarize(QtWidgets.QDialog, PATH):
     """
     Show information from project file after creating new project
     """
-    def __init__(self,rawheader, stationData, instrumentData, processingResults, gravityCorrections):
+
+    def __init__(self, rawheader, stationData, instrumentData, processingResults, gravityCorrections):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(logo_picture))
@@ -38,30 +38,30 @@ class Sumarize(QtWidgets.QDialog,PATH):
         self.processing.setText(self.string(self.processingResults))
         self.gravity.setText(self.string(self.gravityCorrections))
 
-    def raw(self,rawheader):
-        String=''
+    def raw(self, rawheader):
+        String = ''
         for i in range(len(rawheader)):
-            if i%2==1:
-                n='\n'
-                d=''
+            if i % 2 == 1:
+                n = '\n'
+                d = ''
             else:
-                n=''
-                d='         '
-            line=rawheader[i]+d+n
-            String=String+line
+                n = ''
+                d = '         '
+            line = rawheader[i] + d + n
+            String = String + line
         return String
 
-    def string(self,dictionary):
-        String=''
+    def string(self, dictionary):
+        String = ''
         for keys in dictionary.keys():
-            line=keys+':        '+dictionary[keys]+'\n'
-            String=String+line
+            line = keys + ':        ' + dictionary[keys] + '\n'
+            String = String + line
 
         return String
 
 
 if __name__ == "__main__":
-    app=QtWidgets.QApplication([])
-    sumarize=Sumarize()
+    app = QtWidgets.QApplication([])
+    sumarize = Sumarize()
     sumarize.show()
     app.exec_()

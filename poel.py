@@ -7,113 +7,86 @@ from math import pi, sin, cos
 import sqlite3 as sql
 import numpy as np
 
-ps=10
-sens_tn=1
-sens_tx=150*ps
-frmax=940*ps
-frmin=15*ps
-frmaxplot=1040*ps
-nforfft=4501
+ps = 10
+sens_tn = 1
+sens_tx = 150 * ps
+frmax = 940 * ps
+frmin = 15 * ps
+frmaxplot = 1040 * ps
+nforfft = 4501
 
+tt = np.loadtxt('tt.txt')
+resmm = np.loadtxt('resmm.txt', delimiter=';')
+resm = np.loadtxt('ress.csv', delimiter=';')
 
-tt=np.loadtxt('tt.txt')
-resmm=np.loadtxt('resmm.txt', delimiter = ';')
-resm=np.loadtxt('ress.csv', delimiter=';')
-
-
-matr_db=sql.connect(os.getcwd()+'/zaloha/data.db')
-cursor=matr_db.cursor()
+matr_db = sql.connect(os.getcwd() + '/zaloha/data.db')
+cursor = matr_db.cursor()
 # print(type(cursor))
 cursor.execute('select Set1, Res from results where Accepted = 1')
-r=cursor.fetchall()
-
+r = cursor.fetchall()
 
 #
 cursor.execute('''select count(*) from results
 where Accepted = 1
 group by Set1''')
-count=cursor.fetchall()
+count = cursor.fetchall()
 
-countAcc=0
+countAcc = 0
 for c in count:
-    countAcc+=c[0]
-
+    countAcc += c[0]
 
 #
 # cursor.execute('select Accepted, Set1, Drop1 from results')
 # d=cursor.fetchall()
 
-tin=np.linspace(tt[frmin-1], tt[frmax-1], nforfft)
-tinc=np.linspace(tt[0], tt[frmaxplot-1], nforfft)
-ttx2=tt[0:frmaxplot]
+tin = np.linspace(tt[frmin - 1], tt[frmax - 1], nforfft)
+tinc = np.linspace(tt[0], tt[frmaxplot - 1], nforfft)
+ttx2 = tt[0:frmaxplot]
 
 # resxxx=np.interp(tin, ttx2, resmm)
-ttx=tt[frmin-1:frmax]
+ttx = tt[frmin - 1:frmax]
 
-x=int((nforfft-1)/2)
+x = int((nforfft - 1) / 2)
 
-yfd=np.zeros((len(r),nforfft), dtype=complex)
-yfdMeanBySet=np.zeros((15,x))
-yfdMean=np.zeros((1,x))
+yfd = np.zeros((len(r), nforfft), dtype=complex)
+yfdMeanBySet = np.zeros((15, x))
+yfdMean = np.zeros((1, x))
 
-it=0
+it = 0
 for set, res in r:
-    ress=res.split(',')
-    ress=np.array([float(x) for x in ress])
-    ress=ress[frmin-1:frmax]
+    ress = res.split(',')
+    ress = np.array([float(x) for x in ress])
+    ress = ress[frmin - 1:frmax]
 
-    resd=np.interp(tin, ttx, ress)
-    resd=resd-np.mean(resd)
+    resd = np.interp(tin, ttx, ress)
+    resd = resd - np.mean(resd)
 
-    fft= 2/nforfft*np.fft.fft(resd)
+    fft = 2 / nforfft * np.fft.fft(resd)
 
-    yfd[it, :] =fft
+    yfd[it, :] = fft
 
-    l=np.absolute(fft[0:x])/count[set-1][0]
-    yfdMeanBySet[set-1,:]+=np.real(l)
+    l = np.absolute(fft[0:x]) / count[set - 1][0]
+    yfdMeanBySet[set - 1, :] += np.real(l)
 
-    l=np.absolute(fft[0:x]/countAcc)
-    yfdMean[0,:]+=np.real(l)
+    l = np.absolute(fft[0:x] / countAcc)
+    yfdMean[0, :] += np.real(l)
 
+    it += 1
 
-    it+=1
+yfs = np.zeros((15, 4501), dtype=complex)
+yfsa = np.zeros((15, x))
+for i in range(0, 15):
+    ress = np.interp(tin, ttx, resm[i, frmin - 1:frmax])
 
-yfs=np.zeros((15, 4501), dtype = complex)
-yfsa=np.zeros((15,x))
-for i in range(0,15):
-    ress=np.interp(tin, ttx, resm[i,frmin-1:frmax])
+    ressm = ress - np.mean(ress)
 
-    ressm=ress-np.mean(ress)
-
-    fft = 2/nforfft*np.fft.fft(ressm)
+    fft = 2 / nforfft * np.fft.fft(ressm)
 
     yfs[i, :] = fft
 
     yfsa[i, :] = np.real(np.absolute(fft[0:x]))
 
-
-
-
-
-
-
-np.savetxt('pokus.csv',yfdMean , delimiter=';')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+np.savetxt('pokus.csv', yfdMean, delimiter=';')
 
 # d=int(len(r[0][1].split(',')))
 # res=np.zeros((15,d))
@@ -216,8 +189,6 @@ np.savetxt('pokus.csv',yfdMean , delimiter=';')
 # res_mean=res_mean/c
 # for i in range(0, len(res_mean)):
 #     print(res_mean[i])
-
-
 
 
 #
