@@ -44,22 +44,25 @@ def getFG5(ps):
         'sensa_bx': 640 * ps,
         'nforfft': 3293,
         'ksmooth': 3,
-        'sens_bx': 640 * ps,
+        'sens_bx': 650 * ps,
         'Lmin': 3,
         'Lmax': 16,
         'Lcable': 3.7,
         'Acable': 0.004,
-        'Pcable': np.pi / 2
+        'Pcable': np.pi / 2,
+        'frminss' : 1,
+        'frmaxss' : 650*ps
     }
-    FG5['sens_bn'] = FG5['frmaxplot'] - 15 * ps
-    FG5['frmaxss'] = FG5['frmax'] + 10
-    FG5['frminss'] = FG5['frmin'] - 10
+    FG5['sens_bn'] = FG5['frmaxplot'] - 150 * ps
+    # FG5['frmaxss'] = FG5['frmax'] + 10
+    # FG5['frminss'] = FG5['frmin'] - 10
     return FG5
 
 
 matrDatabase = {
     'schema': '''CREATE TABLE results (
              n INTEGER,
+             m0 REAL,
              Set1 INTEGER,
              Drop1 INTEGER,
              Date TEXT,
@@ -89,37 +92,10 @@ matrDatabase = {
              ssres REAL,
              Accepted INTEGER,
              Res TEXT)''',
-    'insert': '''INSERT INTO results (
-            n,
-            Set1,
-            Drop1,
-            Date,
-            mjd,
-            z0_withGR,
-            v0_withGR,
-            a_withGR,
-            b_withGR,
-            c_withGR,
-            d_withGR,
-            e_withGR,
-            f_withGR,
-            g0_Gr,
-            CorrToTop,
-            Tide,
-            Load,
-            Baro,
-            Polar,
-            gTopCor,
-            g0,
-            EffHeight,
-            CorToEffHeight,
-            Gradient,
-            GradientLSTm0,
-            std,
-            vgg,
-            ssres,
-            Accepted,
-            Res) values({},{},{},"{}",{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
+    'insert': '''INSERT INTO results ( n, m0, Set1, Drop1, Date, mjd, z0_withGR, v0_withGR, a_withGR, b_withGR, 
+    c_withGR, d_withGR, e_withGR, f_withGR, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, 
+    CorToEffHeight, Gradient, GradientLSTm0, std, vgg, ssres, Accepted, Res) values({},{},{},{},"{}",{},{},{},{},{},
+    {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
 
     'updateAcc': '''UPDATE results
                 SET Accepted = 0

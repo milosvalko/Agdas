@@ -144,6 +144,10 @@ class Fall():
 
         # count of fringe use for computing
         nfringe = len(self.fringe)
+        # print('nfringe: {}'.format(nfringe))
+        # print('frmin: {}'.format(self.frmin))
+        # print('frmax: {}'.format(self.frmax))
+        # print('lambda: {}'.format(self.Lambda))
 
         # interpolated SAE for measuring
         if self.ksae:

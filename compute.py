@@ -30,21 +30,10 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # set values to widgets
         self.gravimeter_box.addItems(['FG5X', 'FG5'])
-        # self.prescale.addItems(['100','800','1000'])
-        self.multiplex.setText(processingResults['multiplex'])
-        self.scaleFactor.setText(processingResults['scaleFactor'])
-        self.preScale.setText(str(int(processingResults['scaleFactor']) * int(processingResults['multiplex'])))
-        self.frminT.setText(processingResults['fringeStart'])
-        self.frmaxT.setText(str(int(processingResults['processedFringes']) + int(processingResults['fringeStart'])))
-        self.grad.setText(stationData['gradient'])
         self.setPrescale(10)
-        self.set_gravimeter()
-        self.fmodf.setText(str(self.gravimeter['fmodf']))
-        self.lpar.setText(str(self.gravimeter['Lpar']))
-        self.poleCorr_file.setText(gravityCorrections['polarMotion'])
-        self.gravimeter_box.currentTextChanged.connect(self.set_gravimeter)
 
         # connect buttons with method
+        self.gravimeter_box.currentTextChanged.connect(self.set_gravimeter)
         self.run.clicked.connect(self.Run)
         self.allDrop.stateChanged.connect(self.numDrops)
         self.downloadPoleCorr.clicked.connect(self.downloadPole)
@@ -52,7 +41,6 @@ class Compute(QtWidgets.QDialog, PATH):
         self.numDrop.valueChanged.connect(self.DisStat)
         self.split_set.stateChanged.connect(self.disabledSplit)
         self.sets_choose.activated.connect(self.currentSet)
-        # self.num_sets.valueChanged.connect(self.splitSet)
 
         # make class values
         self.path = path
@@ -69,9 +57,11 @@ class Compute(QtWidgets.QDialog, PATH):
         self.setDelimiter(',')
 
         self.ndrops = len(self.raw_lines)
-        # self.run=True
 
         self.kalpha.setText(str(50))
+
+        self.set_gravimeter()
+        self.set_ui()
 
         # self.Prescale()
         self.numDrops()
@@ -80,7 +70,50 @@ class Compute(QtWidgets.QDialog, PATH):
         self.show()
         self.exec()
 
+    def set_multiplex_ui(self):
+        self.multiplex.setText(self.processingResults['multiplex'])
+
+    def set_scalefactor_ui(self):
+        self.scaleFactor.setText(self.processingResults['scaleFactor'])
+
+    def set_prescale_ui(self):
+        self.preScale.setText(
+            str(int(self.processingResults['scaleFactor']) * int(self.processingResults['multiplex'])))
+
+    def set_frminT_ui(self):
+        self.frminT.setText(str(self.gravimeter['frmin']))
+
+
+    def set_frmaxT_ui(self):
+        self.frmaxT.setText(str(self.gravimeter['frmax']))
+
+    def set_gradient_ui(self):
+        self.grad.setText(self.stationData['gradient'])
+
+    def set_modulation_frequency_ui(self):
+        self.fmodf.setText(str(self.gravimeter['fmodf']))
+
+    def set_lpar_ui(self):
+        self.lpar.setText(str(self.gravimeter['Lpar']))
+
+    def set_pole_corr_ui(self):
+        self.poleCorr_file.setText(self.gravityCorrections['polarMotion'])
+
+    def set_ui(self):
+        self.set_multiplex_ui()
+        self.set_scalefactor_ui()
+        self.set_prescale_ui()
+        self.set_frminT_ui()
+        self.set_frmaxT_ui()
+        self.set_gradient_ui()
+        self.set_modulation_frequency_ui()
+        self.set_lpar_ui()
+        self.set_pole_corr_ui()
+
     def set_gravimeter(self):
+        """
+        set gravimeter and rewrite ui
+        """
 
         grav = self.gravimeter_box.currentText()
 
@@ -89,6 +122,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if grav == 'FG5':
             self.gravimeter = getFG5(self.ps)
+
+        self.set_ui()
 
     def setPrescale(self, ps):
         """
@@ -449,7 +484,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
             # line for database
             try:
-                matr_drop = [i + 1, drop['Set'], drop['Drp'], date_database, date_mjd, fall.x_grad[0][0],
+                matr_drop = [i + 1, fall.m02_grad[0], drop['Set'], drop['Drp'], date_database, date_mjd,
+                             fall.x_grad[0][0],
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], fall.x_grad[0][7], fall.x_grad[0][8], fall.g0_Gr,
                              - fall.gradient * fall.Grad,
@@ -464,7 +500,8 @@ class Compute(QtWidgets.QDialog, PATH):
                 break
 
             except IndexError:
-                matr_drop = [i + 1, drop['Set'], drop['Drp'], date_database, date_mjd, fall.x_grad[0][0],
+                matr_drop = [i + 1, fall.m02_grad[0], drop['Set'], drop['Drp'], date_database, date_mjd,
+                             fall.x_grad[0][0],
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], 0.0, 0.0, fall.g0_Gr, - fall.gradient * fall.Grad,
                              float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar * 10,
@@ -693,7 +730,6 @@ class Compute(QtWidgets.QDialog, PATH):
         fs = nforfft / (2 * (self.tin[nforfft - 1] - self.tin[0]))
         frk = 2 * fs / (nforfft - 3)
         fr = np.arange(0, fs + 1, frk)
-
         n = 1
         # ratio of arrays
         ratio = [self.yfdMean[0, i] / self.yffa[i] for i in range(self.yffa.shape[0])]
@@ -1050,11 +1086,14 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(tttt)
             Y.append(self.dgr[i, :])
+            print(self.dgr[i, :].shape)
             l.append('Set ' + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
+        print(tttt.shape)
+        print(self.dgrm.T.shape)
         X.append(tttt)
         Y.append(self.dgrm.T)
         l.append('Mean')
