@@ -8,6 +8,7 @@ path1 = r'c:\Users\Jakub\Desktop\pecny\agdas_807zaloha'
 path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
 compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
 delimiter = ','
+out = True
 
 
 # path1 = r'c:\Users\Jakub\Desktop\pecny\data\x172_wetzel\files_wetzel'
@@ -43,7 +44,7 @@ class Compare():
         files2 = glob(self.path2 + '\*.csv')
 
         # get accepted
-        path_database = path_database = os.path.realpath(os.path.join(os.path.dirname(path2), '.', 'data.db'))
+        path_database = os.path.realpath(os.path.join(os.path.dirname(path2), '.', 'data.db'))
         path_drops_file_matlab = glob(self.path2 + '\*drops.csv')[0]
         accepted = Compare.get_accepted(path_database, path_drops_file_matlab, delimiter)
 
@@ -73,9 +74,10 @@ class Compare():
 
                     output_file = os.path.join(self.compare_path, 'Comp_' + file1)
 
-                    f = open(output_file, 'w')
-                    f.write(comparision)
-                    f.close()
+                    if out:
+                        f = open(output_file, 'w')
+                        f.write(comparision)
+                        f.close()
 
     @staticmethod
     def match_columns(l1: list, l2: list):
@@ -179,8 +181,24 @@ class Compare():
         # units
         c = file1_r[1].split(delimiter1)
 
-        # find matches
-        matches = Compare.match_columns(a, b)
+        # this is because 'residuals_sets' file has columns without names
+        if 'residuals_sets' in path1:
+            # create matches for residuals sets
+            count_columns = len(file1_r[1].split(delimiter1))
+
+            matches = []
+
+            [matches.append([i, i]) for i in range(count_columns)]
+
+            a = file1_r[0].split(delimiter1)
+            b = file2_r[0].split(delimiter2)
+
+            [a.append('-') for i in range(len(a), count_columns)]
+            [b.append('-') for i in range(len(b), count_columns)]
+
+        else:
+            # find matches
+            matches = Compare.match_columns(a, b)
 
         # l1_p = len(file1_r[header1 + 2].split(delimiter1))
         n = len(file1_r) - headers1
