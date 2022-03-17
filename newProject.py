@@ -33,22 +33,20 @@ class NewProject(QtWidgets.QDialog, PATH):
         Get files direction
         """
         self.path = QtWidgets.QFileDialog.getExistingDirectory()
-        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\files_wetzel'
 
     def saveDir(self):
         """
         Get direction where will results
         """
         self.pathDir = QtWidgets.QFileDialog.getExistingDirectory()
-        # self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\res'
         self.projDirPath.setText(self.pathDir)
 
     def accept(self):
         # for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
         #     rawfile=rawFile(self.rawfilepath)
         #     print(rawfile.rawHeader1())
-        # self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\res'
-        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\files_wetzel'
+        # self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
+        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
         try:
             for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
                 self.rawfile = rawFile(self.rawfilepath)

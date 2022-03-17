@@ -4,12 +4,15 @@ from glob import glob
 import sqlite3 as sql
 
 # -----------------------------------------------------------------
-path1 = r'c:\Users\Jakub\Desktop\pecny\agdas_807zaloha'
-path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
-compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
-delimiter = ','
-out = True
+# path1 = r'c:\Users\Jakub\Desktop\pecny\agdas_807zaloha'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
+# delimiter = ','
 
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
+# delimiter = ','
 
 # path1 = r'c:\Users\Jakub\Desktop\pecny\data\x172_wetzel\files_wetzel'
 # path2 = r'c:\Users\Jakub\Desktop\pecny\data\x172_wetzel\res1\Files'
@@ -17,6 +20,7 @@ out = True
 # delimiter = ','
 
 # Compare(path1, path2, compare_path, delimiter)
+out = True
 # -----------------------------------------------------------------
 
 class Compare():
@@ -135,19 +139,20 @@ class Compare():
         cursor.execute('select Accepted, Set1, Drop1 from results')
         acc = cursor.fetchall()
 
+
         file = open(path_drops_file_matlab, 'r')
         file_r = file.read().splitlines()
         file.close()
 
         j = 0
         accepted = []
-        for i in range(len(file_r)):
+        for i in range(len(file_r)-1):
 
             a = file_r[i].split(delimiter)[-1]
 
             if a != 'Acc':
 
-                acc_python = acc[j - 1][0]
+                acc_python = acc[j][0]
 
                 if acc_python == 0 or a.strip() == '0':
                     accepted.append(False)
@@ -203,7 +208,7 @@ class Compare():
         # l1_p = len(file1_r[header1 + 2].split(delimiter1))
         n = len(file1_r) - headers1
 
-        if acc:
+        if acc == True:
             acc = []
             [acc.append(True) for i in range(n)]
 
@@ -216,23 +221,36 @@ class Compare():
             l1 = file1_r[headers1 + i].split(delimiter1)
             l2 = file2_r[headers2 + i].split(delimiter2)
 
-            j = 0
-            for ind in matches:
-                try:
-                    if acc[i]:
+
+            if acc[i]:
+                j = 0
+                for ind in matches:
+                    try:
                         d = abs(float(l1[ind[0]]) - float(l2[ind[1]]))
 
                         diff[i, j] = d
 
                         j += 1
-                    else:
+                        # else:
+                        #     diff[i, j] = 0
+                    except ValueError:
+                        pass
+            else:
+                j = 0
+                for ind in matches:
+                    try:
+                        d = abs(float(l1[ind[0]]) - float(l2[ind[1]]))
+
                         diff[i, j] = 0
 
-                except ValueError:
-                    pass
+                        j += 1
+
+                    except ValueError:
+                        pass
+
 
         maxima = []
-        minima = []
+        # minima = []
         means = []
         maxi_ind = []
         # find maximal differences for each column
@@ -241,11 +259,11 @@ class Compare():
             ind_min = np.unravel_index(np.argmin(diff[:, i], axis=None), diff[:, i].shape)
 
             maxi = diff[ind_max[0], i]
-            mini = diff[ind_min[0], i]
+            # mini = diff[ind_min[0], i]
             mean = np.mean(diff[:, i])
 
             maxima.append(maxi)
-            minima.append(mini)
+            # minima.append(mini)
             means.append(mean)
 
             maxi_ind.append(ind_max)
@@ -253,7 +271,7 @@ class Compare():
         header_out1 = '{}'.format(delimiter)
         header_out2 = '{}'.format(delimiter)
         differences_max = 'max_diff{}'.format(delimiter)
-        differences_min = 'min_diff{}'.format(delimiter)
+        # differences_min = 'min_diff{}'.format(delimiter)
         differences_mean = 'mean_diff{}'.format(delimiter)
         differences_max_ind = 'max_number_of_line{}'.format(delimiter)
 
@@ -263,14 +281,14 @@ class Compare():
             header_out2 += b[matches[i][1]].strip() + delimiter  # add units of columns
 
             differences_max += str('{:.5f}'.format(maxima[i])) + delimiter
-            differences_min += str('{:.5f}'.format(minima[i])) + delimiter
+            # differences_min += str('{:.5f}'.format(minima[i])) + delimiter
             differences_mean += str('{:.5f}'.format(means[i])) + delimiter
             differences_max_ind += str('{}'.format(maxi_ind[i][0] + 1)) + delimiter
 
         output = header_out1[:-1] + '\n'
         output += header_out2[:-1] + '\n'
         output += differences_max[:-1] + '\n'
-        output += differences_min[:-1] + '\n'
+        # output += differences_min[:-1] + '\n'
         output += differences_mean[:-1] + '\n'
         output += differences_max_ind[:-1]
 

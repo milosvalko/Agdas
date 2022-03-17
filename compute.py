@@ -1079,21 +1079,18 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # x range
         tttt = np.linspace(self.gravimeter['sens_bn'], self.gravimeter['sens_bx'] - 1,
-                           self.gravimeter['sens_bx'] - self.gravimeter['sens_bn'])
+                           self.gravimeter['sens_bx'] - self.gravimeter['sens_bn'] + 1)
 
         # sensitivity data
         for i in range(len(self.dgr)):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(tttt)
             Y.append(self.dgr[i, :])
-            print(self.dgr[i, :].shape)
             l.append('Set ' + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
-        print(tttt.shape)
-        print(self.dgrm.T.shape)
         X.append(tttt)
         Y.append(self.dgrm.T)
         l.append('Mean')
@@ -1636,13 +1633,15 @@ class Compute(QtWidgets.QDialog, PATH):
 
         sens_tn = self.gravimeter['sens_tn']
         sens_tx = self.gravimeter['sens_tx']
+        sens_bn = self.gravimeter['sens_bn']
+        sens_bx = self.gravimeter['sens_bx']
 
         # initialization of arrays for sensitivity
         dgl = np.zeros((self.nset, sens_tx - sens_tn + 1))
-        self.dgr = np.zeros((self.nset, sens_tx - sens_tn + 1))
+        self.dgr = np.zeros((self.nset, sens_bx - sens_bn + 1))
 
         dglm = np.zeros((1, sens_tx - sens_tn + 1))
-        self.dgrm = np.zeros((1, sens_tx - sens_tn + 1))
+        self.dgrm = np.zeros((1, sens_bx - sens_bn + 1))
 
         # sensitivity is calculated for averages by sets
         for i in range(self.nset):
@@ -1655,13 +1654,22 @@ class Compute(QtWidgets.QDialog, PATH):
                 # storing quadratic coefficient of equation of fitted parabola
                 dgl[i, j - 1] = koef[0] * 2
 
+            for j in range(sens_bn, sens_bx + 1):
                 # data for fitting by parabola on right side of drop
-                x = self.tt[self.gravimeter['frmin'] - 1: j + self.gravimeter['sens_bn'] - 1]
-                y = self.meanResSets[i, self.gravimeter['frmin'] - 1: j + self.gravimeter['sens_bn'] - 1]
+                x = self.tt[self.gravimeter['frmin'] - 1: j - 1]
+                y = self.meanResSets[i, self.gravimeter['frmin'] - 1: j - 1]
                 # fitting by parabola
+                # print(self.gravimeter['frmin'] - 1)
+                # print(j + sens_bn - 1)
+                # print(x.size)
+                # print(y.size)
+                # print(self.tt.shape)
+                # print(self.meanResSets.shape)
+                # print(self.gravimeter['frmin'] - 1)
+                # print(j + self.gravimeter['sens_bn'] - 1)
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
-                self.dgr[i, j - 1] = koef[0] * 2
+                self.dgr[i, j - 1 - sens_bn] = koef[0] * 2
 
             dglm += dgl[i, :]
             self.dgrm += self.dgr[i, :]
