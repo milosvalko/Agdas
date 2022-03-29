@@ -28,20 +28,6 @@ class Compute(QtWidgets.QDialog, PATH):
         self.setupUi(self)
         self.setWindowIcon(QIcon(logo_picture))
 
-        # set values to widgets
-        self.gravimeter_box.addItems(['FG5X', 'FG5'])
-        self.setPrescale(10)
-
-        # connect buttons with method
-        self.gravimeter_box.currentTextChanged.connect(self.set_gravimeter)
-        self.run.clicked.connect(self.Run)
-        self.allDrop.stateChanged.connect(self.numDrops)
-        self.downloadPoleCorr.clicked.connect(self.downloadPole)
-        self.statistics.setDisabled(True)
-        self.numDrop.valueChanged.connect(self.DisStat)
-        self.split_set.stateChanged.connect(self.disabledSplit)
-        self.sets_choose.activated.connect(self.currentSet)
-
         # make class values
         self.path = path
         self.stationData = stationData
@@ -60,6 +46,22 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.kalpha.setText(str(50))
 
+        # set values to widgets
+        self.gravimeter_box.addItems(['FG5X', 'FG5'])
+        self.setPrescale(10)
+
+        self.automatic_detection_gravimeter()
+
+        # connect buttons with method
+        self.gravimeter_box.currentTextChanged.connect(self.set_gravimeter)
+        self.run.clicked.connect(self.Run)
+        self.allDrop.stateChanged.connect(self.numDrops)
+        self.downloadPoleCorr.clicked.connect(self.downloadPole)
+        self.outputs.setDisabled(True)
+        self.numDrop.valueChanged.connect(self.DisStat)
+        self.split_set.stateChanged.connect(self.disabledSplit)
+        self.sets_choose.activated.connect(self.currentSet)
+
         self.set_gravimeter()
         self.set_ui()
 
@@ -69,6 +71,16 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.show()
         self.exec()
+
+    def automatic_detection_gravimeter(self):
+        """
+        set gravimeter automatically by count of processed fringes
+        @return:
+        """
+        if int(self.processingResults['processedFringes']) < 8000:
+            self.gravimeter_box.setCurrentIndex(1)
+        else:
+            self.gravimeter_box.setCurrentIndex(0)
 
     def set_multiplex_ui(self):
         self.multiplex.setText(self.processingResults['multiplex'])
@@ -158,9 +170,9 @@ class Compute(QtWidgets.QDialog, PATH):
         This method set possible choice of sets to QComboBox
         """
         if self.numDrop.value() > 0:
-            self.statistics.setDisabled(False)
+            self.outputs.setDisabled(False)
         else:
-            self.statistics.setDisabled(True)
+            self.outputs.setDisabled(True)
 
         self.sets_choose.clear()
         x = self.numDrop.value()
@@ -328,7 +340,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.frmaxss = self.gravimeter['frmaxss']
 
         # create estim file with head
-        if self.files.isChecked():
+        if self.outputs.isChecked():
             estim = res_final(path=self.projDirPath, header=headers['estim'].format(self.delimiter),
                               name=self.stationData['ProjName'] + '_' + 'estim', delimiter=self.delimiter)
             estim_grad = res_final(path=self.projDirPath, header=headers['estim_grad'].format(self.delimiter),
@@ -437,7 +449,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.m0grad4Sig.append(fall.m0grad4)
 
             # ===========================================================================#
-            if self.files.isChecked():
+            if self.outputs.isChecked():
                 # create line for estim file
                 estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad)
                 # print line to the estim file
@@ -543,7 +555,9 @@ class Compute(QtWidgets.QDialog, PATH):
         # self.matr_connection.close()
 
         # Compute statistics
-        if self.statistics.isChecked():
+        if self.outputs.isChecked():
+            # ===========================================================================================================#
+            # compute statistics for printing files
             self.rejectBySigma()
             self.meanResidualsBySets()
             self.sensitivity()
@@ -553,9 +567,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.ressets_res()
             # self.harmonic()
 
-        # print results with gradient to estim file
-        if self.files.isChecked():
-
+            # ===========================================================================================================#
+            # print results with gradient to estim file
             try:
                 self.writeDropsFile()
             except AttributeError:
@@ -563,12 +576,11 @@ class Compute(QtWidgets.QDialog, PATH):
 
             try:
                 self.write_res_final()
-
             except AttributeError:
                 Warning(error=warning_window['cannot_wrtite_file'], icon='critical', title='Warning')
 
-        # Create graph
-        if self.graph_save.isChecked():
+            #===========================================================================================================#
+            # creating of graphs
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
                       title='Atmosferic correction')
@@ -626,8 +638,7 @@ class Compute(QtWidgets.QDialog, PATH):
             name = 'allan3'
             self.graphAllan1(data, title, ylabel, name)
 
-        # close files
-        if self.files.isChecked():
+            # close estim and estim_grad files
             estim.close()
             estim_grad.close()
             self.matlog_file()
@@ -1431,7 +1442,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         file.close()
 
-        if self.graph_save.isChecked():
+        if self.outputs.isChecked():
             self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation')
 
             self.allanGraph(a3, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_gradient')
@@ -1496,7 +1507,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # print((i[0]-self.gfinal)/stdodchpadu[i[1]-1]*gstd*np.sqrt(count))
             self.normres.append((i[0] - self.gfinal) / self.stdodchpadu[i[1] - 1] * gstd * np.sqrt(count))
 
-        if self.files.isChecked():
+        if self.outputs.isChecked():
             self.print_allanFile()
             self.printMatlog()
 
@@ -1729,7 +1740,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.yffa = np.real(np.absolute(yff[0:x]))
 
         # writing data to text files
-        if self.files.isChecked():
+        if self.outputs.isChecked():
             tins = np.linspace(0, 10000, 2151)
             fs = self.gravimeter['nforfft'] / (2 * (tin[-1] - tin[0]))
             frk = 2 * fs / (self.gravimeter['nforfft'] - 3)

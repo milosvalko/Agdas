@@ -528,19 +528,6 @@ p, li { white-space: pre-wrap; }
       <string>Reject sigma:</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="statistics">
-     <property name="geometry">
-      <rect>
-       <x>680</x>
-       <y>320</y>
-       <width>171</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Statistics</string>
-     </property>
-    </widget>
     <widget class="QCheckBox" name="split_set">
      <property name="geometry">
       <rect>
@@ -721,42 +708,24 @@ p, li { white-space: pre-wrap; }
       <string>ksae</string>
      </property>
     </widget>
-   </widget>
-   <widget class="QWidget" name="tab_3">
-    <attribute name="title">
-     <string>Files</string>
-    </attribute>
-    <widget class="QCheckBox" name="files">
+    <widget class="QCheckBox" name="outputs">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>20</y>
+       <x>440</x>
+       <y>250</y>
        <width>161</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Save files</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="graph_save">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>30</y>
-       <width>161</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Save graphs</string>
+      <string>Outputs</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="open_graphs">
      <property name="geometry">
       <rect>
-       <x>270</x>
-       <y>70</y>
+       <x>440</x>
+       <y>280</y>
        <width>131</width>
        <height>20</height>
       </rect>

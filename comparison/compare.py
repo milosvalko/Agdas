@@ -9,9 +9,9 @@ path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
 compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
 # delimiter = ','
 
-# path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
-# path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
-# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
+path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
+path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
+compare_path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
 
 # path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
 # path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
@@ -44,17 +44,17 @@ delimiter = ','
 # path2 = r'c:\Users\Jakub\Desktop\pecny\data\x163_glb\res\Files'
 # compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x163_glb\res'
 
-path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parOFF'
-path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off\Files'
-compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off'
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parOFF'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off'
+#
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parON'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on'
 
-path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parON'
-path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on\Files'
-compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on'
-
-path1 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\agdas_808'
-path2 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res\Files'
-compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res'
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\agdas_808'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res'
 
 
 # Compare(path1, path2, compare_path, delimiter)
@@ -87,8 +87,10 @@ class Compare():
         acc = cursor.fetchall()
         cursor.execute('select count(*) from results')
         all = cursor.fetchall()
-        # ==================================================================#
 
+        cursor.execute('select n from results where Accepted = 0')
+        rejected_python = cursor.fetchall()
+        # ==================================================================#
         acc_matlab = 0
         for i in accepted:
             if i:
@@ -104,12 +106,24 @@ class Compare():
         summary_file = open(path, 'w')
         output = """Gravimeter: {}     
         Rejected/Accepted/All\nMatlab: {}   /   {}/   {}\nPython: {}   /   {}/   {}
+        Rejected Matlab / Python \n
         """
-        print(self.matlab_acc)
         output = output.format(gravimeter, self.matlab_acc, all[0][0] - self.matlab_acc, all[0][0],
                                all[0][0] - acc[0][0], acc[0][0],
                                all[0][0])
         summary_file.write(output)
+
+        if len(rejected_python) > len(self.rejected_matlab):
+            d = len(rejected_python) - len(self.rejected_matlab)
+            [self.rejected_matlab.append('-') for i in range(d)]
+        else:
+            d = len(self.rejected_matlab) - len(rejected_python)
+            [rejected_python.append('-') for i in range(d)]
+
+        for i in range(len(rejected_python)):
+            line = '      {}   /   {}'.format(self.rejected_matlab[i], rejected_python[i][0]) + '\n'
+            summary_file.write(line)
+
         summary_file.close()
 
     def Compare_dir(self):
@@ -236,12 +250,14 @@ class Compare():
 
         j = 0
         accepted = []
+        self.rejected_matlab = []
         for i in range(len(file_r) - 1):
 
             a = file_r[i].split(delimiter)[acc_index]
 
             if a.strip() == '0':
                 self.matlab_acc += 1
+                self.rejected_matlab.append(i + 1)
 
             if a != 'Acc':
 
