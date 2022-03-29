@@ -50,8 +50,8 @@ def getFG5(ps):
         'Lcable': 3.7,
         'Acable': 0.004,
         'Pcable': np.pi / 2,
-        'frminss' : 1,
-        'frmaxss' : 650*ps
+        'frminss': 1,
+        'frmaxss': 650 * ps
     }
     FG5['sens_bn'] = FG5['frmaxplot'] - 150 * ps
     # FG5['frmaxss'] = FG5['frmax'] + 10
@@ -92,8 +92,8 @@ matrDatabase = {
              ssres REAL,
              Accepted INTEGER,
              Res TEXT)''',
-    'insert': '''INSERT INTO results ( n, m0, Set1, Drop1, Date, mjd, z0_withGR, v0_withGR, a_withGR, b_withGR, 
-    c_withGR, d_withGR, e_withGR, f_withGR, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, 
+    'insert': '''INSERT INTO results ( n, m0, Set1, Drop1, Date, mjd, z0_withGR, v0_withGR, a_withGR, b_withGR,
+    c_withGR, d_withGR, e_withGR, f_withGR, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight,
     CorToEffHeight, Gradient, GradientLSTm0, std, vgg, ssres, Accepted, Res) values({},{},{},{},"{}",{},{},{},{},{},
     {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
 
@@ -125,7 +125,7 @@ logo = r'''
 
 wel = '''
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Welcome to grafical user interface of Agdas
+Welcome to the graphical user interface of Agdas
 Agdas homepage:
 RIGTC homepage:             www.vugtk.cz
 G. O. Pecny homepage:       www.pecny.cz
@@ -137,7 +137,7 @@ logo_picture = 'picture/logo.png'
 headers = {
     'estim': 'Set {0} Drop {0} m0 {0} z0 {0} z0-std {0} v0 {0} v0-std {0} g0 {0} g0-std {0} a {0} a-std {0} b {0} b-std {0} c {0} c-std {0} d {0} d-std {0} e {0} e-std {0} f {0} f-std \n   {0}    {0} {0} mm {0} mm {0} mm.s-1 {0} mm.s-1 {0} nm.s-2 {0} nm.s-2 {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm   ',
     'drops': ' Set{0} Drop{0} Date{0} g"(t=0s){0} STD{0} TOD{0} Tide{0} Load{0} Baro{0} Polar{0} g(TOD){0} g(Ef.H){0} Ef.H1{0} c.EfH{0} Acc',
-    'matlog': 'Campaign{0} Set{0} Year{0} Month{0} Day{0} Hour{0} Minute{0} Second{0} MJD{0} VGG_inp{0} g{0} g_std{0} STD-Start{0}STD-Final{0}Accepted{0} Top height{0} Pressure{0} VGG{0} T-stat',
+    'matlogsets': 'Campaign{0} Set{0} Year{0} Month{0} Day{0} Hour{0} Minute{0} Second{0} MJD{0} VGG_inp{0} g{0} g_std{0} STD-Start{0}STD-Final{0}Accepted{0} Top height{0} Pressure{0} VGG{0} T-stat',
     'allan': 'n{0}ALLAN1{0}STD1{0}ALLAN2{0}STD2{0}ALLAN3{0}STD3',
     'residuals_final': 'Fringe{0} z [m]{0}Time [s]{0}Time Top [s]{0}Value [nm]{0}Filtered value [nm]',
     'residuals_final1000': 'Fringe{0} z [m]{0} Time [s]{0} Time Top [s]{0} resid [nm]{0} Filtered resid [nm]',
@@ -148,7 +148,9 @@ headers = {
                         {0}    {0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2/mm{0}nm.s-2/mm""",
     'resgradsum': 'Fringe{0}z [m]{0}Time [s]{0}Time TOP [s]{0}Resgradsum4_mean [nm]{0}Filtered mean [nm]',
     'vgg_per_sets0': 'Set {0}	vgg0 [uGal/cm] {0}	mvgg0 [uGal/cm] {0}	dg0 [uGal] {0}	mdg0 [uGal]',
-    'effective_height_corr': 'Drop{0} EffHeight{0} CorToEffHeight'
+    'effective_height_corr': 'Drop{0} EffHeight{0} CorToEffHeight',
+    'matlog' : """Campaign{0}Gravimeter-type{0}Gravimeter-SN{0}Sitename{0}Sitecode{0}Latitude{0}Longitude{0}Elevation{0}P_norm{0}baro admit.{0}VGG{0}WEO-IE{0}WEO-fmod{0}Clock-10MHz{0}L_parasit{0}Ksol{0}Ksae{0}Kdis{0}Kimp{0}kpar{0}L_TTLcable{0}Start Fringe{0}Final Fringe{0}x_pole{0}y_pole{0}Sets{0}Drops/Set{0}Year{0}Month{0}Day{0}Hour{0}Minute{0}MJD{0}Duration{0}Ave_P{0}dP(MAX-MIN){0}Ave_tide{0}Tide(MAX-MIN){0}Tstud{0}Drops_accept{0}Ef.h t0{0}Ef.h.TOD{0}STD{0}H.ef.ins{0}g@H.ef.ins{0}STD{0}STD-Start{0}STD-final{0}VGG_AG{0}STD
+    {0}{0}{0}{0}{0}deg{0}deg{0}m{0}hPa{0}uGal/hPa{0}uGal/m{0}nm{0}Hz{0}Hz{0}m{0}{0}0/1{0}0/1{0}0/1{0}0/1{0}m{0}{0}{0}arcsec{0}arcsec{0}{0}{0}{0}{0}{0}{0}{0}{0}hour{0}hPa{0}hPa{0}uGal{0}uGal{0}%{0}{0}mm{0}mm{0}mm{0}m{0}uGal{0}uGal{0}uGal{0}uGal{0}uGal/cm{0}uGal/cm"""
 
 }
 

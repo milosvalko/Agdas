@@ -4,10 +4,14 @@ from glob import glob
 import sqlite3 as sql
 
 # -----------------------------------------------------------------
-# path1 = r'c:\Users\Jakub\Desktop\pecny\agdas_807zaloha'
-# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
-# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
+path1 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\agdas_807zaloha'
+path2 = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1\Files'
+compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x153_glb\res1'
 # delimiter = ','
+
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
 
 # path1 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
 # path2 = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res\Files'
@@ -19,10 +23,48 @@ import sqlite3 as sql
 # compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x172_wetzel\res1'
 # delimiter = ','
 
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\575_glb\agdas_902'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\575_glb\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\575_glb\res'
+delimiter = ','
+
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\572_glb\agdas_808'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\572_glb\res_m0\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\572_glb\res_m0'
+
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\573_glb\agdas_901'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\573_glb\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\573_glb\res'
+
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\x179_\agdas_901'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x179_\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x179_\res'
+
+# path1 = r'c:\Users\Jakub\Desktop\pecny\data\x163_glb\agdas_808'
+# path2 = r'c:\Users\Jakub\Desktop\pecny\data\x163_glb\res\Files'
+# compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x163_glb\res'
+
+path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parOFF'
+path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off\Files'
+compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_off'
+
+path1 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\agdas_808_A_parON'
+path2 = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on\Files'
+compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x165_glb\res_on'
+
+path1 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\agdas_808'
+path2 = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res\Files'
+compare_path = r'c:\Users\Jakub\Desktop\pecny\data\x168_gyula\res'
+
+
 # Compare(path1, path2, compare_path, delimiter)
 out = True
-# -----------------------------------------------------------------
+matlab_nonacc = True
+allan = False
+summary = True
 
+
+# -----------------------------------------------------------------
 class Compare():
 
     def __init__(self, path1: str, path2: str, compare_path: str, delimiter: str):
@@ -32,7 +74,43 @@ class Compare():
         self.compare_path = compare_path
         self.delimiter = delimiter
 
+        self.matlab_acc = 0
+
         self.Compare_dir()
+
+    def summary(self, path_database, accepted):
+
+        # ==================================================================#
+        database = sql.connect(path_database)
+        cursor = database.cursor()
+        cursor.execute('select count(*) from results where Accepted = 1')
+        acc = cursor.fetchall()
+        cursor.execute('select count(*) from results')
+        all = cursor.fetchall()
+        # ==================================================================#
+
+        acc_matlab = 0
+        for i in accepted:
+            if i:
+                acc_matlab += 1
+        # ==================================================================#
+        matlog = glob(self.path1 + '/*matlog.csv')
+        matlog = open(matlog[0], 'r')
+        matlog_r = matlog.read().splitlines()
+        matlog.close()
+        gravimeter = matlog_r[2].split(delimiter)[1]
+
+        path = os.path.join(self.compare_path, 'summary.txt')
+        summary_file = open(path, 'w')
+        output = """Gravimeter: {}     
+        Rejected/Accepted/All\nMatlab: {}   /   {}/   {}\nPython: {}   /   {}/   {}
+        """
+        print(self.matlab_acc)
+        output = output.format(gravimeter, self.matlab_acc, all[0][0] - self.matlab_acc, all[0][0],
+                               all[0][0] - acc[0][0], acc[0][0],
+                               all[0][0])
+        summary_file.write(output)
+        summary_file.close()
 
     def Compare_dir(self):
 
@@ -47,10 +125,13 @@ class Compare():
         files1 = glob(self.path1 + '\*.csv')
         files2 = glob(self.path2 + '\*.csv')
 
+        if allan:
+            del files1[0]
+
         # get accepted
         path_database = os.path.realpath(os.path.join(os.path.dirname(path2), '.', 'data.db'))
-        path_drops_file_matlab = glob(self.path2 + '\*drops.csv')[0]
-        accepted = Compare.get_accepted(path_database, path_drops_file_matlab, delimiter)
+        path_drops_file_matlab = glob(self.path1 + '\*drops.csv')[0]
+        accepted = self.get_accepted(path_database, path_drops_file_matlab, delimiter)
 
         # compare each file
         for i in range(len(files1)):
@@ -62,9 +143,15 @@ class Compare():
                 file2 = files2[j].split('\\')[-1]
 
                 if file1 == file2:
-                    headers1, delimiter1 = Compare.get_headers_delimiter(files1[i])
+                    if 'matlog.' in file1:
+                        headers1 = 2
+                        headers2 = 2
+                        delimiter1 = ','
+                        delimiter2 = ','
+                    else:
+                        headers1, delimiter1 = Compare.get_headers_delimiter(files1[i])
 
-                    headers2, delimiter2 = Compare.get_headers_delimiter(files2[j])
+                        headers2, delimiter2 = Compare.get_headers_delimiter(files2[j])
 
                     if 'estim' in file1 or 'drops' in file1:
                         comparision = Compare.compare2files(files1[i], files2[j], self.delimiter, delimiter1,
@@ -83,6 +170,9 @@ class Compare():
                         f.write(comparision)
                         f.close()
 
+        if summary:
+            self.summary(path_database, accepted)
+
     @staticmethod
     def match_columns(l1: list, l2: list):
 
@@ -91,7 +181,7 @@ class Compare():
 
         # prohibited column to comparing
         prohibited = ['', 'Time', 'Campaign', 'Date', 'Accepted', 'Set', 'Drop', 'Year', 'Month', 'Day', 'Hour',
-                      'Minute', 'Second']
+                      'Minute', 'Second', 'Campaign', 'Gravimeter-type', 'Sitename', 'Sitecode', 'Gravimeter-SN']
 
         # used_columns is used for 'estimgrad' because there are columns with the same name
         # key is name of column and value is frequency
@@ -99,7 +189,7 @@ class Compare():
         # find corresponding columns
         for i in range(len(l1)):
 
-            # if columns was already used, increase frequency
+            # if column was already used, increase frequency
             if l1[i].strip() in used_columns:
                 used_columns[l1[i].strip()] += 1
             else:
@@ -115,17 +205,16 @@ class Compare():
             if l1[i].strip() in used_columns and used_columns[l1[i].strip()] == 2:
                 s = 20
 
-
             for j in range(s, len(l2)):
 
-                if l1[i].strip() == l2[j].strip() and l1[i].strip() not in prohibited:
+                if l1[i].strip().lower() == l2[j].strip().lower() and l1[i].strip() not in prohibited:
                     matches.append([i, j])
                     break
 
         return matches
 
-    @staticmethod
-    def get_accepted(path_database: str, path_drops_file_matlab: str, delimiter: str):
+    # @staticmethod
+    def get_accepted(self, path_database: str, path_drops_file_matlab: str, delimiter: str):
         """
 
         @param path_database: path to database with results from pyAgdas
@@ -139,16 +228,20 @@ class Compare():
         cursor.execute('select Accepted, Set1, Drop1 from results')
         acc = cursor.fetchall()
 
-
         file = open(path_drops_file_matlab, 'r')
         file_r = file.read().splitlines()
         file.close()
 
+        acc_index = file_r[0].split(delimiter).index('Acc')
+
         j = 0
         accepted = []
-        for i in range(len(file_r)-1):
+        for i in range(len(file_r) - 1):
 
-            a = file_r[i].split(delimiter)[-1]
+            a = file_r[i].split(delimiter)[acc_index]
+
+            if a.strip() == '0':
+                self.matlab_acc += 1
 
             if a != 'Acc':
 
@@ -164,7 +257,8 @@ class Compare():
         return accepted
 
     @staticmethod
-    def compare2files(path1: str, path2: str, delimiter: str, delimiter1: str, delimiter2: str, headers1: int, headers2: int, acc=True):
+    def compare2files(path1: str, path2: str, delimiter: str, delimiter1: str, delimiter2: str, headers1: int,
+                      headers2: int, acc=True):
 
         # open files
         file1 = open(path1, 'r')
@@ -205,6 +299,10 @@ class Compare():
             # find matches
             matches = Compare.match_columns(a, b)
 
+        if 'matlogsets' in path1:
+            matches.append([12, 12])
+            matches.append([13, 13])
+
         # l1_p = len(file1_r[header1 + 2].split(delimiter1))
         n = len(file1_r) - headers1
 
@@ -220,7 +318,6 @@ class Compare():
 
             l1 = file1_r[headers1 + i].split(delimiter1)
             l2 = file2_r[headers2 + i].split(delimiter2)
-
 
             if acc[i]:
                 j = 0
@@ -248,7 +345,6 @@ class Compare():
                     except ValueError:
                         pass
 
-
         maxima = []
         # minima = []
         means = []
@@ -256,7 +352,7 @@ class Compare():
         # find maximal differences for each column
         for i in range(len(matches)):
             ind_max = np.unravel_index(np.argmax(diff[:, i], axis=None), diff[:, i].shape)
-            ind_min = np.unravel_index(np.argmin(diff[:, i], axis=None), diff[:, i].shape)
+            # ind_min = np.unravel_index(np.argmin(diff[:, i], axis=None), diff[:, i].shape)
 
             maxi = diff[ind_max[0], i]
             # mini = diff[ind_min[0], i]
@@ -315,9 +411,10 @@ class Compare():
         headers = 0
         # find count of headers
         for i in range(5):
-
-            first = file_r[i].split(delimiter)[0]
-
+            try:
+                first = file_r[i].split(delimiter)[0]
+            except:
+                break
             try:
                 float(first)
             except ValueError:
@@ -330,4 +427,19 @@ class Compare():
 
 # -----------------------------------------------------------------#
 Compare(path1, path2, compare_path, delimiter)
+# files_p = open(r'c:\Users\Jakub\Desktop\pecny\data\compare_path.txt', 'r')
+# files = files_p.read().splitlines()
+# files_p.close()
+# for i in range(0, len(files), 3):
+#     l_split = files[i].split()
+#
+#     path1 = l_split[0]
+#     path2 = files[i + 1]
+#     compare_path = files[i + 2]
+#
+#     if len(l_split) == 2:
+#         exec(l_split[1])
+#     print(path2)
+#     Compare(path1, path2, compare_path, delimiter=',')
+#     allan = False
 # -----------------------------------------------------------------#

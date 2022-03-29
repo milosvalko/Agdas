@@ -348,10 +348,11 @@ class Compute(QtWidgets.QDialog, PATH):
             self.nset = int(self.processingResults['setsCollected'])
 
         files = False
+        self.ksol = 1
         atm = []  # atmospheric correction data
         time_gr = []  # data for x axis for atm/baro/tides data
         baro = []  # barometric correction data
-        tides = []  # tide correction data
+        self.tides = []  # tide correction data
         # self.all_xef=[]
         self.allRes = np.zeros((self.ndrop, self.frmaxss))  # numpy array for residuals of all drops
         self.v0 = []  # list of v0 values
@@ -393,6 +394,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # compute of LST
             fall = Fall()
             # Setters
+            fall.set_ksol(ksol=self.ksol)
             fall.setFringe(raw['ftime'])
             fall.setLambda(Lambda)
             fall.setScaleFactor(self.processingResults['scaleFactor'])
@@ -458,9 +460,10 @@ class Compute(QtWidgets.QDialog, PATH):
 
             # decision if measuring is accepted by kalpha
             accepted = True
-            self.ssresAr.append(fall.ssres)
-            if fall.ssres > kalpha:
-                accepted = False
+            # self.ssresAr.append(fall.ssres)
+            self.ssresAr.append(fall.m02_grad)
+            # if fall.ssres > kalpha:
+            #     accepted = False
 
             # polar correction from file
             if self.useFilePoleCorr.isChecked():
@@ -522,7 +525,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # data for atmsorefic graphs
             atm.append(float(drop['Baro']))
             baro.append(float(drop['Pres']))
-            tides.append(float(drop['Tide']))
+            self.tides.append(float(drop['Tide']))
             time1 = drop['Time'].split(':')
             time1 = int(time1[2]) / 3600 + int(time1[1]) / 60 + int(time1[0])
             if i > 0:
@@ -552,6 +555,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # print results with gradient to estim file
         if self.files.isChecked():
+
             try:
                 self.writeDropsFile()
             except AttributeError:
@@ -582,7 +586,7 @@ class Compute(QtWidgets.QDialog, PATH):
             g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Tides /μGal',
                       title='Tidal acceleration')
-            g.plotXY(x=[time_gr], y=[tides], mark=['b+'], columns_name=['tides'])
+            g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
             g.saveSourceData()
             g.save()
 
@@ -626,6 +630,7 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.files.isChecked():
             estim.close()
             estim_grad.close()
+            self.matlog_file()
 
         # Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
@@ -660,6 +665,125 @@ class Compute(QtWidgets.QDialog, PATH):
 
             for j in range(1, self.gravimeter['frmaxplot']):
                 self.zzh[j, i] = self.zzh[0, i] + self.Lambda * 1e-9 / 2 * prescale * j
+
+    def matlog_file(self):
+        line = []
+        line.append(self.stationData['ProjName'])
+        line.append(self.instrumentData['meterType'])
+        line.append(self.instrumentData['meterS/N'])
+        line.append(self.stationData['name'])
+        line.append(self.stationData['SiteCode'])
+        line.append(self.stationData['lat'])
+        line.append(self.stationData['long'])
+        line.append(self.stationData['elev'])
+        line.append(self.stationData['airPressure'])
+        line.append(self.stationData['barometricFactor'])
+        line.append(self.stationData['gradient'])
+        line.append(self.instrumentData['ID'])
+        line.append(self.instrumentData['modulFreq'])
+        line.append('0.' + self.instrumentData['rubiFreq'].split('.')[1])
+        line.append(self.gravimeter['Lpar']/1e9)
+        line.append(self.ksol)
+        line.append(self.ksae.isChecked())
+        line.append(self.kdis.isChecked())
+        line.append(self.kimp.isChecked())
+        line.append(self.kpar.isChecked())
+        line.append(self.gravimeter['Lcable'])
+        line.append(self.gravimeter['frmin'])
+        line.append(self.gravimeter['frmax'])
+        line.append(self.stationData['polarX'])
+        line.append(self.stationData['polarY'])
+        line.append(self.nset)
+        line.append(self.ndrop/self.nset)
+        year = self.processingResults['year']
+        month = self.processingResults['date'].split('/')[0]
+        day = self.processingResults['date'].split('/')[1]
+        hour = self.processingResults['time'].split(':')[0]
+        minute = self.processingResults['time'].split(':')[1]
+        line.append(year)
+        line.append(month)
+        line.append(day)
+        line.append(hour)
+        line.append(minute)
+        line.append(date_to_mjd(int(year), int(month), int(day) + int(hour) / 24 + int(minute) / 1440))
+        line.append(self.get_duration())
+        m, press = self.get_avg_press()
+        line.append(m)
+        line.append(np.max(press) - np.min(press))
+        line.append(np.mean(self.tides))
+        line.append(np.max(self.tides) - np.min(self.tides))
+        line.append(95)
+        line.append(self.matr_connection.get('select count(*) from results where Accepted = 1')[0][0])
+        line.append(self.matr_connection.get('select avg(EffHeight) from results where Accepted = 1')[0][0])
+        hefm = self.matr_connection.get('select avg(EffHeight + CorToEffHeight) from results where Accepted = 1')[0][0]
+        line.append(hefm)
+        line.append(np.std(self.matr_connection.get('select EffHeight + CorToEffHeight from results where Accepted = 1'), ddof=1))
+        line.append(float(self.stationData['actualHeight'])/100 - float(hefm)/100)
+        line.append((self.gfinal - float(self.stationData['gradient'])*float(hefm))/10)
+        line.append(self.gstd/10)
+        line.append(np.median(self.dglrms)/10)
+        line.append(np.median(self.dgrrms) / 10)
+        line.append(self.vggp3)
+        line.append(self.mggp3/np.sqrt(self.get_count_gradients()))
+
+        a = res_final(path=self.projDirPath, header=headers['matlog'].format(self.delimiter),
+                      name=self.stationData['ProjName'] + '_' + 'matlog', delimiter=self.delimiter)
+
+        a.printResult(line)
+        a.close()
+
+    def get_count_gradients(self):
+
+        gradients = self.matr_connection.get('select Gradient from results where Accepted = 1')
+        vggp2 = np.mean(gradients)
+        mggp2 = np.std(gradients, ddof=1)
+
+        c = 0
+        for i in gradients:
+            if abs(vggp2 - i[0]) < 3*mggp2:
+                c += 1
+
+        return c
+
+    def get_avg_press(self):
+        """
+
+        @return: m: weight average of pressure
+        """
+        m = 0
+        press = []
+        for i in range(len(self.weight)):
+            press.append(float(self.press[i]))
+            m += press[-1] * self.weight[i]
+
+        m = m / sum(self.weight)
+
+        return m, press
+
+
+    def get_duration(self):
+        """
+
+        @return: d: count of hours between first and final drop
+        """
+
+        d = self.matr_connection.get('select Date from results where n = 1 or n = {}'.format(self.ndrop))
+
+        d1 = d[0][0]
+        d2 = d[1][0]
+
+        d1_date, d1_time = d1.split(' ')
+        d2_date, d2_time = d2.split(' ')
+
+        d1 = datetime(int(d1_date.split(':')[0]), int(d1_date.split(':')[1]), int(d1_date.split(':')[2]),
+                      int(d1_time.split(':')[0]), int(d1_time.split(':')[1]), int(d1_time.split(':')[2]))
+        d2 = datetime(int(d2_date.split(':')[0]), int(d2_date.split(':')[1]), int(d2_date.split(':')[2]),
+                      int(d2_time.split(':')[0]), int(d2_time.split(':')[1]), int(d2_time.split(':')[2]))
+        d = d2 - d1
+        h, m, s = str(d).split(':')
+        d = float(s) / 1440 + float(m) / 60 + float(h)
+
+        return d
 
     def allanGraph(self, a, tau, path):
         """
@@ -1011,12 +1135,12 @@ class Compute(QtWidgets.QDialog, PATH):
 
         moving_average, moving_avg_x = movingAverage(grad, n=50)
 
-        vggp3 = np.mean(grad)  # average value of gradients
-        mggp3 = np.std(grad)  # standart deviation of gradients
+        self.vggp3 = np.mean(grad)  # average value of gradients
+        self.mggp3 = np.std(grad, ddof=1)  # standart deviation of gradients
         xlim = [0, self.ndrop]  # xrange
-        ylim = [vggp3, vggp3]  # yrange for mean
-        yylim = [vggp3 - 3 * mggp3, vggp3 - 3 * mggp3]  # yrange for -3sigma
-        yyylim = [vggp3 + 3 * mggp3, vggp3 + 3 * mggp3]  # yrange for +3sigma
+        ylim = [self.vggp3, self.vggp3]  # yrange for mean
+        yylim = [self.vggp3 - 3 * self.mggp3, self.vggp3 - 3 * self.mggp3]  # yrange for -3sigma
+        yyylim = [self.vggp3 + 3 * self.mggp3, self.vggp3 + 3 * self.mggp3]  # yrange for +3sigma
 
         m0 = []  # vector of m0 values
         x = []  # x range for plotting data
@@ -1258,11 +1382,12 @@ class Compute(QtWidgets.QDialog, PATH):
         a = open(self.setFile, 'r')
 
         a = a.read().splitlines()
-        press = [a[i].split()[18] for i in range(4, len(a))]
+
+        self.press = [a[i].split()[18] for i in range(4, len(a))]
 
         self.vgg_median_bysets = []
 
-        a = res_final(path=self.projDirPath, header=headers['matlog'].format(self.delimiter),
+        a = res_final(path=self.projDirPath, header=headers['matlogsets'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'matlogsets', delimiter=self.delimiter)
         it = 0
         for i in r:
@@ -1274,11 +1399,13 @@ class Compute(QtWidgets.QDialog, PATH):
 
             line = [self.stationData['ProjName'], i[0], int(i[1]), int(i[2]), int(i[3]), int(i[4]), int(i[5]),
                     int(i[6]), i[-1], self.stationData['gradient'], i[7], self.stodch[it], self.dglrms[it],
-                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, press[it], vgg, tst]
+                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, self.press[it], vgg, tst]
             a.printResult(line=roundList(line, round_line_ind['matlogsets']))
             it += 1
 
         a.close()
+
+
 
     def print_allanFile(self):
 
@@ -1326,7 +1453,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.stodch = []  # mean error of sets
         self.stdodchpadu = []  # mean error of drops
         count = 0
-        weight = []  # weight of sets
+        self.weight = []  # weight of sets
         gfinal = 0  # weight mean of g by sets
         sumweight = 0
         self.vv = []  # mean correction
@@ -1338,29 +1465,29 @@ class Compute(QtWidgets.QDialog, PATH):
             d = self.matr_connection.get('select gTopCor from results where Accepted = 1 and Set1 = {}'.format(i + 1))
 
             count += len(d)
-            self.stodch.append(np.std(d) / np.sqrt(len(d)))
+            self.stodch.append(np.std(d, ddof=1) / np.sqrt(len(d)))
             self.stodchs.append(self.stodch[-1] / np.sqrt(2 * len(d)))
             stodchmod = self.stodch[-1] * self.stodch[-1] + ksmooth * ksmooth
             self.stodchmod.append(sqrt(stodchmod))
             self.stdodchpadu.append(self.stodch[-1] * np.sqrt(len(d)))
             # print('STD {}'.format(stdodchpadu[-1]))
-            weight.append(100 / stodchmod)
-            sumweight += weight[-1]
-            gfinal += g[i][0] * weight[-1]
+            self.weight.append(100 / stodchmod)
+            sumweight += self.weight[-1]
+            gfinal += g[i][0] * self.weight[-1]
 
         self.gfinal = gfinal / sumweight
 
         # if nset>1:
         self.mm = 0
         for i in range(r):
-            self.vv.append((g[i][0] - self.gfinal) * np.sqrt(weight[i]))
+            self.vv.append((g[i][0] - self.gfinal) * np.sqrt(self.weight[i]))
             self.mm += self.vv[-1] * self.vv[-1]
             # print(weight[i])
 
         self.mm = np.sqrt(self.mm / (nset - 1))
 
         # if count>=1:
-        gstd = np.std(self.vv) / np.sqrt(sumweight)
+        gstd = np.std(self.vv, ddof=1) / np.sqrt(sumweight)
         self.gstd = gstd
 
         gtop = self.matr_connection.get('select gTopCor, Set1 from results where Accepted = 1')

@@ -11,17 +11,20 @@ import matplotlib.mlab as mlab
 from scipy.stats import norm
 import subprocess
 import scipy.interpolate as interp
+import scipy.stats
 
 
 class Fall():
 
     def __init__(self):
-        self.ksol = 1
         self.c = 2.99792458e+17
         self.keys = ['z0', 'v0', 'g0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
         self.kdis = False
         self.kimp = False
         self.ksae = False
+
+    def set_ksol(self, ksol):
+        self.ksol = ksol
 
     def setFringe(self, times):
         """Short summary.
@@ -524,7 +527,7 @@ class projectFile():
             if self.file[i] == '(ETGTAB):':
                 gravityCorrections['earthTide'] = self.file[i + 1]
 
-            if self.file[i] == 'Motion:' and self.file[i - 1] == 'Polar' and i < 460:
+            if self.file[i] == 'Motion:' and self.file[i - 1] == 'Polar' and self.file[i+3] == 'Barometric':
                 gravityCorrections['polarMotion'] = self.file[i + 1]
 
             if self.file[i] == 'Pressure:' and self.file[i - 1] == 'Barometric':
@@ -831,16 +834,13 @@ class Graph():
         # bins=np.floor(1+3.32*np.log(len(hist_data)))
         bins = np.floor(1 + 5 * np.log(len(hist_data)))
 
-        a = self.gr.hist(hist_data, edgecolor='black', bins=int(bins))
+        _, bins, _ = self.gr.hist(hist_data, int(bins), density=1, alpha=1, edgecolor='black')
 
+        # fitting graph by Gaussian curve
         if fit:
-            bins = np.linspace(min(hist_data), max(hist_data), 100)
-
-            mu, sigma = norm.fit(hist_data)
-
-            fit = norm.pdf(bins, mu, sigma)
-
-            self.gr.plot(bins, fit * max(a[0]) / max(fit), 'r')
+            mu, sigma = scipy.stats.norm.fit(hist_data)
+            best_fit_line = scipy.stats.norm.pdf(bins, mu, sigma)
+            self.gr.plot(bins, best_fit_line, '-r')
 
     def error_bar(self, x_err, y_err, yerr, color_err, ms=10, capsize=5):
         # Create error bar

@@ -9,6 +9,7 @@ from data import Data
 from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window
 from time import sleep
+from functions import printDict
 
 PATH, _ = uic.loadUiType('gui/main.ui')
 
@@ -76,6 +77,7 @@ class Main(QtWidgets.QMainWindow, PATH):
                                   header2=self.newProjectWin.header2, rawlines=self.newProjectWin.rawlines,
                                   header1=self.newProjectWin.header1, projDirPath=self.newProjectWin.pathDir,
                                   setFile=self.newProjectWin.setFile)
+
         except AttributeError:
             Warning(error=warning_window['import_data'], icon='critical', title='Warning')
 
