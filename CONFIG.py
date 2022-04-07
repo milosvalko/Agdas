@@ -23,7 +23,8 @@ def getFG5X(ps):
         'Lmax': 16,
         'Lcable': 2,
         'Acable': 0.004,
-        'Pcable': np.pi / 2
+        'Pcable': np.pi / 2,
+        'valenv': 0.005
     }
     FG5X['sens_bn'] = FG5X['frmaxss'] - FG5X['sens_tx']
     return FG5X
@@ -51,7 +52,8 @@ def getFG5(ps):
         'Acable': 0.004,
         'Pcable': np.pi / 2,
         'frminss': 1,
-        'frmaxss': 650 * ps
+        'frmaxss': 650 * ps,
+        'valenv': 0.002
     }
     FG5['sens_bn'] = FG5['frmaxplot'] - 150 * ps
     # FG5['frmaxss'] = FG5['frmax'] + 10
@@ -131,7 +133,7 @@ RIGTC homepage:             www.vugtk.cz
 G. O. Pecny homepage:       www.pecny.cz
 '''
 
-separator = '================================='
+separator = '==============================='
 logo_picture = 'picture/logo.png'
 
 headers = {
@@ -149,7 +151,7 @@ headers = {
     'resgradsum': 'Fringe{0}z [m]{0}Time [s]{0}Time TOP [s]{0}Resgradsum4_mean [nm]{0}Filtered mean [nm]',
     'vgg_per_sets0': 'Set {0}	vgg0 [uGal/cm] {0}	mvgg0 [uGal/cm] {0}	dg0 [uGal] {0}	mdg0 [uGal]',
     'effective_height_corr': 'Drop{0} EffHeight{0} CorToEffHeight',
-    'matlog' : """Campaign{0}Gravimeter-type{0}Gravimeter-SN{0}Sitename{0}Sitecode{0}Latitude{0}Longitude{0}Elevation{0}P_norm{0}baro admit.{0}VGG{0}WEO-IE{0}WEO-fmod{0}Clock-10MHz{0}L_parasit{0}Ksol{0}Ksae{0}Kdis{0}Kimp{0}kpar{0}L_TTLcable{0}Start Fringe{0}Final Fringe{0}x_pole{0}y_pole{0}Sets{0}Drops/Set{0}Year{0}Month{0}Day{0}Hour{0}Minute{0}MJD{0}Duration{0}Ave_P{0}dP(MAX-MIN){0}Ave_tide{0}Tide(MAX-MIN){0}Tstud{0}Drops_accept{0}Ef.h t0{0}Ef.h.TOD{0}STD{0}H.ef.ins{0}g@H.ef.ins{0}STD{0}STD-Start{0}STD-final{0}VGG_AG{0}STD
+    'matlog': """Campaign{0}Gravimeter-type{0}Gravimeter-SN{0}Sitename{0}Sitecode{0}Latitude{0}Longitude{0}Elevation{0}P_norm{0}baro admit.{0}VGG{0}WEO-IE{0}WEO-fmod{0}Clock-10MHz{0}L_parasit{0}Ksol{0}Ksae{0}Kdis{0}Kimp{0}kpar{0}L_TTLcable{0}Start Fringe{0}Final Fringe{0}x_pole{0}y_pole{0}Sets{0}Drops/Set{0}Year{0}Month{0}Day{0}Hour{0}Minute{0}MJD{0}Duration{0}Ave_P{0}dP(MAX-MIN){0}Ave_tide{0}Tide(MAX-MIN){0}Tstud{0}Drops_accept{0}Ef.h t0{0}Ef.h.TOD{0}STD{0}H.ef.ins{0}g@H.ef.ins{0}STD{0}STD-Start{0}STD-final{0}VGG_AG{0}STD
     {0}{0}{0}{0}{0}deg{0}deg{0}m{0}hPa{0}uGal/hPa{0}uGal/m{0}nm{0}Hz{0}Hz{0}m{0}{0}0/1{0}0/1{0}0/1{0}0/1{0}m{0}{0}{0}arcsec{0}arcsec{0}{0}{0}{0}{0}{0}{0}{0}{0}hour{0}hPa{0}hPa{0}uGal{0}uGal{0}%{0}{0}mm{0}mm{0}mm{0}m{0}uGal{0}uGal{0}uGal{0}uGal{0}uGal/cm{0}uGal/cm"""
 
 }
