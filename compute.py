@@ -19,6 +19,9 @@ import scipy.signal as sig
 
 PATH, _ = uic.loadUiType('gui/compute.ui')
 
+import matplotlib
+font = {'size' : 18}
+matplotlib.rc('font', **font)
 
 class Compute(QtWidgets.QDialog, PATH):
 
@@ -48,7 +51,16 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # set values to widgets
         self.gravimeter_box.addItems(['FG5X', 'FG5'])
-        self.setPrescale(10)
+
+        # setting sel.ps value
+        multiplex = int(self.processingResults['multiplex'])
+        scalefactor = int(self.processingResults['scaleFactor'])
+        if multiplex * scalefactor == 1000:
+            self.setPrescale(1)
+        if multiplex * scalefactor == 800:
+            self.setPrescale(1)
+        if multiplex * scalefactor == 100:
+            self.setPrescale(10)
 
         self.automatic_detection_gravimeter()
 
@@ -209,36 +221,30 @@ class Compute(QtWidgets.QDialog, PATH):
         except urllib.error.URLError:
             Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
+        #coordinations of point
+        fi = float(self.stationData['lat']) * pi / 180
+        lam = float(self.stationData['long']) * pi / 180
+        deg = 1 #degree of fitting
+
         # open and load file from IERS
         file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
-        # reader = csv.DictReader(file, delimiter=';')
         reader = csv.reader(file, delimiter=';')
         rows = list(reader)
         file.close()
 
-        # date of first day
-        a = datetime(int(self.lines[2].split()[4]), 1, 1) + timedelta(int(self.lines[2].split()[3]))
+        #date of first and last drop in campaign
+        first_drop = self.lines[0].split()[2:5]
+        last_drop = self.lines[-1].split()[2:5]
 
-        month = (str(a.month))
-        if len(month) == 1:
-            month = '0' + month
+        first_drop_date = datetime(int(first_drop[2]), 1, 1) + timedelta(int(first_drop[1]) - 1)
+        last_drop_date = datetime(int(last_drop[2]), 1, 1) + timedelta(int(last_drop[1]) - 1)
 
-        day = (str(a.day))
-        if len(day) == 1:
-            day = '0' + day
+        date = str(first_drop_date.date()).split('-')
+        date1 = str(last_drop_date.date()).split('-')
 
-        date = [str(a.year), month, day]
+        count_days = int(last_drop[1]) - int(first_drop[1])
 
-        # get unique DOY
-        doys = []
-        years = []
-        for l in self.lines:
-            doy = int(l.split()[3])
-            if doy not in doys:
-                doys.append(doy)
-                years.append(int(l.split()[4]))
-
-        # get index of date in finals file
+        #find index of starting day
         i = 0
         for row in reversed(rows):
             if row[1:4] == date:
@@ -246,37 +252,38 @@ class Compute(QtWidgets.QDialog, PATH):
                 break
             i += 1
 
-        # coordinates of pole from finals to interpolation
-        x = []
-        y = []
-        for j in range(-i - 1, -i + len(doys)):
-            x.append(rows[j][5])
-            y.append(rows[j][7])
+        i = len(rows) - i + 1
 
-        # coordinates of station
-        fi = float(self.stationData['lat']) * pi / 180
-        lam = float(self.stationData['long']) * pi / 180
+        #get one day before and one day after measuring
+        d = rows[i - 3:i + count_days]
+        x_pole = [float(x[5]) for x in d]
+        y_pole = [float(x[7]) for x in d]
+        x = [0]
+        for i in range(len(x_pole) - 1):
+            x.append(x[-1] + 24)
 
-        # compute pole corrections
+        #fit pole coordinates
+        x_para = np.polyfit(x, x_pole, deg)
+        y_para = np.polyfit(x, y_pole, deg)
+
         self.dg = []
-        for l in self.lines:
-            line = l.split()
+        for i in range(len(self.lines)):
+            split_line = self.lines[i].split()
+            drop_date = \
+            str(datetime(int(split_line[4]), 1, 1) + timedelta(int(split_line[3]) - 1)).split()[0]
+            day_drop = int(drop_date.split('-')[-1])
 
-            doy = line[3]
+            multi = day_drop - int(d[0][3])
 
-            xInt = [float(x[doys.index(int(doy))]), float(x[doys.index(int(doy)) + 1])]
-            yInt = [float(y[doys.index(int(doy))]), float(y[doys.index(int(doy)) + 1])]
+            drop_time = split_line[2].split(':')
+            drop_time = float(drop_time[0]) + (float(drop_time[2]) / 60 + float(drop_time[1])) / 24 + multi * 24
 
-            time = (line[2].split(':'))
-            time = int(time[2]) / 3600 + int(time[1]) / 60 + int(time[0])
+            x_pole_interp = np.polyval(x_para, drop_time)
+            y_pole_interp = np.polyval(y_para, drop_time)
 
-            ypole = time * (yInt[1] - yInt[0]) / 24 + yInt[0]
-            xpole = time * (xInt[1] - xInt[0]) / 24 + xInt[0]
+            self.dg.append(-19.139 * np.sin(2 * fi) * (x_pole_interp * np.cos(lam) - y_pole_interp * np.sin(lam)))
 
-            self.dg.append(-19.139 * sin(2 * fi) * (xpole * cos(lam) - ypole * sin(lam)))
-        # print(self.dg)
-        self.poleCorrIERS.setText('<{}; {}>'.format(str(round(min(self.dg), 2)), str(round(max(self.dg), 2))))
-        # print(self.dg)
+        self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
 
     def defineSets(self):
         """
@@ -310,7 +317,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def Run(self):
         """
-        In this method is manage the whole calculating
+        In this method is managed the whole calculating
         """
         # set color of RUN button on green
         self.run.setStyleSheet("background-color : green")
@@ -401,7 +408,13 @@ class Compute(QtWidgets.QDialog, PATH):
             laser = 'I{}'.format(drop['LaserLock'])
             Lambda = self.instrumentData[laser]
             # ===========================================================================#
+            # polar correction from file
+            if self.useFilePoleCorr.isChecked():
+                Polar = float(self.poleCorr_file.toPlainText())
 
+            # polar correction calculated for each drop from IERS file
+            if self.useIERSPoleCorr.isChecked():
+                Polar = self.dg[i]
             # ===========================================================================#
             # compute of LST
             fall = Fall()
@@ -437,7 +450,7 @@ class Compute(QtWidgets.QDialog, PATH):
             fall.effectiveHeightTop()
             fall.effectivePosition()
             fall.gTop()
-            fall.gTopCor(drop['Tide'], drop['Load'], drop['Baro'], drop['Polar'])
+            fall.gTopCor(drop['Tide'], drop['Load'], drop['Baro'], Polar)
             self.tt = fall.tt
             self.Lambda = fall.Lambda
             # ===========================================================================#
@@ -477,16 +490,9 @@ class Compute(QtWidgets.QDialog, PATH):
             # if fall.ssres > kalpha:
             #     accepted = False
 
-            # polar correction from file
-            if self.useFilePoleCorr.isChecked():
-                Polar = float(self.poleCorr_file.toPlainText())
-
-            # polar correction calculated for each drop from IERS file
-            if self.useIERSPoleCorr.isChecked():
-                Polar = self.dg[i]
 
             # residuals added into matrix with all residuals
-            self.allRes[i, :] = fall.res_grad1[0:self.frmaxss]
+            self.allRes[i, :] = fall.res_grad1[:self.frmaxss]
 
             # transfer residuals to string for adding into database
             res = ', '.join(str(r) for r in fall.res_grad1[0:self.frmaxss])
@@ -566,8 +572,15 @@ class Compute(QtWidgets.QDialog, PATH):
             self.print_allanFile()
             self.ressets_res()
             # self.harmonic()
-            if fall.kpar:
+            if self.kpar.isChecked():
                 self.parasitic_wave()
+
+                g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
+                          show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
+                          title='Atmosferic correction')
+                g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
+                g.saveSourceData()
+                g.save()
 
             # ===========================================================================================================#
             # print results with gradient to estim file
@@ -620,7 +633,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graphResidualsGradient()
             self.graphSpectrumParts()
             self.graphSpectrumRatio()
-            if fall.kpar:
+            if self.kpar.isChecked():
                 self.graph_parasitic2()
             self.graph_sensitivity_top()
             self.graph_spectrum('spectrum')
@@ -804,7 +817,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         return d
 
-    def allanGraph(self, a, tau, path):
+    def allanGraph(self, a, tau, path, type):
         """
         Create loglog graph of allan standard deviations
 
@@ -831,7 +844,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # p.legend(legend)
 
         p.legend(['Mean values', 'White noise'])
-        p.title('Allan deviation - normalized data')
+        p.title('Allan deviation - {}'.format(type))
         p.xlabel('Drop number (n)')
         p.ylabel(r'σ (n)/nm.s$^-2$')
         p.savefig(path)
@@ -984,7 +997,7 @@ class Compute(QtWidgets.QDialog, PATH):
         p = plt
         p.grid('k', which='minor', lw=0.3)
 
-        for i in range(self.yfsa.shape[0]):
+        for i in range(x_by_sets.shape[0]):
             p.loglog(fr[start:], x_by_sets[i, start:], lw=0.5)
             legend.append('Set {}'.format(i + 1))
 
@@ -993,11 +1006,11 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # printing envelope
         frenv = range(1, int(1e4) + 1)
-        valenv = []
+        valenv_y = []
         for i in frenv:
             v = np.sqrt((0.25 / (i ** 2)) ** 2 + (self.gravimeter['valenv'] * i) ** 2)
-            valenv.append(v)
-        p.loglog(frenv[start:], valenv[start:], 'r')
+            valenv_y.append(v)
+        p.loglog(frenv[start:], valenv_y[start:], 'r')
 
         legend.append('1 μGal envelope')
         p.title(title)
@@ -1019,8 +1032,8 @@ class Compute(QtWidgets.QDialog, PATH):
         yl = 0.75
         n = 4
 
-        aa, bb = sig.butter(n, self.kcutoff, btype='low')
-        self.resgradsum4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean)
+        # aa, bb = sig.butter(n, self.kcutoff, btype='low')
+        # self.resgradsum4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean[:self.gravimeter['frmaxplot']])
 
         resm0 = [0, 0]
         tt0 = [self.tt[0], self.tt[self.nfringe - 1]]
@@ -1042,7 +1055,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # p.plot(tt[:frmaxplot], resmm, '-k', lw = 2)
         p.plot(self.tt[:self.gravimeter['frmaxplot']], self.resgradsum4Mean[0, :self.gravimeter['frmaxplot']], '-k',
                lw=1)
-        p.plot(self.tt[:self.gravimeter['frmaxplot']], self.resgradsum4filt[0, :self.gravimeter['frmaxplot']], '-',
+        p.plot(self.tt[:self.gravimeter['frmaxplot']], self.resgradsm4filt[:self.gravimeter['frmaxplot']], '-',
                lw=3,
                color=(1, 0, 1))
         p.text(xlim[0] + 0.001, -yl, 'Start fringe', color='b')
@@ -1249,24 +1262,24 @@ class Compute(QtWidgets.QDialog, PATH):
         sensa_bx = self.gravimeter['sensa_bx']
         sensa_bn = self.gravimeter['sensa_bn']
 
-        # y values
-        celk = sensa_tx - sensa_tn
-        dglrms = rssq(self.dglc) / np.sqrt(celk + 1)
-
-        celk = sensa_bx - sensa_bn
-        dgrrms = rssq(self.dgrc) / np.sqrt(celk + 1)
+        # # y values
+        # celk = sensa_tx - sensa_tn
+        # dglrms = rssq(self.dglc) / np.sqrt(celk + 1)
+        #
+        # celk = sensa_bx - sensa_bn
+        # dgrrms = rssq(self.dgrc) / np.sqrt(celk + 1)
 
         # xrange
         ts = np.linspace(1, self.nset, self.nset)
 
         # legend
-        l1 = r'$RMS_S({}-{}) = {:.1f}  nm.s^2$'.format(sensa_tn, sensa_tx, np.mean(dglrms))
-        l2 = r'$RMS_F({}-{}) = {:.1f}  nm.s^2$'.format(sensa_bn, sensa_bx, np.mean(dgrrms))
+        l1 = r'$RMS_S({}-{}) = {:.1f}  nm.s^2$'.format(sensa_tn, sensa_tx, np.mean(self.dglrms))
+        l2 = r'$RMS_F({}-{}) = {:.1f}  nm.s^2$'.format(sensa_bn, sensa_bx, np.mean(self.dgrrms))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label='Set #', y_label=r'Standart deviation $[nm.s^2]$',
                   title='Variability of set g-values on the choice of first and final fringe')
-        g.plotXY(x=[ts, ts], y=[dglrms, dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'], legend=[l1, l2],
+        g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'], legend=[l1, l2],
                  lw=[1, 1])
         g.saveSourceData()
         g.save()
@@ -1326,11 +1339,11 @@ class Compute(QtWidgets.QDialog, PATH):
         g = Graph(path=self.projDirPath + '/Graphs', name='set_g', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label='Set #',
                   y_label='Set gravity -{:.2f} /nm.s^(-2)'.format(g0), title='Set gravity at top of the drop')
+        g.error_bar(range(1, x[1]), mean_by_set, self.stodchmod, 'r')
         g.plotXY(x=[x, x, x],
                  y=[[self.gfinal - g0, self.gfinal - g0], [self.gfinal - g0 - self.gstd, self.gfinal - g0 - self.gstd],
                     [self.gfinal - g0 + self.gstd, self.gfinal - g0 + self.gstd]], mark=['b-', 'g-', 'g-'],
                  columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend=['Set g-values', 'Avegare g-value', '1σ range'])
-        g.error_bar(range(1, x[1]), mean_by_set, self.stodchmod, 'r')
         g.saveSourceData()
         g.save()
 
@@ -1508,9 +1521,9 @@ class Compute(QtWidgets.QDialog, PATH):
         file.close()
 
         if self.outputs.isChecked():
-            self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation')
+            self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation', type='normalized data')
 
-            self.allanGraph(a3, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_gradient')
+            self.allanGraph(a3, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_gradient', type='VGG')
 
     def compute_normres(self):
         self.logWindow.append(separator)
@@ -1522,7 +1535,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # r=[i[0] for i in r]
         r = r[0][0]
-        nset = (r)
+        # nset = (r)
         # self.nset = nset
 
         ksmooth = self.gravimeter['ksmooth']
@@ -1560,7 +1573,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.mm += self.vv[-1] * self.vv[-1]
             # print(weight[i])
 
-        self.mm = np.sqrt(self.mm / (nset - 1))
+        self.mm = np.sqrt(self.mm / (self.nset - 1))
 
         # if count>=1:
         gstd = np.std(self.vv, ddof=1) / np.sqrt(sumweight)
@@ -1611,7 +1624,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # =======================================================================
 
-        self.resgradsm4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean)
+        self.resgradsm4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean[0, :self.gravimeter['frmaxplot']])
 
         # =======================================================================
 
@@ -1629,7 +1642,7 @@ class Compute(QtWidgets.QDialog, PATH):
             by_sets.printResult(line=roundList(line, round_ind_bysets))
 
             line = [it + 1, z, self.tt[it], self.tt[it] - v0mg0mkor, self.resgradsum4Mean[0, it],
-                    self.resgradsm4filt[0, it]]
+                    self.resgradsm4filt[it]]
             resgradsum.printResult(roundList(line, round_line_ind['resgradsum']))
 
             if (it + 1) % 10 == 5:
@@ -1976,9 +1989,10 @@ class Compute(QtWidgets.QDialog, PATH):
         p, (ax1, ax2) = plt.subplots(2, 1)
 
         ax1.plot(x, self.ampar, 'r', lw=0.5)
-        ax1.set(title='Amplitudes and phases of the parasitic wave with L = {} m'.format(self.gravimeter['Lpar']/1e10),
-                xlabel='Drop #',
-                ylabel='Amplitude /nm')
+        ax1.set(
+            title='Amplitudes and phases of the parasitic wave with L = {} m'.format(self.gravimeter['Lpar'] / 1e10),
+            xlabel='Drop #',
+            ylabel='Amplitude /nm')
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)

@@ -13,6 +13,10 @@ import subprocess
 import scipy.interpolate as interp
 import scipy.stats
 
+import matplotlib
+font = {'size' : 18}
+matplotlib.rc('font', **font)
+
 
 class Fall():
 
@@ -199,7 +203,7 @@ class Fall():
                     dz_list.append((vsae_list[i - 1] + vsae_list[i]) / 2 * (self.tt[i] - self.tt[i - 1]))
                     zsae_list.append(zsae_list[i - 1] + dz_list[-1])
                     z1[i] -= zsae_list[-1]
-                    print(zsae_list[-1])
+                    # print(zsae_list[-1])
 
             # corrections from dispersion and distortion
             fcefr = self.tt[i] * 9.8093 / (self.Lambda / 2 / 10e8)

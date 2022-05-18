@@ -109,7 +109,6 @@
      <string>File</string>
     </property>
     <addaction name="newProject"/>
-    <addaction name="openProject"/>
     <addaction name="closeProject"/>
    </widget>
    <widget class="QMenu" name="menuData">
@@ -118,7 +117,6 @@
     </property>
     <addaction name="computing"/>
     <addaction name="viewdata"/>
-    <addaction name="viewGraphs"/>
    </widget>
    <addaction name="menuFile_s"/>
    <addaction name="menuData"/>
