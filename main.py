@@ -10,6 +10,7 @@ from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window
 from time import sleep
 from functions import printDict
+from comparison import Comparison
 
 PATH, _ = uic.loadUiType('gui/main.ui')
 
@@ -39,6 +40,7 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.viewGraphs.triggered.connect(self.viewgraphs)
         self.closeProject.triggered.connect(self.closeproject)
         self.openProject.triggered.connect(self.open_project)
+        self.actionComparison.triggered.connect(self.compare)
 
         # self.Import_data.triggered.connect(self.importdata)
 
@@ -80,6 +82,11 @@ class Main(QtWidgets.QMainWindow, PATH):
 
         except AttributeError:
             Warning(error=warning_window['import_data'], icon='critical', title='Warning')
+
+    def compare(self):
+
+        Comparison(',')
+
 
     def viewData(self):
 

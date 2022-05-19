@@ -180,6 +180,7 @@ warning_window = {
     'split_set': 'Choose count of sets',
     'pole_corr': 'Choose polar correction',
     'cannot_wrtite_file': 'Cannot write file due statistic is not computed',
+    'comparison': 'Files successfully compared'
 }
 
 # colors = ['b', 'g', 'r', ]
