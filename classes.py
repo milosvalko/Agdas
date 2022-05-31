@@ -13,9 +13,9 @@ import subprocess
 import scipy.interpolate as interp
 import scipy.stats
 
-import matplotlib
-font = {'size' : 18}
-matplotlib.rc('font', **font)
+# import matplotlib
+# font = {'size' : 18}
+# matplotlib.rc('font', **font)
 
 
 class Fall():
@@ -42,8 +42,6 @@ class Fall():
         -------
         type
             -Set to class variable
-
-
         """
 
         self.fringe = np.float_((times))

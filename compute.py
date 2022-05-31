@@ -19,9 +19,10 @@ import scipy.signal as sig
 
 PATH, _ = uic.loadUiType('gui/compute.ui')
 
-import matplotlib
-font = {'size' : 18}
-matplotlib.rc('font', **font)
+
+# import matplotlib
+# font = {'size' : 18}
+# matplotlib.rc('font', **font)
 
 class Compute(QtWidgets.QDialog, PATH):
 
@@ -55,6 +56,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # setting sel.ps value
         multiplex = int(self.processingResults['multiplex'])
         scalefactor = int(self.processingResults['scaleFactor'])
+
         if multiplex * scalefactor == 1000:
             self.setPrescale(1)
         if multiplex * scalefactor == 800:
@@ -94,6 +96,43 @@ class Compute(QtWidgets.QDialog, PATH):
             self.gravimeter_box.setCurrentIndex(1)
         else:
             self.gravimeter_box.setCurrentIndex(0)
+
+    def set_sensitivity_intervals(self):
+        """
+        This method sets intervals for computing of sensitivity. This is change against solution with prescale
+        factor. This solution is based only on frmin, frmax and total count of fringes.
+        """
+        # 10 percent from "Total Fringes Acquired"
+        INTsens = int(self.total_fringes / 10)
+
+        self.sens_tn = 1  # Sensitivity top - minimum
+        self.sens_tx = self.frmin + INTsens  # Sensitivity top - maximum
+
+        self.sens_bn = self.frmax - INTsens  # Sensitivity bottom - minimum
+
+        # Sensitivity bottom - maximum
+        if self.frmax + INTsens <= (self.frmax + int(self.processingResults['totalFringes']))/2:
+            self.sens_bx = self.frmax + INTsens
+        else:
+            self.sens_bx = (self.frmax + int(self.processingResults['totalFringes']))/2
+
+        self.sensa_tn = self.frmin - int(self.total_fringes / 100)  # Sensitivity top - minimum (for rms computing)
+        self.sensa_tx = self.frmin + int(self.total_fringes / 20)  # Sensitivity top - maximum (for rms computing)
+
+        self.sensa_bn = self.frmax - int(self.total_fringes * 0.03)  # Sensitivity bottom - minimum (for rms computing)
+        self.sensa_bx = self.frmax + int(self.total_fringes * 0.05)  # Sensitivity bottom - maximum (for rms computing)
+
+    def set_frmaxplot(self):
+        self.frmaxplot = self.gravimeter['frmaxplot']
+
+    def set_total_fringes(self):
+        self.total_fringes = int(self.processingResults['totalFringes'])
+
+    def set_frmin_frmax(self):
+
+        self.frmin = int(self.frminT.toPlainText())
+
+        self.frmax = int(self.frmaxT.toPlainText())
 
     def set_multiplex_ui(self):
         self.multiplex.setText(self.processingResults['multiplex'])
@@ -221,10 +260,10 @@ class Compute(QtWidgets.QDialog, PATH):
         except urllib.error.URLError:
             Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
-        #coordinations of point
+        # coordinations of point
         fi = float(self.stationData['lat']) * pi / 180
         lam = float(self.stationData['long']) * pi / 180
-        deg = 1 #degree of fitting
+        deg = 1  # degree of fitting
 
         # open and load file from IERS
         file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
@@ -232,7 +271,7 @@ class Compute(QtWidgets.QDialog, PATH):
         rows = list(reader)
         file.close()
 
-        #date of first and last drop in campaign
+        # date of first and last drop in campaign
         first_drop = self.lines[0].split()[2:5]
         last_drop = self.lines[-1].split()[2:5]
 
@@ -244,7 +283,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         count_days = int(last_drop[1]) - int(first_drop[1])
 
-        #find index of starting day
+        # find index of starting day
         i = 0
         for row in reversed(rows):
             if row[1:4] == date:
@@ -254,7 +293,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         i = len(rows) - i + 1
 
-        #get one day before and one day after measuring
+        # get one day before and one day after measuring
         d = rows[i - 3:i + count_days]
         x_pole = [float(x[5]) for x in d]
         y_pole = [float(x[7]) for x in d]
@@ -262,7 +301,7 @@ class Compute(QtWidgets.QDialog, PATH):
         for i in range(len(x_pole) - 1):
             x.append(x[-1] + 24)
 
-        #fit pole coordinates
+        # fit pole coordinates
         x_para = np.polyfit(x, x_pole, deg)
         y_para = np.polyfit(x, y_pole, deg)
 
@@ -270,7 +309,7 @@ class Compute(QtWidgets.QDialog, PATH):
         for i in range(len(self.lines)):
             split_line = self.lines[i].split()
             drop_date = \
-            str(datetime(int(split_line[4]), 1, 1) + timedelta(int(split_line[3]) - 1)).split()[0]
+                str(datetime(int(split_line[4]), 1, 1) + timedelta(int(split_line[3]) - 1)).split()[0]
             day_drop = int(drop_date.split('-')[-1])
 
             multi = day_drop - int(d[0][3])
@@ -324,6 +363,17 @@ class Compute(QtWidgets.QDialog, PATH):
         # delete information about time of calculating from last computing
         self.calc_time.clear()
 
+        self.set_frmaxplot()
+
+        # set count of all fringes
+        self.set_total_fringes()
+
+        # Set self.frmin and self.frmax
+        self.set_frmin_frmax()
+
+        # Set sensitivity intervals
+        self.set_sensitivity_intervals()
+
         # clear the logging window?
         if self.clwin.isChecked():
             self.logWindow.clear()
@@ -344,7 +394,7 @@ class Compute(QtWidgets.QDialog, PATH):
         kalpha = float(self.kalpha.toPlainText())
 
         frminss = self.gravimeter['frminss']
-        self.frmaxss = self.gravimeter['frmaxss']
+        # self.frmaxss = self.gravimeter['frmaxss']
 
         # create estim file with head
         if self.outputs.isChecked():
@@ -373,7 +423,7 @@ class Compute(QtWidgets.QDialog, PATH):
         baro = []  # barometric correction data
         self.tides = []  # tide correction data
         # self.all_xef=[]
-        self.allRes = np.zeros((self.ndrop, self.frmaxss))  # numpy array for residuals of all drops
+        self.allRes = np.zeros((self.ndrop, self.total_fringes))  # numpy array for residuals of all drops
         self.v0 = []  # list of v0 values
         self.g0 = []  # list of g0 values
         self.resgradsum4 = np.zeros(
@@ -431,9 +481,9 @@ class Compute(QtWidgets.QDialog, PATH):
             # fall.setLpar(self.FG5X['Lpar'])
             fall.setLpar(float(self.lpar.toPlainText()))
             fall.setRubiFreq(self.instrumentData['rubiFreq'])
-            fall.setFrRange(int(self.frminT.toPlainText()), int(self.frmaxT.toPlainText()))
+            fall.setFrRange(self.frmin, self.frmax)
             # fall.setFrRange(frmin,frmax)
-            fall.setFRssRange(self.frmaxss, frminss)
+            fall.setFRssRange(self.frmaxplot, frminss)
             fall.setKpar(self.kpar.isChecked())
             fall.setPcable(self.gravimeter['Pcable'])
             fall.setAcable(self.gravimeter['Acable'])
@@ -490,12 +540,11 @@ class Compute(QtWidgets.QDialog, PATH):
             # if fall.ssres > kalpha:
             #     accepted = False
 
-
             # residuals added into matrix with all residuals
-            self.allRes[i, :] = fall.res_grad1[:self.frmaxss]
+            self.allRes[i, :] = fall.res_grad1
 
             # transfer residuals to string for adding into database
-            res = ', '.join(str(r) for r in fall.res_grad1[0:self.frmaxss])
+            res = ', '.join(str(r) for r in fall.res_grad1[0:self.frmaxplot])
             # date for database
             date_database = drop['Year'] + ':' + str(date.month).zfill(2) + ':' + str(date.day).zfill(2) + ' ' + drop[
                 'Time']
@@ -681,7 +730,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.v0m_bysets = []
         self.g0m_bysets = []
         self.tkor = []
-        self.zzh = np.zeros((self.gravimeter['frmaxplot'], nset))
+        self.zzh = np.zeros((self.frmaxplot, nset))
         for i in range(nset):
 
             a = self.matr_connection.get('select v0_withGR from results where Set1 = {}'.format(i + 1))
@@ -694,7 +743,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             self.zzh[0, i] = 0.5 * 9.809 * (tfit[0] - self.tkor[-1]) ** 2
 
-            for j in range(1, self.gravimeter['frmaxplot']):
+            for j in range(1, self.frmaxplot):
                 self.zzh[j, i] = self.zzh[0, i] + self.Lambda * 1e-9 / 2 * prescale * j
 
     def matlog_file(self):
@@ -720,8 +769,8 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(self.kimp.isChecked())
         line.append(self.kpar.isChecked())
         line.append(self.gravimeter['Lcable'])
-        line.append(self.gravimeter['frmin'])
-        line.append(self.gravimeter['frmax'])
+        line.append(self.frmin)
+        line.append(self.frmax)
         line.append(self.stationData['polarX'])
         line.append(self.stationData['polarY'])
         line.append(self.nset)
@@ -884,8 +933,8 @@ class Compute(QtWidgets.QDialog, PATH):
         1) FFT of average and average of FFT
         2) their ratio
         """
-        frmin = self.gravimeter['frmin']
-        frmax = self.gravimeter['frmax']
+        # frmin = self.gravimeter['frmin']
+        # frmax = self.gravimeter['frmax']
         nforfft = self.gravimeter['nforfft']
         indexpad = self.matr_connection.get('select count(*) from results where Accepted = 1')[0]
 
@@ -921,16 +970,16 @@ class Compute(QtWidgets.QDialog, PATH):
         """
 
         """
-        frmin = self.gravimeter['frmin']
-        frmax = self.gravimeter['frmax']
+        # frmin = self.gravimeter['frmin']
+        # frmax = self.gravimeter['frmax']
         nforfft = self.gravimeter['nforfft']
 
-        self.tin = np.linspace(self.tt[frmin - 1], self.tt[frmax - 1], nforfft)
-        tin1 = np.linspace(self.tt[frmin - 1], self.tt[int(frmin + (frmax - frmin + self.ps) / 2 - 1)], nforfft)
-        tin2 = np.linspace(self.tt[int(frmin + (frmax - frmin + self.ps) / 2)], self.tt[frmax - 1], nforfft)
+        self.tin = np.linspace(self.tt[self.frmin - 1], self.tt[self.frmax - 1], nforfft)
+        tin1 = np.linspace(self.tt[self.frmin - 1], self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2 - 1)], nforfft)
+        tin2 = np.linspace(self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2)], self.tt[self.frmax - 1], nforfft)
 
-        res1 = np.interp(tin1, self.tt[:self.gravimeter['frmaxplot']], self.meanRes[0, :])
-        res2 = np.interp(tin2, self.tt[:self.gravimeter['frmaxplot']], self.meanRes[0, :])
+        res1 = np.interp(tin1, self.tt[:self.frmaxplot], self.meanRes[0, :])
+        res2 = np.interp(tin2, self.tt[:self.frmaxplot], self.meanRes[0, :])
 
         yres1 = 2 / nforfft * np.fft.fft(res1)
         yres1a = np.abs(yres1[:int((nforfft - 1) / 2)])
@@ -1039,8 +1088,8 @@ class Compute(QtWidgets.QDialog, PATH):
         tt0 = [self.tt[0], self.tt[self.nfringe - 1]]
 
         ylim = [-yl, yl]
-        xlim = [self.tt[self.gravimeter['frmin']], self.tt[self.gravimeter['frmin']]]
-        xxlim = [self.tt[self.gravimeter['frmax']], self.tt[self.gravimeter['frmax']]]
+        xlim = [self.tt[self.frmin], self.tt[self.frmin]]
+        xxlim = [self.tt[self.frmax], self.tt[self.frmax]]
 
         import matplotlib as mpb
         mpb.use('ps')
@@ -1053,9 +1102,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(xxlim, ylim, '-b')
 
         # p.plot(tt[:frmaxplot], resmm, '-k', lw = 2)
-        p.plot(self.tt[:self.gravimeter['frmaxplot']], self.resgradsum4Mean[0, :self.gravimeter['frmaxplot']], '-k',
+        p.plot(self.tt[:self.frmaxplot], self.resgradsum4Mean[0, :self.frmaxplot], '-k',
                lw=1)
-        p.plot(self.tt[:self.gravimeter['frmaxplot']], self.resgradsm4filt[:self.gravimeter['frmaxplot']], '-',
+        p.plot(self.tt[:self.frmaxplot], self.resgradsm4filt[:self.frmaxplot], '-',
                lw=3,
                color=(1, 0, 1))
         p.text(xlim[0] + 0.001, -yl, 'Start fringe', color='b')
@@ -1080,8 +1129,8 @@ class Compute(QtWidgets.QDialog, PATH):
         tt0 = [self.tt[0], self.tt[self.nfringe - 1]]
 
         ylim = [-yl, yl]
-        xlim = [self.tt[self.gravimeter['frmin']], self.tt[self.gravimeter['frmin']]]
-        xxlim = [self.tt[self.gravimeter['frmax']], self.tt[self.gravimeter['frmax']]]
+        xlim = [self.tt[self.frmin], self.tt[self.frmin]]
+        xxlim = [self.tt[self.frmax], self.tt[self.frmax]]
 
         import matplotlib as mpb
         mpb.use('ps')
@@ -1097,9 +1146,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(xlim, ylim, '-b')
         p.plot(xxlim, ylim, '-b')
         for i in self.meanResSets:
-            p.plot(self.tt[:self.gravimeter['frmaxplot']], i, '-', lw=1, color='0.75')
+            p.plot(self.tt[:self.frmaxplot], i[ :self.frmaxplot], '-', lw=1, color='0.75')
 
-        p.plot(self.tt[:self.gravimeter['frmaxplot']], self.meanRes[0, :], '-k', lw=2)
+        p.plot(self.tt[:self.frmaxplot], self.meanRes[0, :], '-k', lw=2)
         p.plot(self.tinc, self.yn, '-', lw=3, color='tab:pink')
         p.text(xlim[0] + 0.001, -yl, 'Start fringe', color='b')
         p.text(xxlim[0] + 0.001, -yl, 'Final fringe', color='b')
@@ -1127,21 +1176,21 @@ class Compute(QtWidgets.QDialog, PATH):
         p = mpb.pyplot
         p.rcParams['figure.figsize'] = (20, 13)
         p.ylim([-siz, siz])
-        p.plot([self.gravimeter['frmin'], self.gravimeter['frmin']], [-siz, siz], '-b', lw=1)
-        p.plot([self.gravimeter['frmax'], self.gravimeter['frmax']], [-siz, siz], '-b', lw=1)
+        p.plot([self.frmin, self.frmin], [-siz, siz], '-b', lw=1)
+        p.plot([self.frmax, self.frmax], [-siz, siz], '-b', lw=1)
         p.title('Residuals for all drops')
         p.ylabel('Residuals /nm')
         p.xlabel('Fringe #')
-        x = range(1, self.gravimeter['frmaxplot'] + 1)
+        x = range(1, self.frmaxplot + 1)
         for i in range(len(r)):
             acc = r[i]
 
             if acc:
                 # black color
-                p.plot(x, self.allRes[i, :], '-k', lw=0.2)
+                p.plot(x, self.allRes[i, :self.frmaxplot], '-k', lw=0.2)
             else:
                 # grey color
-                p.plot(x, self.allRes[i, :], '-', color="0.5", lw=0.2)
+                p.plot(x, self.allRes[i, :self.frmaxplot], '-', color="0.5", lw=0.2)
 
         path = self.projDirPath + '/Graphs/'
         name = 'resid_all'
@@ -1155,11 +1204,9 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Printing shifted residuals by sets to graph
         """
-
-        frmaxplot = self.gravimeter['frmaxplot']  # range of data
-        frmin = self.gravimeter['frmin']  # start fringe
-        frmax = self.gravimeter['frmax']  # final fringe
-        x = self.tt[:frmaxplot]  # data for x axis
+        # frmin = self.gravimeter['frmin']  # start fringe
+        # frmax = self.gravimeter['frmax']  # final fringe
+        x = self.tt[:self.frmaxplot]  # data for x axis
 
         j = 1
         X = []
@@ -1176,7 +1223,7 @@ class Compute(QtWidgets.QDialog, PATH):
         text_color = []
         for l in self.meanResSets:
             X.append(x)
-            y = [k + j for k in l]
+            y = [k + j for k in l[ :self.frmaxplot]]
             Y.append(y)
             mark.append('-k')
             col_name.append('Set{}'.format(j))
@@ -1193,13 +1240,13 @@ class Compute(QtWidgets.QDialog, PATH):
             j += 1
 
         # start fringe
-        XX.append([x[frmin], x[frmin]])
+        XX.append([x[self.frmin], x[self.frmin]])
         YY.append([0.5, self.nset + 0.5])
         markk.append('-b')
         lww.append(0.3)
 
         # final fringe
-        XX.append([x[frmax], x[frmax]])
+        XX.append([x[self.frmax], x[self.frmax]])
         YY.append([0.5, self.nset + 0.5])
         markk.append('-b')
         lww.append(0.3)
@@ -1209,7 +1256,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   title='Set residuals', winsize=(15, 10))
         g.plotXY(x=X, y=Y, mark=mark, columns_name=col_name, lw=lw)
         g.plotXY(x=XX, y=YY, mark=markk, columns_name=col_name, lw=lww)
-        g.text(x=[x[frmin], x[frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
+        g.text(x=[x[self.frmin], x[self.frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
         g.text(x=text_x, y=text_y, t=col_name, c=text_color)
         g.saveSourceData()
         g.save()
@@ -1257,29 +1304,18 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Variability of set g-values on the choice of first and final fringe
         """
-        sensa_tx = self.gravimeter['sensa_tx']
-        sensa_tn = self.gravimeter['sensa_tn']
-        sensa_bx = self.gravimeter['sensa_bx']
-        sensa_bn = self.gravimeter['sensa_bn']
-
-        # # y values
-        # celk = sensa_tx - sensa_tn
-        # dglrms = rssq(self.dglc) / np.sqrt(celk + 1)
-        #
-        # celk = sensa_bx - sensa_bn
-        # dgrrms = rssq(self.dgrc) / np.sqrt(celk + 1)
-
         # xrange
         ts = np.linspace(1, self.nset, self.nset)
 
         # legend
-        l1 = r'$RMS_S({}-{}) = {:.1f}  nm.s^2$'.format(sensa_tn, sensa_tx, np.mean(self.dglrms))
-        l2 = r'$RMS_F({}-{}) = {:.1f}  nm.s^2$'.format(sensa_bn, sensa_bx, np.mean(self.dgrrms))
+        l1 = r'$RMS_S({}-{}) = {:.1f}  nm.s^2$'.format(self.sensa_tn, self.sensa_tx, np.mean(self.dglrms))
+        l2 = r'$RMS_F({}-{}) = {:.1f}  nm.s^2$'.format(self.sensa_bn, self.sensa_bx, np.mean(self.dgrrms))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label='Set #', y_label=r'Standart deviation $[nm.s^2]$',
                   title='Variability of set g-values on the choice of first and final fringe')
-        g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'], legend=[l1, l2],
+        g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
+                 legend=[l1, l2],
                  lw=[1, 1])
         g.saveSourceData()
         g.save()
@@ -1293,21 +1329,23 @@ class Compute(QtWidgets.QDialog, PATH):
         lw = []
 
         # x range
-        tttt = np.linspace(self.gravimeter['sens_bn'], self.gravimeter['sens_bx'] - 1,
-                           self.gravimeter['sens_bx'] - self.gravimeter['sens_bn'] + 1)
+        tttt = np.linspace(self.sens_bn, self.sens_bx - 1,
+                           self.sens_bx - self.sens_bn + 1)
+
+        tttt = [i for i in tttt if i <= self.frmaxplot]
 
         # sensitivity data
         for i in range(len(self.dgr)):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(tttt)
-            Y.append(self.dgr[i, :])
+            Y.append(self.dgr[i, :len(tttt)])
             l.append('Set ' + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
         X.append(tttt)
-        Y.append(self.dgrm.T)
+        Y.append(self.dgrm.T[:len(tttt)])
         l.append('Mean')
         cn.append('Mean')
         m.append('k-')
@@ -1317,7 +1355,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   show=self.open_graphs.isChecked(), x_label='Final Fringe #', y_label='',
                   title='Gravity change due to choice of the last fringe')
         g.plotXY(x=[tttt], y=[[0 for i in range(len(tttt))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
-        g.plotXY(x=[[self.gravimeter['frmax'], self.gravimeter['frmax']]], y=[[-10, 10]], mark=['b-'],
+        g.plotXY(x=[[self.frmax, self.frmax]], y=[[-10, 10]], mark=['b-'],
                  columns_name='xx', legend='',
                  lw=[0.3])
         g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
@@ -1521,13 +1559,15 @@ class Compute(QtWidgets.QDialog, PATH):
         file.close()
 
         if self.outputs.isChecked():
-            self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation', type='normalized data')
+            self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation',
+                            type='normalized data')
 
-            self.allanGraph(a3, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_gradient', type='VGG')
+            self.allanGraph(a3, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_gradient',
+                            type='VGG')
 
     def compute_normres(self):
         self.logWindow.append(separator)
-        self.logWindow.append('Compute allan standart deviation')
+        self.logWindow.append('Compute statistic by sets')
         QtCore.QCoreApplication.processEvents()
 
         r = self.matr_connection.get('select max(Set1) from results')
@@ -1598,7 +1638,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.g0m = np.median(self.g0) / 10e9
         v0mg0mkor = (-self.v0m / self.g0m) / 10
 
-        self.tinc = np.linspace(self.tt[0], self.tt[self.gravimeter['frmaxplot']], self.gravimeter['nforfft'])
+        self.tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot], self.gravimeter['nforfft'])
 
         a = res_final(path=self.projDirPath, header=headers['residuals_final'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'residuals_final', delimiter=self.delimiter)
@@ -1611,27 +1651,27 @@ class Compute(QtWidgets.QDialog, PATH):
                           name=self.stationData['ProjName'] + '_' + 'residuals_final1000', delimiter=self.delimiter)
 
         # =======================================================================
-        resyyy = np.interp(self.tinc, self.tt[:self.gravimeter['frmaxplot']], self.meanRes[0, :])
+        resyyy = np.interp(self.tinc, self.tt[:self.frmaxplot], self.meanRes[0, :])
 
         coff = int(self.coff.toPlainText())
         n = 4
-        self.kcutoff = 2 * coff * (self.tt[self.gravimeter['frmaxplot'] - 1] - self.tt[0]) / self.gravimeter['nforfft']
+        self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.gravimeter['nforfft']
 
         aa, bb = sig.butter(n, self.kcutoff, btype='low')
         self.yn = sig.filtfilt(aa, bb, resyyy)
 
-        resmmi = np.interp(self.tt[:self.gravimeter['frmaxplot']], self.tinc, self.yn)
+        resmmi = np.interp(self.tt[:self.frmaxplot], self.tinc, self.yn)
 
         # =======================================================================
 
-        self.resgradsm4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean[0, :self.gravimeter['frmaxplot']])
+        self.resgradsm4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean[0, :self.frmaxplot])
 
         # =======================================================================
 
         # data for round value to print into file
         round_ind_bysets = [[1, 5], [2, 5], [3, 5]]
         round_ind_bysets.extend([[i, 6] for i in range(4, len(self.meanResSets[:, 0]) + 1)])
-        for it in range(self.gravimeter['frmaxplot']):
+        for it in range(self.frmaxplot):
 
             z = (it) * self.Lambda / 2 * 1e-9 * prescale
             line = [it + 1, z, self.tt[it], self.tt[it] - v0mg0mkor, self.meanRes[0, it], resmmi[it]]
@@ -1725,8 +1765,8 @@ class Compute(QtWidgets.QDialog, PATH):
         QtCore.QCoreApplication.processEvents()
 
         # initialization of arrays for averages
-        self.meanResSets = np.zeros((self.nset, self.frmaxss))
-        self.meanRes = np.zeros((1, self.frmaxss))
+        self.meanResSets = np.zeros((self.nset, self.total_fringes))
+        self.meanRes = np.zeros((1, self.frmaxplot))
         # get is drop accepted set values from database
         d = self.matr_connection.get('select Accepted, Set1 from results')
         self.d = d
@@ -1744,7 +1784,7 @@ class Compute(QtWidgets.QDialog, PATH):
             if i[0] == 1:
                 # mean the residuals
                 self.meanResSets[i[1] - 1, :] += self.allRes[it, :] / c[i[1] - 1][0]
-                self.meanRes[0, :] += self.allRes[it, :]
+                self.meanRes[0, :] += self.allRes[it, :self.frmaxplot]
 
             it += 1
 
@@ -1759,13 +1799,13 @@ class Compute(QtWidgets.QDialog, PATH):
         QtCore.QCoreApplication.processEvents()
 
         # split tt on nforfft parts
-        tin = np.linspace(self.tt[self.gravimeter['frmin'] - 1], self.tt[self.gravimeter['frmax'] - 1],
+        tin = np.linspace(self.tt[self.frmin - 1], self.tt[self.frmax - 1],
                           self.gravimeter['nforfft'])
-        ttx = self.tt[self.gravimeter['frmin'] - 1:self.gravimeter['frmax']]
+        ttx = self.tt[self.frmin - 1:self.frmax]
 
         x = int((self.gravimeter['nforfft'] - 1) / 2)
         # arrays with results
-        self.yfda = np.zeros((len(self.allRes), self.gravimeter['nforfft']), dtype=complex)
+        self.yfda = np.zeros((len(self.allRes[:self.frmaxplot]), self.gravimeter['nforfft']), dtype=complex)
         self.yfdMeanBySet = np.zeros((self.nset, x))
         self.yfdMean = np.zeros((1, x))
         yfs = np.zeros((self.nset, self.gravimeter['nforfft']), dtype=complex)
@@ -1776,7 +1816,7 @@ class Compute(QtWidgets.QDialog, PATH):
         for ress in self.allRes:
             # for accepted drops
             if self.d[it][0] == 1:
-                ress = ress[self.gravimeter['frmin'] - 1: self.gravimeter['frmax']]
+                ress = ress[self.frmin - 1: self.frmax]
 
                 # transformation of ress = f(ttx) => tin
                 resd = np.interp(tin, ttx, ress)
@@ -1800,7 +1840,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # fourier transformation for mean residuals by set
         for i in range(self.nset):
-            ress = np.interp(tin, ttx, self.meanResSets[i, self.gravimeter['frmin'] - 1:self.gravimeter['frmax']])
+            ress = np.interp(tin, ttx, self.meanResSets[i, self.frmin - 1:self.frmax])
 
             ressm = ress - np.mean(ress)
 
@@ -1811,7 +1851,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.yfsa[i, :] = np.real(np.absolute(fft[0:x]))
 
         # spectrum for mean all residuals
-        resf = np.interp(tin, ttx, self.meanRes[0, self.gravimeter['frmin'] - 1:self.gravimeter['frmax']])
+        resf = np.interp(tin, ttx, self.meanRes[0, self.frmin - 1:self.frmax])
         resfm = resf - np.mean(resf)
         yff = 2 / self.gravimeter['nforfft'] * np.fft.fft(resfm)
         self.yffa = np.real(np.absolute(yff[0:x]))
@@ -1846,37 +1886,33 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Compute sensitivity')
         QtCore.QCoreApplication.processEvents()
 
-        sens_tn = self.gravimeter['sens_tn']
-        sens_tx = self.gravimeter['sens_tx']
-        sens_bn = self.gravimeter['sens_bn']
-        sens_bx = self.gravimeter['sens_bx']
 
         # initialization of arrays for sensitivity
-        self.dgl = np.zeros((self.nset, sens_tx - sens_tn + 1))
-        self.dgr = np.zeros((self.nset, sens_bx - sens_bn + 1))
+        self.dgl = np.zeros((self.nset, self.sens_tx - self.sens_tn + 1))
+        self.dgr = np.zeros((self.nset, self.sens_bx - self.sens_bn + 1))
 
-        self.dglm = np.zeros((1, sens_tx - sens_tn + 1))
-        self.dgrm = np.zeros((1, sens_bx - sens_bn + 1))
+        self.dglm = np.zeros((1, self.sens_tx - self.sens_tn + 1))
+        self.dgrm = np.zeros((1, self.sens_bx - self.sens_bn + 1))
 
         # sensitivity is calculated for averages by sets
         for i in range(self.nset):
-            for j in range(sens_tn, sens_tx + 1):
+            for j in range(self.sens_tn, self.sens_tx + 1):
                 # data for fitting by parabola on left side of drop
-                x = self.tt[j - 1: self.gravimeter['frmax']]
-                y = self.meanResSets[i, j - 1:self.gravimeter['frmax']]
+                x = self.tt[j - 1: self.frmax]
+                y = self.meanResSets[i, j - 1:self.frmax]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
                 self.dgl[i, j - 1] = koef[0] * 2
 
-            for j in range(sens_bn, sens_bx + 1):
+            for j in range(self.sens_bn, self.sens_bx + 1):
                 # data for fitting by parabola on right side of drop
-                x = self.tt[self.gravimeter['frmin'] - 1: j - 1]
-                y = self.meanResSets[i, self.gravimeter['frmin'] - 1: j - 1]
+                x = self.tt[self.frmin - 1: j - 1]
+                y = self.meanResSets[i, self.frmin - 1: j - 1]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
-                self.dgr[i, j - 1 - sens_bn] = koef[0] * 2
+                self.dgr[i, j - 1 - self.sens_bn] = koef[0] * 2
 
             self.dglm += self.dgl[i, :]
             self.dgrm += self.dgr[i, :]
@@ -1884,18 +1920,20 @@ class Compute(QtWidgets.QDialog, PATH):
         # average
         self.dglm /= self.nset
         self.dgrm /= self.nset
+        # np.savetxt('dgr.csv', self.dgr, delimiter=';')
+        # np.savetxt('dgrm.csv', self.dgrm, delimiter=';')
         # ==============================================================================
 
-        rozd = self.gravimeter['sensa_tn'] - self.gravimeter['sens_tn']
-        celk = self.gravimeter['sensa_tx'] - self.gravimeter['sensa_tn']
+        rozd = self.sensa_tn - self.sens_tn
+        celk = self.sensa_tx - self.sensa_tn
 
         self.dglc = self.dgl[:, rozd:rozd + 1 + celk]
 
         self.dglrms = np.sqrt(np.sum(np.square(self.dglc.transpose()), axis=0)) / np.sqrt(celk + 1)
 
         # ==============================================================================
-        rozd = self.gravimeter['sensa_bn'] - self.gravimeter['sens_bn']
-        celk = self.gravimeter['sensa_bx'] - self.gravimeter['sensa_bn']
+        rozd = self.sensa_bn - self.sens_bn
+        celk = self.sensa_bx - self.sensa_bn
 
         self.dgrc = self.dgr[:, rozd:rozd + 1 + celk]
 
@@ -2007,7 +2045,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graph_sensitivity_top(self):
 
-        xlim = [self.gravimeter['frmin']]
+        xlim = [self.frmin]
         ylim = [-20, 20]
         legend = []
 

@@ -6,7 +6,6 @@ from CONFIG import logo_picture
 
 PATH, _ = uic.loadUiType('gui/sumarize.ui')
 
-
 class Sumarize(QtWidgets.QDialog, PATH):
     """
     Show information from project file after creating new project
