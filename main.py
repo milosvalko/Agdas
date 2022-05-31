@@ -11,6 +11,7 @@ from CONFIG import logo, wel, logo_picture, warning_window
 from time import sleep
 from functions import printDict
 from comparison import Comparison
+import os
 
 PATH, _ = uic.loadUiType('gui/main.ui')
 
@@ -42,7 +43,19 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.openProject.triggered.connect(self.open_project)
         self.actionComparison.triggered.connect(self.compare)
 
+        self.finals_folder()
+
         # self.Import_data.triggered.connect(self.importdata)
+
+    def finals_folder(self):
+        """
+        This method just creates 'finals' folder
+        @return:
+        """
+        try:
+            os.mkdir('finals')
+        except FileExistsError:
+            pass
 
     @staticmethod
     def splashScreen():
