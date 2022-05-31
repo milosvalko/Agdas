@@ -33,6 +33,7 @@ class NewProject(QtWidgets.QDialog, PATH):
         Get files direction
         """
         self.path = QtWidgets.QFileDialog.getExistingDirectory()
+        self.name.setText(self.path)
 
     def saveDir(self):
         """
