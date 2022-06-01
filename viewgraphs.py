@@ -3,8 +3,11 @@ from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
 import os
 from PyQt5.QtGui import QIcon, QPixmap
 from CONFIG import logo_picture
+import os
 
-PATH, _ = uic.loadUiType('gui/graph.ui')
+script_path = os.path.dirname(os.path.realpath(__file__))
+
+PATH, _ = uic.loadUiType(script_path + '\gui\graph.ui')
 
 
 class Graphs(QtWidgets.QDialog, PATH):

@@ -7,13 +7,15 @@ from PyQt5.QtWidgets import QSplashScreen
 from PyQt5.QtGui import QIcon, QPixmap
 from data import Data
 from viewgraphs import Graphs
-from CONFIG import logo, wel, logo_picture, warning_window
+from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
 from functions import printDict
 from comparison import Comparison
 import os
 
-PATH, _ = uic.loadUiType('gui/main.ui')
+script_path = os.path.dirname(os.path.realpath(__file__))
+
+PATH, _ = uic.loadUiType(script_path + '\gui\main.ui')
 
 
 class Main(QtWidgets.QMainWindow, PATH):
@@ -29,8 +31,9 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.setupUi(self)
         self.setWindowIcon(QIcon(logo_picture))
 
+
         # show opened/closed picture
-        pixmap = QPixmap('picture/unchecked.png')
+        pixmap = QPixmap(picture_unchecked)
         pixmap = pixmap.scaled(16, 16)
         self.check.setPixmap(pixmap)
 

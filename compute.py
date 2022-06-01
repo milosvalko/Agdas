@@ -16,8 +16,11 @@ from functions import allan, roundList, date_to_mjd, rssq, movingAverage
 import numpy as np
 from scipy.stats import t
 import scipy.signal as sig
+import os
 
-PATH, _ = uic.loadUiType('gui/compute.ui')
+script_path = os.path.dirname(os.path.realpath(__file__))
+
+PATH, _ = uic.loadUiType(script_path + '\gui\compute.ui')
 
 
 # import matplotlib

@@ -1,5 +1,5 @@
 import numpy as np
-
+import os
 
 def getFG5X(ps):
     FG5X = {
@@ -134,7 +134,8 @@ G. O. Pecny homepage:       www.pecny.cz
 '''
 
 separator = '==============================='
-logo_picture = 'picture/logo.png'
+logo_picture = os.path.dirname(os.path.realpath(__file__)) + r'\picture\logo.png'
+picture_unchecked = os.path.dirname(os.path.realpath(__file__)) + r'\picture\unchecked.png'
 
 headers = {
     'estim': 'Set {0} Drop {0} m0 {0} z0 {0} z0-std {0} v0 {0} v0-std {0} g0 {0} g0-std {0} a {0} a-std {0} b {0} b-std {0} c {0} c-std {0} d {0} d-std {0} e {0} e-std {0} f {0} f-std \n   {0}    {0} {0} mm {0} mm {0} mm.s-1 {0} mm.s-1 {0} nm.s-2 {0} nm.s-2 {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm   ',

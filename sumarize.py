@@ -3,8 +3,11 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtGui import QIcon
 from CONFIG import logo_picture
+import os
 
-PATH, _ = uic.loadUiType('gui/sumarize.ui')
+script_path = os.path.dirname(os.path.realpath(__file__))
+
+PATH, _ = uic.loadUiType(script_path + '\gui\sumarize.ui')
 
 class Sumarize(QtWidgets.QDialog, PATH):
     """
