@@ -26,7 +26,7 @@ def getFG5X(ps):
         'Pcable': np.pi / 2,
         'valenv': 0.005
     }
-    FG5X['sens_bn'] = FG5X['frmaxss'] - FG5X['sens_tx']
+    # FG5X['sens_bn'] = FG5X['frmaxss'] - FG5X['sens_tx']
     return FG5X
 
 
@@ -37,12 +37,12 @@ def getFG5(ps):
         'frmax': 629 * ps,  # end fringe
         'fmodf': 8333.251,  # [Hz] modulation frequency
         'frmaxplot': 650 * ps,
-        'sens_tn': 1,
-        'sens_tx': 100 * ps,
-        'sensa_tn': 15 * ps,
-        'sensa_tx': 60 * ps,
-        'sensa_bn': 550 * ps,
-        'sensa_bx': 640 * ps,
+        # 'sens_tn': 1,
+        # 'sens_tx': 100 * ps,
+        # 'sensa_tn': 15 * ps,
+        # 'sensa_tx': 60 * ps,
+        # 'sensa_bn': 550 * ps,
+        # 'sensa_bx': 640 * ps,
         'nforfft': 3293,
         'ksmooth': 3,
         'sens_bx': 650 * ps,
@@ -55,7 +55,7 @@ def getFG5(ps):
         'frmaxss': 650 * ps,
         'valenv': 0.002
     }
-    FG5['sens_bn'] = FG5['frmaxplot'] - 150 * ps
+    # FG5['sens_bn'] = FG5['frmaxplot'] - 150 * ps
     # FG5['frmaxss'] = FG5['frmax'] + 10
     # FG5['frminss'] = FG5['frmin'] - 10
     return FG5

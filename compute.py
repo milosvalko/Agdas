@@ -50,6 +50,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.kalpha.setText(str(50))
 
+        self.drop()  # open and load drop file
+
         # set values to widgets
         self.gravimeter_box.addItems(['FG5X', 'FG5'])
 
@@ -82,7 +84,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # self.Prescale()
         self.numDrops()
-        self.drop()  # open and load drop file
+
 
         self.show()
         self.exec()
@@ -250,11 +252,16 @@ class Compute(QtWidgets.QDialog, PATH):
             self.numDrop.setValue(1)
 
     def downloadPole(self):
-        '''
-        Download pole coordinates from IERS and compute corrections for each drop
-        '''
+        """
+        Download pole coordinates from IERS/naval and compute corrections for each drop
+        """
 
-        url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
+        if self.service.currentText() == 'IERS':
+            url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
+
+        if self.service.currentText() == 'Naval Observatory':
+            url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
+
         try:
             urllib.request.urlretrieve(url, os.getcwd() + '/finals/finals2000A.all.csv')
         except urllib.error.URLError:
@@ -264,12 +271,6 @@ class Compute(QtWidgets.QDialog, PATH):
         fi = float(self.stationData['lat']) * pi / 180
         lam = float(self.stationData['long']) * pi / 180
         deg = 1  # degree of fitting
-
-        # open and load file from IERS
-        file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
-        reader = csv.reader(file, delimiter=';')
-        rows = list(reader)
-        file.close()
 
         # date of first and last drop in campaign
         first_drop = self.lines[0].split()[2:5]
@@ -283,23 +284,54 @@ class Compute(QtWidgets.QDialog, PATH):
 
         count_days = int(last_drop[1]) - int(first_drop[1])
 
-        # find index of starting day
-        i = 0
-        for row in reversed(rows):
-            if row[1:4] == date:
-                today = row
-                break
-            i += 1
+        if self.service.currentText() == 'IERS':
+            # open and load file from IERS
+            file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
+            reader = csv.reader(file, delimiter=';')
+            rows = list(reader)
+            file.close()
 
-        i = len(rows) - i + 1
+            # find index of starting day
+            i = 0
+            for row in reversed(rows):
+                if row[1:4] == date:
+                    # today = row
+                    break
+                i += 1
 
-        # get one day before and one day after measuring
-        d = rows[i - 3:i + count_days]
-        x_pole = [float(x[5]) for x in d]
-        y_pole = [float(x[7]) for x in d]
-        x = [0]
-        for i in range(len(x_pole) - 1):
-            x.append(x[-1] + 24)
+            i = len(rows) - i + 1
+
+            # get one day before and one day after measuring
+            d = rows[i - 3:i + count_days]
+            x_pole = [float(x[5]) for x in d]
+            y_pole = [float(x[7]) for x in d]
+            x = [0]
+            for i in range(len(x_pole) - 1):
+                x.append(x[-1] + 24)
+
+        if self.service.currentText() == 'Naval Observatory':
+            file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
+            file_l = file.read()
+            file.close()
+            file = file_l.splitlines()
+
+            i = 0
+            for l in reversed(file):
+                d = ['20' + l[:3].split()[0], l[2:4].split()[0].zfill(2), l[4:6].split()[0].zfill(2)]
+                if d == date:
+                    break
+
+                i += 1
+
+            i = len(file) - i + 1
+
+            # get one day before and one day after measuring
+            d = file[i - 3:i + count_days]
+            x_pole = [float(x[19:27]) for x in d]
+            y_pole = [float(x[38:46]) for x in d]
+            x = [0]
+            for i in range(len(x_pole) - 1):
+                x.append(x[-1] + 24)
 
         # fit pole coordinates
         x_para = np.polyfit(x, x_pole, deg)
