@@ -352,10 +352,28 @@ class projectFile():
         Read project file word by word and create 'self.file' list
         """
         self.file = []
+        self.names = []
 
-        with open(self.projectfile, "r") as f:
-            for line in f:
-                self.file.extend(line.split())
+        file = open(self.projectfile, 'r')
+        self.file_lines = file.read().splitlines()
+        file.close()
+
+        i = 0
+        for line in self.file_lines:
+            line_split = line.split()
+            self.file.extend(line_split)
+            ind = [i for j in range(len(line_split))]
+            self.names.extend(ind)
+            i += 1
+
+    def insert_to_names(self, dict, i):
+        ind = self.file_lines[self.names[i]].index(':')
+        name = self.file_lines[self.names[i]][:ind + 1]
+        self.names_summary[list(dict.keys())[-1]] = name
+
+    def insert_to_units(self, dict, i):
+
+        self.units[list(dict.keys())[-1]] = self.file[i+2]
 
     def createDictionary(self):
         """
@@ -369,179 +387,287 @@ class projectFile():
         instrumentData = {}
         processingResults = {}
         gravityCorrections = {}
+        self.names_summary = {}
+        self.units = {}
         for i in range(0, len(self.file)):
 
             if self.file[i] == 'Project' and self.file[i + 1] == 'Name:':
                 stationData['ProjName'] = self.file[i + 2]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Name:' and self.file[i - 1] == 'Data':
                 stationData['name'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Code:':
                 stationData['SiteCode'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Lat:':
                 stationData['lat'] = self.file[i + 1]
+                self.names_summary['lat'] = 'Latitude:'
+                self.units['lat'] = 'deg'
 
             if self.file[i] == 'Long:':
                 stationData['long'] = self.file[i + 1]
+                self.names_summary['long'] = 'Longitude:'
+                self.units['long'] = 'deg'
 
             if self.file[i] == 'Elev:':
                 stationData['elev'] = self.file[i + 1]
+                self.names_summary['elev'] = 'Elevation:'
+                self.units['elev'] = 'm'
 
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Setup':
                 stationData['setupHeight'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
+                self.insert_to_units(stationData, i)
 
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Transfer' and self.file[i - 2] == 'cm':
                 stationData['transferHeight'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
+                self.insert_to_units(stationData, i)
 
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Actual':
                 stationData['actualHeight'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
+                self.insert_to_units(stationData, i)
 
             if self.file[i] == 'Gradient:' and self.file[i - 1] == 'cm':
                 stationData['gradient'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
+                self.insert_to_units(stationData, i)
 
             if self.file[i] == 'Pressure:' and self.file[i - 1] == 'Air':
                 stationData['airPressure'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
+                self.insert_to_units(stationData, i)
 
             if self.file[i] == 'Factor:' and self.file[i - 1] == 'Admittance':
                 stationData['barometricFactor'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Coord:':
                 stationData['polarX'] = self.file[i + 1]
+                self.names_summary['polarX'] = 'X polar coordinate:'
+                self.units['polarX'] = '"'
+
                 stationData['polarY'] = self.file[i + 3]
+                self.names_summary['polarY'] = 'Y polar coordinate:'
+                self.units['polarY'] = '"'
 
             if self.file[i] == 'Filename:' and self.file[i - 1] == 'Potential':
                 stationData['potentialFile'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Filename:' and self.file[i - 1] == 'Factor':
                 stationData['deltaFactorFile'] = self.file[i + 1]
+                self.insert_to_names(stationData, i)
 
             if self.file[i] == 'Type:' and self.file[i - 1] == 'Meter':
                 instrumentData['meterType'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
 
             if self.file[i] == 'S/N:':
                 instrumentData['meterS/N'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
 
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Factory':
                 instrumentData['factoryHeight'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'Frequency:' and self.file[i - 1] == 'Rubidium':
                 instrumentData['rubiFreq'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'Laser:' and self.file[i + 3] == 'ID:':
                 instrumentData['laser'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
 
             if self.file[i] == 'ID:':
                 instrumentData['ID'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['ID_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IE:':
                 instrumentData['IE'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['IE_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IF:':
                 instrumentData['IF'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['IF_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IG:':
                 instrumentData['IG'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['IG_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IH:':
                 instrumentData['IH'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['IH_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'II:':
                 instrumentData['II'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['II_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IJ:':
                 instrumentData['IJ'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
+
                 instrumentData['IJ_V'] = self.file[i + 4]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'Frequency:' and self.file[i - 1] == 'Modulation':
                 instrumentData['modulFreq'] = self.file[i + 1]
+                self.insert_to_names(instrumentData, i)
+                self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'Date:':
                 processingResults['date'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Time:':
                 processingResults['time'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'DOY:':
                 processingResults['doy'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Year:':
                 processingResults['year'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Offset':
                 processingResults['timeOffset'] = self.file[i + 4]
+                self.names_summary['timeOffset'] = 'Time Offset (D h:m:s):'
 
             if self.file[i] == 'Gravity:':
                 processingResults['gravity'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
+                self.insert_to_units(processingResults, i)
 
             if self.file[i] == 'Scatter:':
                 processingResults['setScatter'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
+                self.insert_to_units(processingResults, i)
 
             if self.file[i] == 'Precision:':
                 processingResults['precision'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
+                self.insert_to_units(processingResults, i)
 
             if self.file[i] == 'Uncertainty:' and self.file[i - 1] == 'Total':
                 processingResults['totalUncertainty'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
+                self.insert_to_units(processingResults, i)
 
             if self.file[i] == 'Collected:':
                 processingResults['setsCollected'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Processed:' and self.file[i - 1] == 'Sets':
                 processingResults['setsProcessed'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Processed:' and self.file[i - 1] == '#s':
                 processingResults['processedSets'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Processed:' and self.file[i - 1] == 'NOT' and self.file[i - 2] == 'Sets':
                 processingResults['numNotProcessed'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Drops/Set:':
                 processingResults['dropsInSet'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Accepted:':
                 processingResults['acceptedDrops'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Rejected:':
                 processingResults['rejectedDrops'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Acquired:':
                 processingResults['totalFringes'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Start:':
                 processingResults['fringeStart'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Fringes:':
                 processingResults['processedFringes'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Multiplex:':
                 processingResults['multiplex'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == 'Factor:' and self.file[i - 1] == 'Scale':
                 processingResults['scaleFactor'] = self.file[i + 1]
+                self.insert_to_names(processingResults, i)
 
             if self.file[i] == '(ETGTAB):':
                 gravityCorrections['earthTide'] = self.file[i + 1]
+                self.insert_to_names(gravityCorrections, i)
+                self.insert_to_units(gravityCorrections, i)
 
             if self.file[i] == 'Motion:' and self.file[i - 1] == 'Polar' and self.file[i+3] == 'Barometric':
                 gravityCorrections['polarMotion'] = self.file[i + 1]
+                self.insert_to_names(gravityCorrections, i)
+                self.insert_to_units(gravityCorrections, i)
 
             if self.file[i] == 'Pressure:' and self.file[i - 1] == 'Barometric':
                 gravityCorrections['baroPress'] = self.file[i + 1]
+                self.insert_to_names(gravityCorrections, i)
+                self.insert_to_units(gravityCorrections, i)
 
             if self.file[i] == 'Height:' and self.file[i + 2] == 'µGal':
                 gravityCorrections['transferHeight'] = self.file[i + 1]
+                self.insert_to_names(gravityCorrections, i)
+                self.insert_to_units(gravityCorrections, i)
 
             if self.file[i] == 'Xo:':
                 gravityCorrections['referenceXo'] = self.file[i + 1]
+                self.insert_to_names(gravityCorrections, i)
+                self.insert_to_units(gravityCorrections, i)
 
-        return stationData, instrumentData, processingResults, gravityCorrections
+        return stationData, instrumentData, processingResults, gravityCorrections, self.names_summary, self.units
 
 
 class rawFile():

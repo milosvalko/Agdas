@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>611</width>
-    <height>455</height>
+    <width>576</width>
+    <height>467</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,28 +18,13 @@
     <rect>
      <x>10</x>
      <y>20</y>
-     <width>581</width>
-     <height>411</height>
+     <width>551</width>
+     <height>431</height>
     </rect>
    </property>
    <property name="currentIndex">
     <number>0</number>
    </property>
-   <widget class="QWidget" name="tab_5">
-    <attribute name="title">
-     <string>Raw file</string>
-    </attribute>
-    <widget class="QTextBrowser" name="raw_tab">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>20</y>
-       <width>511</width>
-       <height>331</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
    <widget class="QWidget" name="tab">
     <attribute name="title">
      <string>Station data</string>
@@ -52,6 +37,19 @@
        <width>511</width>
        <height>331</height>
       </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="accept_button">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>360</y>
+       <width>93</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>OK</string>
      </property>
     </widget>
    </widget>

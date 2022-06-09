@@ -152,6 +152,9 @@
      <property name="text">
       <string>All drops</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
     <widget class="QLabel" name="label_6">
      <property name="geometry">
@@ -665,6 +668,9 @@ p, li { white-space: pre-wrap; }
      <property name="text">
       <string>Outputs</string>
      </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
     </widget>
     <widget class="QCheckBox" name="open_graphs">
      <property name="geometry">
@@ -718,6 +724,9 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="text">
       <string>From project file</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
     <widget class="QRadioButton" name="useIERSPoleCorr">

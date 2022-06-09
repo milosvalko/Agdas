@@ -119,7 +119,7 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.frmax + INTsens <= (self.frmax + int(self.processingResults['totalFringes']))/2:
             self.sens_bx = self.frmax + INTsens
         else:
-            self.sens_bx = (self.frmax + int(self.processingResults['totalFringes']))/2
+            self.sens_bx = int((self.frmax + int(self.processingResults['totalFringes']))/2)
 
         self.sensa_tn = self.frmin - int(self.total_fringes / 100)  # Sensitivity top - minimum (for rms computing)
         self.sensa_tx = self.frmin + int(self.total_fringes / 20)  # Sensitivity top - maximum (for rms computing)
@@ -396,7 +396,8 @@ class Compute(QtWidgets.QDialog, PATH):
         # set color of RUN button on green
         self.run.setStyleSheet("background-color : green")
         # delete information about time of calculating from last computing
-        self.calc_time.clear()
+        # self.calc_time.clear()
+        self.calc_time.setText('I am still running!')
 
         self.set_frmaxplot()
 
@@ -645,7 +646,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # self.matr_connection.close()
 
         # Compute statistics
-        if self.outputs.isChecked():
+        if self.outputs.isChecked() and self.nset > 1:
             # ===========================================================================================================#
             # compute statistics for printing files
             self.rejectBySigma()
@@ -659,12 +660,12 @@ class Compute(QtWidgets.QDialog, PATH):
             if self.kpar.isChecked():
                 self.parasitic_wave()
 
-                g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-                          show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
-                          title='Atmosferic correction')
-                g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
-                g.saveSourceData()
-                g.save()
+            g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
+                      show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
+                      title='Atmosferic correction')
+            g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
+            g.saveSourceData()
+            g.save()
 
             # ===========================================================================================================#
             # print results with gradient to estim file
@@ -1737,7 +1738,7 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         # Print to logWindow
         self.logWindow.append(separator)
-        self.logWindow.append('Reject drops with rejsigma>3*std')
+        self.logWindow.append('Reject drops with rejsigma>3*std and by median')
         QtCore.QCoreApplication.processEvents()
 
         # Get mean and v*v by sets from database
@@ -1920,7 +1921,6 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append(separator)
         self.logWindow.append('Compute sensitivity')
         QtCore.QCoreApplication.processEvents()
-
 
         # initialization of arrays for sensitivity
         self.dgl = np.zeros((self.nset, self.sens_tx - self.sens_tn + 1))

@@ -15,7 +15,7 @@ import os
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-PATH, _ = uic.loadUiType(script_path + '\gui\main.ui')
+PATH, _ = uic.loadUiType(script_path + r'\gui\main.ui')
 
 
 class Main(QtWidgets.QMainWindow, PATH):
@@ -31,7 +31,6 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.setupUi(self)
         self.setWindowIcon(QIcon(logo_picture))
 
-
         # show opened/closed picture
         pixmap = QPixmap(picture_unchecked)
         pixmap = pixmap.scaled(16, 16)
@@ -45,6 +44,8 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.closeProject.triggered.connect(self.closeproject)
         self.openProject.triggered.connect(self.open_project)
         self.actionComparison.triggered.connect(self.compare)
+
+        self.newproject.clicked.connect(self.new_Project)
 
         self.finals_folder()
 
@@ -79,12 +80,22 @@ class Main(QtWidgets.QMainWindow, PATH):
     def new_Project(self):
         # show opened/closed picture
         self.newProjectWin = NewProject()
-        try:
-            self.newProjectWin.pathDir
-            pixmap = QPixmap('picture/checked.png')
+
+        if self.newProjectWin.succ:
+            pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + r'\picture\checked.png')
             self.check.setPixmap(pixmap)
-        except AttributeError:
-            pass
+
+            self.campaign.setText(self.newProjectWin.stationData['ProjName'])
+
+            self.succ_upload.setText('Following input files have been uploaded successfully!')
+
+            self.label_2.clear()
+        # try:
+        #     self.newProjectWin.pathDir
+        #     pixmap = QPixmap('picture/checked.png')
+        #     self.check.setPixmap(pixmap)
+        # except AttributeError:
+        #     pass
 
     def Computing(self):
         try:
@@ -120,9 +131,16 @@ class Main(QtWidgets.QMainWindow, PATH):
     def closeproject(self):
         try:
             del self.newProjectWin
-            pixmap = QPixmap('picture/unchecked.png')
+            pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + r'\picture\unchecked.png')
             pixmap = pixmap.scaled(16, 16)
             self.check.setPixmap(pixmap)
+
+            self.campaign.clear()
+
+            self.succ_upload.clear()
+
+            self.label_2.setText('Upload data for measurement campaign')
+
         except AttributeError:
             Warning(error=warning_window['project'], icon='critical', title='Warning')
         # self.__del__()

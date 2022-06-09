@@ -25,6 +25,9 @@ class NewProject(QtWidgets.QDialog, PATH):
         self.loadFiles.clicked.connect(self.load_files)
         self.projDir.clicked.connect(self.saveDir)
 
+        # info if upload of input files was successfully
+        self.succ = False
+
         self.show()
         self.exec()
 
@@ -43,41 +46,44 @@ class NewProject(QtWidgets.QDialog, PATH):
         self.projDirPath.setText(self.pathDir)
 
     def accept(self):
-        # for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
-        #     rawfile=rawFile(self.rawfilepath)
-        #     print(rawfile.rawHeader1())
-        # self.pathDir = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\res'
-        # self.path = r'c:\Users\Jakub\Desktop\pecny\data\566_glb\agdas_808'
-        try:
-            for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
-                self.rawfile = rawFile(self.rawfilepath)
-                header1 = self.rawfile.rawHeader1()
-                self.header2 = self.rawfile.rawHeader2()
-                self.header1 = self.rawfile.rawHeader1()
-                self.rawlines = self.rawfile.rawLines()
 
-            for self.projectfile in glob('{}/*.project.txt'.format(self.path)):
-                a = projectFile(self.projectfile)
-                a.read()
-                self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections = a.createDictionary()
+        if len(self.name.toPlainText()) > 0 and len(self.projDirPath.toPlainText()) > 0:
+            try:
 
-            self.setFile = glob('{}/*.set.txt'.format(self.path))[0]
+                self.path = self.name.toPlainText()
+                self.pathDir = self.projDirPath.toPlainText()
 
-            self.close()
-            Sumarize(header1, self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections)
+                for self.rawfilepath in glob('{}/*.raw.txt'.format(self.path)):
+                    self.rawfile = rawFile(self.rawfilepath)
+                    header1 = self.rawfile.rawHeader1()
+                    self.header2 = self.rawfile.rawHeader2()
+                    self.header1 = self.rawfile.rawHeader1()
+                    self.rawlines = self.rawfile.rawLines()
 
+                for self.projectfile in glob('{}/*.project.txt'.format(self.path)):
+                    a = projectFile(self.projectfile)
+                    a.read()
+                    self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections, self.names, self.units = a.createDictionary()
 
-        except AttributeError:
+                self.setFile = glob('{}/*.set.txt'.format(self.path))[0]
+
+                self.close()
+
+                Sumarize(header1, self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections, self.names, self.units)
+
+                self.succ = True
+
+                try:
+                    os.mkdir(self.pathDir + '/Graphs')
+                    os.mkdir(self.pathDir + '/Files')
+                except FileExistsError:
+                    pass
+
+            except IndexError:
+                Warning(error='Bad direction with files!', icon='critical', title='Warning')
+        else:
             Warning(error='Something is missing', icon='critical', title='Warning')
 
-        except IndexError:
-            Warning(error='Bad direction with files!', icon='critical', title='Warning')
-
-        try:
-            os.mkdir(self.pathDir + '/Graphs')
-            os.mkdir(self.pathDir + '/Files')
-        except FileExistsError:
-            pass
 
 
 if __name__ == "__main__":
