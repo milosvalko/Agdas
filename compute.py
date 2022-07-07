@@ -1,11 +1,11 @@
 import sys, glob, os, urllib.request, csv
-from PyQt5 import uic, QtWidgets, QtCore
+from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QLabel
 from time import sleep, time
 from warning import Warning
 from classes import Fall, projectFile, rawFile, dropFile, estim, matr_db, res_final, Graph
 from CONFIG import getFG5X, getFG5, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, \
-    warning_window
+    warning_window, tau
 import sqlite3 as sql
 from datetime import datetime, timedelta
 from time import time
@@ -81,6 +81,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.numDrop.valueChanged.connect(self.DisStat)
         self.split_set.stateChanged.connect(self.disabledSplit)
         self.sets_choose.activated.connect(self.currentSet)
+        self.complete_help.clicked.connect(self.complete_out_help)
 
         self.set_gravimeter()
         self.set_ui()
@@ -88,9 +89,39 @@ class Compute(QtWidgets.QDialog, PATH):
         # self.Prescale()
         self.numDrops()
 
+        # set l cable to ui
+        self.lcable_ar.setText(str(self.gravimeter['Lcable']))
+
+        # self.setMouseTracking(True)
 
         self.show()
         self.exec()
+
+    # def setMouseTracking(self, flag):
+    #     def recursive_set(parent):
+    #         for child in parent.findChildren(QtCore.QObject):
+    #             try:
+    #                 child.setMouseTracking(flag)
+    #             except:
+    #                 pass
+    #             recursive_set(child)
+    #
+    #     QtWidgets.QWidget.setMouseTracking(self, flag)
+    #     recursive_set(self)
+
+    # def mouseMoveEvent(self, event):
+    #     print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
+
+        # if event.x() > self.out_help.pos().x() and event.x() < self.out_help.pos().x() + self.out_help.width():
+        #     if event.y() > self.out_help.pos().y() and event.y() < self.out_help.pos().y() + self.out_help.height():
+        #         print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
+
+    def complete_out_help(self):
+
+        self.help_box.setText('pokus')
+
+    def set_lcable_ui(self):
+        self.lcable = float(self.lcable_ar.toPlainText())
 
     def automatic_detection_gravimeter(self):
         """
@@ -399,6 +430,9 @@ class Compute(QtWidgets.QDialog, PATH):
         # self.calc_time.clear()
         self.calc_time.setText('I am still running!')
 
+        # set l cable from ui
+        self.set_lcable_ui()
+
         self.set_frmaxplot()
 
         # set count of all fringes
@@ -467,6 +501,8 @@ class Compute(QtWidgets.QDialog, PATH):
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
 
+
+        ind_ = open('ind.txt', 'w')
         # loop for all drops
         for i in range(self.ndrop):
 
@@ -515,7 +551,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # fall.setModulFreq(self.instrumentData['modulFreq'])
             fall.setModulFreq(float(self.fmodf.toPlainText()))
             # fall.setLpar(self.FG5X['Lpar'])
-            fall.setLpar(float(self.lpar.toPlainText()))
+            fall.setLpar(float(self.lpar.toPlainText())*1e9)
             fall.setRubiFreq(self.instrumentData['rubiFreq'])
             fall.setFrRange(self.frmin, self.frmax)
             # fall.setFrRange(frmin,frmax)
@@ -523,7 +559,7 @@ class Compute(QtWidgets.QDialog, PATH):
             fall.setKpar(self.kpar.isChecked())
             fall.setPcable(self.gravimeter['Pcable'])
             fall.setAcable(self.gravimeter['Acable'])
-            fall.setLcable(self.gravimeter['Lcable'])
+            fall.setLcable(self.lcable)
             if self.kdis.isChecked():
                 fall.checkKDIS()
             if self.kimp.isChecked():
@@ -547,10 +583,15 @@ class Compute(QtWidgets.QDialog, PATH):
             self.resgradsum4[i, :] = fall.resgrad4
             self.m0grad4Sig.append(fall.m0grad4)
 
+            # ind_.write('{},{} \n'.format(str(fall.ind_covar[0]), str(fall.ind_covar[1])))
+
+            # date in normal format
+            date = datetime(int(drop['Year']), 1, 1) + timedelta(int(drop['DOY']) - 1)
+            date_time = '{} {}'.format(str(date.date()), drop['Time'])
             # ===========================================================================#
             if self.outputs.isChecked():
                 # create line for estim file
-                estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad)
+                estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad, date_time)
                 # print line to the estim file
                 estim.printResult(line=roundList(estim_line, round_line_ind['estim']))
 
@@ -566,8 +607,6 @@ class Compute(QtWidgets.QDialog, PATH):
                 estim_grad_line.append(fall.stdGradX[2])
 
                 estim_grad.printResult(line=roundList(estim_grad_line, round_line_ind['estim_grad']))
-
-            date = datetime(int(drop['Year']), 1, 1) + timedelta(int(drop['DOY']) - 1)
 
             # decision if measuring is accepted by kalpha
             accepted = True
@@ -617,11 +656,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
             # send line to database
             self.matr_connection.insert(matrDatabase['insert'].format(*matr_drop))
-
             # send message to logging window
-            mess = (
-                'Drop: {} >> g: {:.2f} m0: {:.2f}'.format(str(i + 1).rjust(len(str(self.ndrop))), round(fall.g0_Gr, 2),
-                                                          round(fall.m02_grad[0], 2)))
+            mess = 'Drop: {} >> g0: {:.2f} std: {:.2f}  eff.height: {:.2f}  gtop: {:.2f}'.format(str(i + 1).rjust(len(str(self.ndrop))), fall.g0_Gr,
+                                                          np.sqrt(fall.m02_grad[0]), fall.h/1e7, fall.gTopCor)
             self.logWindow.append(mess)
             self.progressBar.setValue(float((i + 1) * 100 / self.ndrop))
 
@@ -642,24 +679,15 @@ class Compute(QtWidgets.QDialog, PATH):
         # commit data to database
         self.matr_connection.commit()
 
+        self.logWindow.append(separator)
+        self.logWindow.append('Measurement processing is done')
+        QtCore.QCoreApplication.processEvents()
+
         # close connection with database
         # self.matr_connection.close()
 
-        # Compute statistics
-        if self.outputs.isChecked() and self.nset > 1:
-            # ===========================================================================================================#
-            # compute statistics for printing files
-            self.rejectBySigma()
-            self.meanResidualsBySets()
-            self.sensitivity()
-            self.fourier()
-            self.compute_normres()
-            self.print_allanFile()
-            self.ressets_res()
-            # self.harmonic()
-            if self.kpar.isChecked():
-                self.parasitic_wave()
-
+        if self.outputs.isChecked():
+            # create outputs which doesn't require statistic processing
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
                       title='Atmosferic correction')
@@ -667,20 +695,7 @@ class Compute(QtWidgets.QDialog, PATH):
             g.saveSourceData()
             g.save()
 
-            # ===========================================================================================================#
-            # print results with gradient to estim file
-            try:
-                self.writeDropsFile()
-            except AttributeError:
-                Warning(error='Cannot write file due statistic is not computed', icon='critical', title='Warning')
 
-            try:
-                self.write_res_final()
-            except AttributeError:
-                Warning(error=warning_window['cannot_wrtite_file'], icon='critical', title='Warning')
-
-            # ===========================================================================================================#
-            # creating of graphs
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
                       title='Atmosferic correction')
@@ -702,18 +717,65 @@ class Compute(QtWidgets.QDialog, PATH):
             g.saveSourceData()
             g.save()
 
+            r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
+            data = [i[0] for i in r]
+            title = 'Drop data'
+            ylabel = r'$-/nm.s^2$'
+            name = 'allan1'
+            self.graphAllan1(data, title, ylabel, name)
+
+            r = self.matr_connection.get('select Gradient from results where Accepted = 1')
+            data = [i[0] for i in r]
+            title = 'Gradient'
+            ylabel = r'Data - Median $-/nm.s^2/mm$'
+            name = 'allan3'
+            self.graphAllan1(data, title, ylabel, name)
+
             self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
-            self.graphGravityChange()
             self.graphRes()
-            self.graphSetG()
             self.graphParasitic()
             self.graphHistogramAccDrops()
-            self.graphHistogramAccDropsNorm()
             self.graphEffectiveHeights2()
-            self.graphSensitivityStd()
             self.graphVGG()
-            self.graphResidualsBySets()
             self.allResGraph()
+
+
+        # Compute statistics
+        if self.complete_out.isChecked():
+            # ===========================================================================================================#
+            # compute statistics for printing files
+            self.rejectBySigma()
+            self.meanResidualsBySets()
+            self.sensitivity()
+            self.fourier()
+            self.compute_normres()
+            self.print_allanFile()
+            self.ressets_res()
+            # self.harmonic()
+            if self.kpar.isChecked():
+                self.parasitic_wave()
+
+
+
+            # ===========================================================================================================#
+            # print results with gradient to estim file
+            try:
+                self.writeDropsFile()
+            except AttributeError:
+                Warning(error='Cannot write file due statistic is not computed', icon='critical', title='Warning')
+
+            try:
+                self.write_res_final()
+            except AttributeError:
+                Warning(error=warning_window['cannot_wrtite_file'], icon='critical', title='Warning')
+
+            # ===========================================================================================================#
+
+            self.graphGravityChange()
+            self.graphSetG()
+            self.graphHistogramAccDropsNorm()
+            self.graphSensitivityStd()
+            self.graphResidualsBySets()
             self.graphResiduals()
             self.graphResidualsGradient()
             self.graphSpectrumParts()
@@ -724,24 +786,10 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graph_spectrum('spectrum')
             self.graph_spectrum('spectrum_avr')
 
-            r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
-            data = [i[0] for i in r]
-            title = 'Drop data'
-            ylabel = r'$-/nm.s^2$'
-            name = 'allan1'
-            self.graphAllan1(data, title, ylabel, name)
-
             title = 'Drop data - normalized'
             ylabel = r'$g-g_0  /nm.s^2$'
             name = 'allan1_normalized'
             self.graphAllan1(data=self.normres, title=title, ylabel=ylabel, name=name)
-
-            r = self.matr_connection.get('select Gradient from results where Accepted = 1')
-            data = [i[0] for i in r]
-            title = 'Gradient'
-            ylabel = r'Data - Median $-/nm.s^2/mm$'
-            name = 'allan3'
-            self.graphAllan1(data, title, ylabel, name)
 
             # close estim and estim_grad files
             estim.close()
@@ -755,6 +803,14 @@ class Compute(QtWidgets.QDialog, PATH):
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
 
     def ressets_res(self):
+        """
+        Distance calculation for fringe with time t.
+        Computing medians of v0 and g0 by sets.
+        :return:
+        """
+        self.logWindow.append(separator)
+        self.logWindow.append('Distance calculation for fringe with time t')
+        QtCore.QCoreApplication.processEvents()
 
         prescale = int(self.processingResults['multiplex']) * int(self.processingResults['scaleFactor'])
 
@@ -804,7 +860,7 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(self.kdis.isChecked())
         line.append(self.kimp.isChecked())
         line.append(self.kpar.isChecked())
-        line.append(self.gravimeter['Lcable'])
+        line.append(self.lcable)
         line.append(self.frmin)
         line.append(self.frmax)
         line.append(self.stationData['polarX'])
@@ -1465,7 +1521,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label='Drop #', y_label='sin/cos amplitude /nm',
                   title='Sine/Cosine amplitudes of the parasitic wave with L = {:.3f} m'.format(
-                      float(self.lpar.toPlainText()) / 1e9))
+                      float(self.lpar.toPlainText())))
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
                  legend=['Sine component', 'Cosine component'])
         g.saveSourceData()
@@ -1502,19 +1558,19 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height'])
         g.save()
 
-    def estimLine(self, X, std, set, drop, m0):
+    def estimLine(self, X, std, set, drop, m0, date_time):
         """
         Print result of drop to estim file
         """
-        dropResult = [set, drop, m0[0]]
+        dropResult = [set, drop, date_time, m0[0]]
         for i in range(len(X)):
             dropResult.append(X[i])
             dropResult.append(std[i])
 
-        dropResult[3] /= 1e6
         dropResult[4] /= 1e6
         dropResult[5] /= 1e6
         dropResult[6] /= 1e6
+        dropResult[7] /= 1e6
 
         if self.kpar.isChecked() == False:
             dropResult.extend(['-', '-', '-', '-'])
@@ -1571,13 +1627,21 @@ class Compute(QtWidgets.QDialog, PATH):
         a.close()
 
     def print_allanFile(self):
+        """
+        This method compute allan standart deviation of gTopCor, normres and grad.
+        And also creates allan file and deviation and gradient graphs.
+        tau is importing from CONFIG
+        :return:
+        """
+        self.logWindow.append(separator)
+        self.logWindow.append('Compute allan standard deviation')
+        QtCore.QCoreApplication.processEvents()
 
+        # Instance of allan file
         file = res_final(path=self.projDirPath, header=headers['allan'].format(self.delimiter),
                          name=self.stationData['ProjName'] + '_' + 'allan', delimiter=self.delimiter)
-        # file.write('n;ALLAN1;STD1;ALLAN2;STD2;ALLAN3;STD3\n')
-        tau = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800,
-               900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500]
 
+        # Get data from database
         r = self.matr_connection.get('select gTopCor, Gradient from results where Accepted = 1')
         gTopCor = [i[0] for i in r]
         grad = [i[1] for i in r]
@@ -1588,12 +1652,13 @@ class Compute(QtWidgets.QDialog, PATH):
         a2 = allan(self.normres, tau)
         a3 = allan(grad, tau)
 
+        # Printing to allan file
         for i in range(len(a1)):
             line = [tau[i], a1[i][0], a1[i][1], a2[i][0], a2[i][1], a3[i][0], a3[i][1]]
             file.printResult(line=roundList(line, round_line_ind['allan']))
-
         file.close()
 
+        # Create graphs
         if self.outputs.isChecked():
             self.allanGraph(a2, tau, self.projDirPath + '/Graphs/' + self.stationData['ProjName'] + '_allan_deviation',
                             type='normalized data')
@@ -1785,7 +1850,6 @@ class Compute(QtWidgets.QDialog, PATH):
                 update = matrDatabase['updateAcc'].format(j[0], j[1])
                 self.matr_connection.insert(update)
 
-                # print(j)
             it += 1
 
         self.resgradsum4Mean = self.resgradsum4Mean / grad4Acc
@@ -2023,12 +2087,17 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def parasitic_wave(self):
         """
-        compute amplitude and phase of the parasitic wave
+        Compute amplitude and phase of the parasitic wave
         @return:
         """
+        self.logWindow.append(separator)
+        self.logWindow.append('Compute amplitude and phase of the parasitic wave')
+        QtCore.QCoreApplication.processEvents()
 
+        # Get data from database
         e_f = self.matr_connection.get('select e_withGR, f_withGR from results')
 
+        # Calc
         self.ampar = []  # amplitude
         self.fazepar = []  # phase
         for i in range(len(e_f)):
@@ -2116,7 +2185,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication([])
+    app = QtWidgets.QApplication(sys.argv)
     compute = Compute()
     compute.show()
     app.exec_()

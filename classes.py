@@ -31,35 +31,20 @@ class Fall():
         self.ksol = ksol
 
     def setFringe(self, times):
-        """Short summary.
-
-        Parameters
-        ----------
-        times : type
-            Description of parameter `times`.
-            -Convert fringe in list from string to float
-        Returns
-        -------
-        type
-            -Set to class variable
+        """
+        Set measured fringes
+        @param times: list of fringes, fringes are representation by string
+        @return:
         """
 
         self.fringe = np.float_((times))
         # self.fringe=[float(i) for i in times]
 
     def setLambda(self, Lambda):
-        """Short summary.
-
-        Parameters
-        ----------
-        Lambda : type
-            Description of parameter `Lambda`.
-            -
-        Returns
-        -------
-        type
-            Description of returned object.
-            -Set to class variable
+        """
+        Set wave length
+        @param Lambda: wave length, add as string
+        @return:
         """
         self.Lambda = float(Lambda)
 
@@ -99,6 +84,10 @@ class Fall():
         self.kimp = True
 
     def checkKSAE(self):
+        """
+        This method set if sae correction should be compute
+        @return:
+        """
         self.ksae = True
 
     def setLcable(self, Lcable):
@@ -112,22 +101,13 @@ class Fall():
 
     @staticmethod
     def computeLST(A, z, frmin, frmax):
-        """Short summary.
+        """
 
-        Parameters
-        ----------
-        A : type
-            Description of parameter `A`.
-            -matrix A
-        z : type
-            Description of parameter `z`.
-            -vector of meassurement
-
-        Returns
-        -------
-        type
-            Description of returned object.
-
+        @param A: matrix of derivations
+        @param z: vector of measuring
+        @param frmin: first fringe
+        @param frmax: last fringe
+        @return:
         """
 
         x = np.linalg.lstsq(A, z, rcond=None)  # solution of LST
@@ -141,18 +121,18 @@ class Fall():
         return x, covar, m02, std, stdX, res, m0
 
     def LST(self):
+        # """
+        # Compute 'z0','v0','g0','a1','a2','a3','a4','a5','a6' by least squares method.
+        # For computing LST with non-zero gradient call method - LST(grad=True)
+        # For computing LST with zero gradient call method - LST(grad=False)
+        # """
         """
-        Compute 'z0','v0','g0','a1','a2','a3','a4','a5','a6' by least squares method.
-        For computing LST with non-zero gradient call method - LST(grad=True)
-        For computing LST with zero gradient call method - LST(grad=False)
+        This method compute all of fits by least square method and set all of important variable as variable of class Fall
+        @return:
         """
 
         # count of fringe use for computing
         nfringe = len(self.fringe)
-        # print('nfringe: {}'.format(nfringe))
-        # print('frmin: {}'.format(self.frmin))
-        # print('frmax: {}'.format(self.frmax))
-        # print('lambda: {}'.format(self.Lambda))
 
         # interpolated SAE for measuring
         if self.ksae:
@@ -273,8 +253,11 @@ class Fall():
                                                                                         frmax=self.frmax)
 
         # Fit with gradient
-        self.x_grad, covar_grad, self.m02_grad, stdstd, self.std_grad, res_grad, m0withgradient = Fall.computeLST(
+        self.x_grad, covar_grad, self.m02_grad, self.stdstd, self.std_grad, res_grad, m0withgradient = Fall.computeLST(
             A=A_grad, z=z, frmin=self.frmin, frmax=self.frmax)
+
+        # from sandbox1 import max_ind
+        # self.ind_covar = max_ind(covar_grad)
 
         self.xef, xefCovar, xefM02, xefStd, stdXX, xefRes, m00 = Fall.computeLST(A2, z, frmin=self.frmin,
                                                                                  frmax=self.frmax)
@@ -313,12 +296,13 @@ class Fall():
     def effectiveHeight(self):
         """
         Effective height of measuring
+        @rtype:
         """
         self.h = -(self.g0_Gr - self.g0) / self.gradient
 
     def effectiveHeightTop(self):
         """
-        Effective height of measuring in top
+        Effective height of measuring at top of the drop
         """
         self.Grad = self.v0 ** 2 / (2 * self.g0_Gr)
         self.htop = self.h + self.Grad
@@ -367,21 +351,35 @@ class projectFile():
             i += 1
 
     def insert_to_names(self, dict, i):
+        """
+        This method collects name of lines from project file for summary
+        @param dict: dictionary of values
+        @param i: index of line in raw file
+        @return:
+        """
         ind = self.file_lines[self.names[i]].index(':')
         name = self.file_lines[self.names[i]][:ind + 1]
         self.names_summary[list(dict.keys())[-1]] = name
 
     def insert_to_units(self, dict, i):
-
+        """
+        This method collects units of values for summary
+        @param dict: dictionary of values
+        @param i: index of line in project file
+        @return:
+        """
         self.units[list(dict.keys())[-1]] = self.file[i+2]
 
     def createDictionary(self):
         """
-        Read 'self.file' list and create dictionaries:
+        This method create dictionaries with data from raw file
+        @return:
         --stationData
         --instrumentData
         --processingResults
         --gravityCorrections
+        --self.names_summary
+        --self.units
         """
         stationData = {}
         instrumentData = {}
@@ -426,7 +424,8 @@ class projectFile():
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Transfer' and self.file[i - 2] == 'cm':
                 stationData['transferHeight'] = self.file[i + 1]
                 self.insert_to_names(stationData, i)
-                self.insert_to_units(stationData, i)
+                # self.insert_to_units(stationData, i)
+                self.units['transferHeight'] = 'cm'
 
             if self.file[i] == 'Height:' and self.file[i - 1] == 'Actual':
                 stationData['actualHeight'] = self.file[i + 1]
@@ -491,63 +490,63 @@ class projectFile():
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['ID_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['ID_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IE:':
                 instrumentData['IE'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['IE_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['IE_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IF:':
                 instrumentData['IF'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['IF_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['IF_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IG:':
                 instrumentData['IG'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['IG_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['IG_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IH:':
                 instrumentData['IH'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['IH_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['IH_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'II:':
                 instrumentData['II'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['II_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['II_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'IJ:':
                 instrumentData['IJ'] = self.file[i + 1]
                 self.insert_to_names(instrumentData, i)
                 self.insert_to_units(instrumentData, i)
 
-                instrumentData['IJ_V'] = self.file[i + 4]
-                self.insert_to_names(instrumentData, i)
-                self.insert_to_units(instrumentData, i)
+                # instrumentData['IJ_V'] = self.file[i + 4]
+                # self.insert_to_names(instrumentData, i)
+                # self.insert_to_units(instrumentData, i)
 
             if self.file[i] == 'Frequency:' and self.file[i - 1] == 'Modulation':
                 instrumentData['modulFreq'] = self.file[i + 1]
@@ -673,6 +672,10 @@ class projectFile():
 class rawFile():
 
     def __init__(self, rawfile):
+        """
+
+        @param rawfile: path of rawfile
+        """
         self.rawfile = rawfile
         self.read()
 
@@ -706,6 +709,10 @@ class rawFile():
 class dropFile():
 
     def __init__(self, dropfile):
+        """
+
+        @param dropfile: path of drop file
+        """
         self.dropfile = dropfile
         self.read()
 

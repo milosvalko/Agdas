@@ -19,7 +19,7 @@
      <x>10</x>
      <y>20</y>
      <width>551</width>
-     <height>431</height>
+     <height>381</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -37,19 +37,6 @@
        <width>511</width>
        <height>331</height>
       </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="accept_button">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>360</y>
-       <width>93</width>
-       <height>28</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>OK</string>
      </property>
     </widget>
    </widget>
@@ -70,7 +57,7 @@
    </widget>
    <widget class="QWidget" name="tab_3">
     <attribute name="title">
-     <string>Processing results</string>
+     <string>Results</string>
     </attribute>
     <widget class="QTextBrowser" name="processing">
      <property name="geometry">
@@ -98,6 +85,19 @@
      </property>
     </widget>
    </widget>
+  </widget>
+  <widget class="QPushButton" name="accept_button">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>420</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
   </widget>
  </widget>
  <resources/>

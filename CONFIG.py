@@ -3,7 +3,7 @@ import os
 
 def getFG5X(ps):
     FG5X = {
-        'Lpar': 0.122 * 1e9,  # [nm] parasitic wavelength
+        'Lpar': 0.122,  # [m] parasitic wavelength
         'frmin': 15 * ps,  # first fringe
         'frmax': 940 * ps,  # end fringe
         'fmodf': 8333.355,  # [Hz] modulation frequency
@@ -32,7 +32,7 @@ def getFG5X(ps):
 
 def getFG5(ps):
     FG5 = {
-        'Lpar': 0.044 * 1e9,  # [nm] parasitic wavelength
+        'Lpar': 0.044,  # [m] parasitic wavelength
         'frmin': 30 * ps,  # first fringe
         'frmax': 629 * ps,  # end fringe
         'fmodf': 8333.251,  # [Hz] modulation frequency
@@ -138,7 +138,7 @@ logo_picture = os.path.dirname(os.path.realpath(__file__)) + r'\picture\logo.png
 picture_unchecked = os.path.dirname(os.path.realpath(__file__)) + r'\picture\unchecked.png'
 
 headers = {
-    'estim': 'Set {0} Drop {0} m0 {0} z0 {0} z0-std {0} v0 {0} v0-std {0} g0 {0} g0-std {0} a {0} a-std {0} b {0} b-std {0} c {0} c-std {0} d {0} d-std {0} e {0} e-std {0} f {0} f-std \n   {0}    {0} {0} mm {0} mm {0} mm.s-1 {0} mm.s-1 {0} nm.s-2 {0} nm.s-2 {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm   ',
+    'estim': 'Set {0} Drop {0} Date/Time {0} m0 {0} z0 {0} z0-std {0} v0 {0} v0-std {0} g0 {0} g0-std {0} a {0} a-std {0} b {0} b-std {0} c {0} c-std {0} d {0} d-std {0} e {0} e-std {0} f {0} f-std \n   {0}  {0}  {0} {0} mm {0} mm {0} mm.s-1 {0} mm.s-1 {0} nm.s-2 {0} nm.s-2 {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm   ',
     'drops': ' Set{0} Drop{0} Date{0} g"(t=0s){0} STD{0} TOD{0} Tide{0} Load{0} Baro{0} Polar{0} g(TOD){0} g(Ef.H){0} Ef.H1{0} c.EfH{0} Acc',
     'matlogsets': 'Campaign{0} Set{0} Year{0} Month{0} Day{0} Hour{0} Minute{0} Second{0} MJD{0} VGG_inp{0} g{0} g_std{0} STD-Start{0}STD-Final{0}Accepted{0} Top height{0} Pressure{0} VGG{0} T-stat',
     'allan': 'n{0}ALLAN1{0}STD1{0}ALLAN2{0}STD2{0}ALLAN3{0}STD3',
@@ -173,6 +173,9 @@ round_line_ind = {
     'vgg_per_sets0': [[1, 5], [2, 5], [3, 5], [4, 5]],
     'matlogsets': [[8, 5], [10, 5], [11, 5], [12, 5], [13, 5], [15, 4], [17, 5], [18, 5]]
 }
+# increase index of floated number due to adding date/time to estim file
+for i in range(len(round_line_ind['estim'])):
+    round_line_ind['estim'][i] = [round_line_ind['estim'][i][0] + 1, round_line_ind['estim'][i][1]]
 
 warning_window = {
     'import_data': 'Import data behind',
@@ -188,3 +191,6 @@ warning_window = {
 
 SAE = [0, 0, 0.006, 0.10, 0.077, 0.92, 0.087, 1, 0.177, 1.65, 0.200, 2, 0.215, 2.20, 0.228, 2, 0.243, 1.70, 0.262, 2,
        0.277, 2.250, 0.317, 3, 0.322, 3.11, 0.335, 3.38, 0.362, 4, 0.377, 4.34, 0.397, 4.74]
+
+tau = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800,
+               900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500]

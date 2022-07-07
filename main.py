@@ -63,6 +63,10 @@ class Main(QtWidgets.QMainWindow, PATH):
 
     @staticmethod
     def splashScreen():
+        """
+        Create splash screen with apple during starting of Agdas
+        :return:
+        """
         splash_pix = QPixmap(logo_picture)
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
         splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -73,20 +77,31 @@ class Main(QtWidgets.QMainWindow, PATH):
         splash.hide()
 
     def open_project(self):
+        """
 
+        :return:
+        """
         path = QtWidgets.QFileDialog.getExistingDirectory()
         self.newProjectWin = NewProject().accept()
 
     def new_Project(self):
-        # show opened/closed picture
+        """
+        This method serves for creating of new project
+        :return:
+        """
+        # Open newproject dialog
         self.newProjectWin = NewProject()
 
+        # If newproject was created successfully
         if self.newProjectWin.succ:
+            # Load check picture to main page
             pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + r'\picture\checked.png')
             self.check.setPixmap(pixmap)
 
+            # Set name of campaign
             self.campaign.setText(self.newProjectWin.stationData['ProjName'])
 
+            # Info about successfully upload
             self.succ_upload.setText('Following input files have been uploaded successfully!')
 
             self.label_2.clear()
@@ -98,7 +113,12 @@ class Main(QtWidgets.QMainWindow, PATH):
         #     pass
 
     def Computing(self):
+        """
+        OThis method serves for creating of Compute
+        :return:
+        """
         try:
+            # Open Compute dialog
             self.result = Compute(self.newProjectWin.path, stationData=self.newProjectWin.stationData,
                                   instrumentData=self.newProjectWin.instrumentData,
                                   processingResults=self.newProjectWin.processingResults,
@@ -116,7 +136,10 @@ class Main(QtWidgets.QMainWindow, PATH):
 
 
     def viewData(self):
-
+        """
+        Open dialog with view to the database
+        :return:
+        """
         try:
             Data(self.newProjectWin.pathDir)
         except AttributeError:
@@ -129,6 +152,10 @@ class Main(QtWidgets.QMainWindow, PATH):
             Warning(error=warning_window['import_data'], icon='critical', title='Warning')
 
     def closeproject(self):
+        """
+        This method delete self.newProjectWin variable and change main page
+        :return:
+        """
         try:
             del self.newProjectWin
             pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + r'\picture\unchecked.png')
