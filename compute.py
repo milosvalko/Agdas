@@ -711,7 +711,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # close connection with database
         # self.matr_connection.close()
-
+        
         if self.outputs.isChecked():
             # create outputs which doesn't require statistic processing
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
@@ -720,7 +720,6 @@ class Compute(QtWidgets.QDialog, PATH):
             g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
             g.saveSourceData()
             g.save()
-
 
             # g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
             #           show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
@@ -760,9 +759,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
             self.graphRes()
             self.graphParasitic()
-            self.graphHistogramAccDrops()
             self.graphEffectiveHeights2()
-            self.graphVGG()
             self.allResGraph()
 
 
@@ -781,8 +778,6 @@ class Compute(QtWidgets.QDialog, PATH):
             if self.kpar.isChecked():
                 self.parasitic_wave()
 
-
-
             # ===========================================================================================================#
             # print results with gradient to estim file
             try:
@@ -796,10 +791,11 @@ class Compute(QtWidgets.QDialog, PATH):
                 Warning(error=warning_window['cannot_wrtite_file'], icon='critical', title='Warning')
 
             # ===========================================================================================================#
-
             self.graphGravityChange()
+            self.graphVGG()
             self.graphSetG()
             self.graphHistogramAccDropsNorm()
+            self.graphHistogramAccDrops()
             self.graphSensitivityStd()
             self.graphResidualsBySets()
             self.graphResiduals()
@@ -1427,7 +1423,7 @@ class Compute(QtWidgets.QDialog, PATH):
                  columns_name=['cumulative_mean', 'moving_average', 'mean', '-3sigma_range', '+3sigma_range'],
                  legend=self.graph_lang['vgg']['legend'].split(','),
                  lw=[3, 3, 1, 1, 1])
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphSensitivityStd(self):
