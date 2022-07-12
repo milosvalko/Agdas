@@ -5,7 +5,7 @@ from time import sleep, time
 from warning import Warning
 from classes import Fall, projectFile, rawFile, dropFile, estim, matr_db, res_final, Graph
 from CONFIG import getFG5X, getFG5, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, \
-    warning_window, tau
+    warning_window, tau, languages
 import sqlite3 as sql
 from datetime import datetime, timedelta
 from time import time
@@ -17,6 +17,7 @@ import numpy as np
 from scipy.stats import t
 import scipy.signal as sig
 import os
+import configparser
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -85,6 +86,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.set_gravimeter()
         self.set_ui()
+        self.fill_output_language()
 
         # self.Prescale()
         self.numDrops()
@@ -115,6 +117,27 @@ class Compute(QtWidgets.QDialog, PATH):
         # if event.x() > self.out_help.pos().x() and event.x() < self.out_help.pos().x() + self.out_help.width():
         #     if event.y() > self.out_help.pos().y() and event.y() < self.out_help.pos().y() + self.out_help.height():
         #         print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
+
+    def set_graph_language(self, lang):
+        """
+        Read ini files from "graphs_languages" and save it to graph_lang as dictionary
+        :param lang: requiered language for graphs
+        :return:
+        """
+
+        # find shortcut of language, "languages" is imported from functions.py
+        for i in languages:
+            if languages[i] == lang:
+                lang_sh = i
+
+        lang_path = os.path.join(script_path, 'graphs_languages', 'graphs_description_' + lang_sh + '.ini')
+
+        self.graph_lang = configparser.ConfigParser()
+        self.graph_lang.read(filenames=lang_path, encoding='utf-8')
+
+
+    def fill_output_language(self):
+        self.output_language.addItems(list(languages.values()))
 
     def complete_out_help(self):
 
@@ -430,6 +453,9 @@ class Compute(QtWidgets.QDialog, PATH):
         # self.calc_time.clear()
         self.calc_time.setText('I am still running!')
 
+        # Languages to output_languages
+        self.set_graph_language(self.output_language.currentText())
+
         # set l cable from ui
         self.set_lcable_ui()
 
@@ -689,45 +715,45 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.outputs.isChecked():
             # create outputs which doesn't require statistic processing
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
-                      title='Atmosferic correction')
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_corr']['xlabel'], y_label=self.graph_lang['atm_corr']['ylabel'],
+                      title=self.graph_lang['atm_corr']['title'])
             g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
             g.saveSourceData()
             g.save()
 
 
-            g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
-                      title='Atmosferic correction')
-            g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
-            g.saveSourceData()
-            g.save()
+            # g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
+            #           show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
+            #           title='Atmosferic correction')
+            # g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
+            # g.saveSourceData()
+            # g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_press', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Recorder pressure /hPa',
-                      title='Atmosferic pressure')
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'], y_label=self.graph_lang['atm_press']['ylabel'],
+                      title=self.graph_lang['atm_press']['title'])
             g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
             g.saveSourceData()
             g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Tides /μGal',
-                      title='Tidal acceleration')
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'], y_label=self.graph_lang['tides']['ylabel'],
+                      title=self.graph_lang['tides']['title'])
             g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
             g.saveSourceData()
             g.save()
 
             r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
             data = [i[0] for i in r]
-            title = 'Drop data'
-            ylabel = r'$-/nm.s^2$'
+            title = self.graph_lang['allan1']['title']
+            ylabel = self.graph_lang['allan1']['ylabel']
             name = 'allan1'
             self.graphAllan1(data, title, ylabel, name)
 
             r = self.matr_connection.get('select Gradient from results where Accepted = 1')
             data = [i[0] for i in r]
-            title = 'Gradient'
-            ylabel = r'Data - Median $-/nm.s^2/mm$'
+            title = self.graph_lang['allan3']['title']
+            ylabel = self.graph_lang['allan3']['ylabel']
             name = 'allan3'
             self.graphAllan1(data, title, ylabel, name)
 
@@ -786,8 +812,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graph_spectrum('spectrum')
             self.graph_spectrum('spectrum_avr')
 
-            title = 'Drop data - normalized'
-            ylabel = r'$g-g_0  /nm.s^2$'
+            title = self.graph_lang['allan1_normalized']['title']
+            ylabel = self.graph_lang['allan1_normalized']['ylabel']
             name = 'allan1_normalized'
             self.graphAllan1(data=self.normres, title=title, ylabel=ylabel, name=name)
 
@@ -984,10 +1010,22 @@ class Compute(QtWidgets.QDialog, PATH):
         # [legend.append('data {}'.format(i+1)) for i in range(len(tau))]
         # p.legend(legend)
 
-        p.legend(['Mean values', 'White noise'])
-        p.title('Allan deviation - {}'.format(type))
-        p.xlabel('Drop number (n)')
-        p.ylabel(r'σ (n)/nm.s$^-2$')
+        if type=='normalized data':
+            title = self.graph_lang['allan_deviation']['title']
+            xlabel = self.graph_lang['allan_deviation']['xlabel']
+            ylabel = self.graph_lang['allan_deviation']['ylabel']
+            legend = self.graph_lang['allan_deviation']['legend'].split(',')
+
+        if type=='VGG':
+            title = self.graph_lang['allan_gradient']['title']
+            xlabel = self.graph_lang['allan_gradient']['xlabel']
+            ylabel = self.graph_lang['allan_gradient']['ylabel']
+            legend = self.graph_lang['allan_gradient']['legend'].split(',')
+
+        p.legend(legend)
+        p.title(title)
+        p.xlabel(xlabel)
+        p.ylabel(ylabel)
         p.savefig(path)
         plt.close()
 
@@ -1041,13 +1079,13 @@ class Compute(QtWidgets.QDialog, PATH):
         p, (ax1, ax2) = plt.subplots(2, 1)
 
         ax1.loglog(fr[n:], self.yffa[n:], '-r', fr[n:], self.yfdMean[0, n:], '-b', lw=0.5)
-        ax1.set(title='Spectrum comparison', xlabel='Frequency /Hz', ylabel='Amplitude /nm')
-        ax1.legend(['FFT of average', 'Average of FFT'])
+        ax1.set(title=self.graph_lang['spectrum_ratio']['title'], xlabel=self.graph_lang['spectrum_ratio']['xlabel'], ylabel=self.graph_lang['spectrum_ratio']['ylabel'])
+        ax1.legend(self.graph_lang['spectrum_ratio']['legend1'].split(','))
 
         ax2.loglog(fr, ratio, color=(0.64, 0, 1), lw=0.5)
         ax2.loglog([np.min(fr), fs], [np.sqrt(indexpad), np.sqrt(indexpad)], '-k', lw=0.5)
-        ax2.set(xlabel='Frequency /Hz', ylabel='Ratio')
-        ax2.legend(['Average of FFT/FFT of average', 'sqrt of #drops'])
+        ax2.set(xlabel=self.graph_lang['spectrum_ratio']['xlabel'], ylabel=self.graph_lang['spectrum_ratio']['ylabel2'])
+        ax2.legend(self.graph_lang['spectrum_ratio']['legend2'].split(','))
 
         p.tight_layout()
 
@@ -1098,13 +1136,13 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10))
         ax1.loglog(frx, yres1x, '-r', frx, yres2x, '-b', lw=0.5)
-        ax1.set(title='Spectrum comparison for 2 parts of drops', xlabel='Frequency /Hz', ylabel='Amplitude /nm')
-        ax1.legend(['1. half of drop', '2. half of drop'])
+        ax1.set(title=self.graph_lang['spectrum_parts']['title'], xlabel=self.graph_lang['spectrum_parts']['xlabel'], ylabel=self.graph_lang['spectrum_parts']['ylabel'])
+        ax1.legend(self.graph_lang['spectrum_parts']['legend1'].split(','))
 
         ax2.loglog(frx, ratio, color=(0.64, 0, 1), lw=0.5)
         ax2.loglog([np.min(frx), fs], [1, 1], '-k', lw=0.5)
-        ax2.set(xlabel='Frequency /Hz', ylabel='Ratio')
-        ax2.legend(['1. half of drop / 2. half of drop'])
+        ax2.set(xlabel=self.graph_lang['spectrum_parts']['xlabel'], ylabel=self.graph_lang['spectrum_parts']['ylabel'])
+        ax2.legend(self.graph_lang['spectrum_parts']['legend2'])
 
         p.tight_layout()
 
@@ -1119,12 +1157,12 @@ class Compute(QtWidgets.QDialog, PATH):
         if type == 'spectrum':
             x_by_sets = self.yfsa
             x = self.yffa
-            title = 'Spectras for set residuals and average of all residuals'
+            title = self.graph_lang['spectrum']['title']
 
         if type == 'spectrum_avr':
             x_by_sets = self.yfdMeanBySet
             x = self.yfdMean[0, :]
-            title = 'Average of drop spectras'
+            title = self.graph_lang['spectrum_avr']['title']
 
         start = 1
         legend = []
@@ -1140,10 +1178,10 @@ class Compute(QtWidgets.QDialog, PATH):
 
         for i in range(x_by_sets.shape[0]):
             p.loglog(fr[start:], x_by_sets[i, start:], lw=0.5)
-            legend.append('Set {}'.format(i + 1))
+            legend.append('{} {}'.format(self.graph_lang['spectrum']['set_description'], i + 1))
 
         p.loglog(fr[start:], x[start:], 'k', lw=0.8)
-        legend.append('Mean')
+        legend.append(self.graph_lang['spectrum']['legend'].split(',')[0])
 
         # printing envelope
         frenv = range(1, int(1e4) + 1)
@@ -1153,10 +1191,10 @@ class Compute(QtWidgets.QDialog, PATH):
             valenv_y.append(v)
         p.loglog(frenv[start:], valenv_y[start:], 'r')
 
-        legend.append('1 μGal envelope')
+        legend.append(self.graph_lang['spectrum']['legend'].split(',')[1])
         p.title(title)
-        p.xlabel('Frequency /Hz')
-        p.ylabel('Amplitude /nm')
+        p.xlabel(self.graph_lang['spectrum']['xlabel'])
+        p.ylabel(self.graph_lang['spectrum']['ylabel'])
         p.ylim([1e-5, 1])
         p.xlim([1, 1e5])
         p.legend(legend)
@@ -1199,12 +1237,12 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(self.tt[:self.frmaxplot], self.resgradsm4filt[:self.frmaxplot], '-',
                lw=3,
                color=(1, 0, 1))
-        p.text(xlim[0] + 0.001, -yl, 'Start fringe', color='b')
-        p.text(xxlim[0] + 0.001, -yl, 'Final fringe', color='b')
+        p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[0], color='b')
+        p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[1], color='b')
 
-        p.title('Mean residuals - gravity gradient estimation')
-        p.ylabel('Residuals /nm')
-        p.xlabel('Time /s')
+        p.title(self.graph_lang['residuals_gradient']['title'])
+        p.ylabel(self.graph_lang['residuals_gradient']['ylabel'])
+        p.xlabel(self.graph_lang['residuals_gradient']['xlabel'])
 
         path = self.projDirPath + '/Graphs/'
         name = 'residuals_gradient'
@@ -1242,12 +1280,12 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p.plot(self.tt[:self.frmaxplot], self.meanRes[0, :], '-k', lw=2)
         p.plot(self.tinc, self.yn, '-', lw=3, color='tab:pink')
-        p.text(xlim[0] + 0.001, -yl, 'Start fringe', color='b')
-        p.text(xxlim[0] + 0.001, -yl, 'Final fringe', color='b')
+        p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[0], color='b')
+        p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[1], color='b')
 
-        p.title('Stacked residuals')
-        p.ylabel('Residuals /nm')
-        p.xlabel('Time /s')
+        p.title(self.graph_lang['residuals']['title'])
+        p.ylabel(self.graph_lang['residuals']['ylabel'])
+        p.xlabel(self.graph_lang['residuals']['xlabel'])
 
         path = self.projDirPath + '/Graphs/'
         name = 'residuals'
@@ -1270,9 +1308,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.ylim([-siz, siz])
         p.plot([self.frmin, self.frmin], [-siz, siz], '-b', lw=1)
         p.plot([self.frmax, self.frmax], [-siz, siz], '-b', lw=1)
-        p.title('Residuals for all drops')
-        p.ylabel('Residuals /nm')
-        p.xlabel('Fringe #')
+        p.title(self.graph_lang['resid_all']['title'])
+        p.ylabel(self.graph_lang['resid_all']['ylabel'])
+        p.xlabel(self.graph_lang['resid_all']['xlabel'])
         x = range(1, self.frmaxplot + 1)
         for i in range(len(r)):
             acc = r[i]
@@ -1318,7 +1356,7 @@ class Compute(QtWidgets.QDialog, PATH):
             y = [k + j for k in l[ :self.frmaxplot]]
             Y.append(y)
             mark.append('-k')
-            col_name.append('Set{}'.format(j))
+            col_name.append('{}{}'.format(self.graph_lang['residuals_shifted']['set_description'], j))
             lw.append(0.3)
             text_x.append(0.265)
             text_y.append(j)
@@ -1344,8 +1382,8 @@ class Compute(QtWidgets.QDialog, PATH):
         lww.append(0.3)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='residuals_shifted', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Time /s', y_label='Shifted Residuals /nm',
-                  title='Set residuals', winsize=(15, 10))
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['residuals_shifted']['xlabel'], y_label=self.graph_lang['residuals_shifted']['ylabel'],
+                  title=self.graph_lang['residuals_shifted']['title'], winsize=(15, 10))
         g.plotXY(x=X, y=Y, mark=mark, columns_name=col_name, lw=lw)
         g.plotXY(x=XX, y=YY, mark=markk, columns_name=col_name, lw=lww)
         g.text(x=[x[self.frmin], x[self.frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
@@ -1381,13 +1419,13 @@ class Compute(QtWidgets.QDialog, PATH):
             cumulative_average.append(sum(grad[:i]) / len(grad[:i]))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Drop #', y_label=r'$VGG /nm.s^2/mm$',
-                  title='Estimated VGGs', winsize=(13, 8))
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['vgg']['xlabel'], y_label=self.graph_lang['vgg']['ylabel'],
+                  title=self.graph_lang['vgg']['title'], winsize=(13, 8))
         g.error_bar(x, grad, m0, 'r', ms=5, capsize=5)
         g.plotXY(x=[x, moving_avg_x, xlim, xlim, xlim], y=[cumulative_average, moving_average, ylim, yylim, yyylim],
                  mark=['k-', '-b', '-p', '-y', '-y'],
                  columns_name=['cumulative_mean', 'moving_average', 'mean', '-3sigma_range', '+3sigma_range'],
-                 legend=['Cumulative average', 'Moving average', 'Average vgg-value', '+3σ range', '-3σ range'],
+                 legend=self.graph_lang['vgg']['legend'].split(','),
                  lw=[3, 3, 1, 1, 1])
         g.saveSourceData()
         g.save()
@@ -1400,12 +1438,12 @@ class Compute(QtWidgets.QDialog, PATH):
         ts = np.linspace(1, self.nset, self.nset)
 
         # legend
-        l1 = r'$RMS_S({}-{}) = {:.1f}  nm.s^2$'.format(self.sensa_tn, self.sensa_tx, np.mean(self.dglrms))
-        l2 = r'$RMS_F({}-{}) = {:.1f}  nm.s^2$'.format(self.sensa_bn, self.sensa_bx, np.mean(self.dgrrms))
+        l1 = self.graph_lang['sensitivity_std']['legend'].split(',')[0].format(self.sensa_tn, self.sensa_tx, np.mean(self.dglrms))
+        l2 = self.graph_lang['sensitivity_std']['legend'].split(',')[1].format(self.sensa_bn, self.sensa_bx, np.mean(self.dgrrms))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Set #', y_label=r'Standart deviation $[nm.s^2]$',
-                  title='Variability of set g-values on the choice of first and final fringe')
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_std']['xlabel'], y_label=self.graph_lang['sensitivity_std']['ylabel'],
+                  title=self.graph_lang['sensitivity_std']['title'])
         g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
                  legend=[l1, l2],
                  lw=[1, 1])
@@ -1431,21 +1469,21 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(tttt)
             Y.append(self.dgr[i, :len(tttt)])
-            l.append('Set ' + str(i + 1))
+            l.append('{} '.format(self.graph_lang['sensitivity_bottom']['set_description']) + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
         X.append(tttt)
         Y.append(self.dgrm.T[:len(tttt)])
-        l.append('Mean')
-        cn.append('Mean')
+        l.append(self.graph_lang['sensitivity_bottom']['legend'])
+        cn.append(self.graph_lang['sensitivity_bottom']['legend'])
         m.append('k-')
         lw.append(1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Final Fringe #', y_label='',
-                  title='Gravity change due to choice of the last fringe')
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom']['xlabel'], y_label='',
+                  title=self.graph_lang['sensitivity_bottom']['title'])
         g.plotXY(x=[tttt], y=[[0 for i in range(len(tttt))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
         g.plotXY(x=[[self.frmax, self.frmax]], y=[[-10, 10]], mark=['b-'],
                  columns_name='xx', legend='',
@@ -1467,20 +1505,20 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # Set gravity at top of the drop
         g = Graph(path=self.projDirPath + '/Graphs', name='set_g', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Set #',
-                  y_label='Set gravity -{:.2f} /nm.s^(-2)'.format(g0), title='Set gravity at top of the drop')
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_g']['xlabel'],
+                  y_label=self.graph_lang['set_g']['ylabel'].format(g0), title=self.graph_lang['set_g']['title'])
         g.error_bar(range(1, x[1]), mean_by_set, self.stodchmod, 'r')
         g.plotXY(x=[x, x, x],
                  y=[[self.gfinal - g0, self.gfinal - g0], [self.gfinal - g0 - self.gstd, self.gfinal - g0 - self.gstd],
                     [self.gfinal - g0 + self.gstd, self.gfinal - g0 + self.gstd]], mark=['b-', 'g-', 'g-'],
-                 columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend=['Set g-values', 'Avegare g-value', '1σ range'])
+                 columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend=self.graph_lang['set_g']['legend'].split(','))
         g.saveSourceData()
         g.save()
 
         # Standart deviation for set g-values
         g = Graph(path=self.projDirPath + '/Graphs', name='set_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Set #', y_label='Set standart deviation /nm.s^(-2)',
-                  title='Standart deviation for set g-values')
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_std']['xlabel'], y_label=self.graph_lang['set_std']['ylabel'],
+                  title=self.graph_lang['set_std']['title'])
         # g.plotXY(x=[x, x, x], y=[[gfinal-g0, gfinal-g0], [gfinal-g0-gstd, gfinal-g0-gstd], [gfinal-g0+gstd, gfinal-g0+gstd]], mark=['b-', 'g-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Set g-values', 'Avegare g-value', '1 range'])
         g.error_bar(range(1, x[1]), self.stodch, self.stodchs, 'r')
         g.saveSourceData()
@@ -1493,8 +1531,8 @@ class Compute(QtWidgets.QDialog, PATH):
         n = range(1, len(std) + 1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='resid_RMS', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Drop #', y_label='Standart deviation /nm',
-                  title='Standart deviation of the residuals for each drop')
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['resid_RMS']['xlabel'], y_label=self.graph_lang['resid_RMS']['ylabel'],
+                  title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
         g.saveSourceData()
         g.save()
@@ -1519,11 +1557,11 @@ class Compute(QtWidgets.QDialog, PATH):
         x = range(1, len(e) + 1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label='Drop #', y_label='sin/cos amplitude /nm',
-                  title='Sine/Cosine amplitudes of the parasitic wave with L = {:.3f} m'.format(
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['parasitic']['xlabel'], y_label=self.graph_lang['parasitic']['ylabel'],
+                  title=self.graph_lang['parasitic']['title'].format(
                       float(self.lpar.toPlainText())))
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
-                 legend=['Sine component', 'Cosine component'])
+                 legend=self.graph_lang['parasitic']['xlabel'].split(','))
         g.saveSourceData()
         g.save()
 
@@ -1533,7 +1571,7 @@ class Compute(QtWidgets.QDialog, PATH):
         r = [i[0] for i in r]
 
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram', project=self.stationData['ProjName'],
-                  x_label='Drop gravity - final g/nm.s^{-2}', y_label='Frequency', title='Histogram of accepted drops',
+                  x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'], title=self.graph_lang['histogram']['title'],
                   show=self.open_graphs.isChecked())
         g.histogram(r, fit=True)
         g.saveSourceData()
@@ -1541,8 +1579,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphHistogramAccDropsNorm(self):
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram_norm', project=self.stationData['ProjName'],
-                  x_label='Drop gravity - final g/normalized nm.s^{-2}', y_label='Frequency',
-                  title='Histogram of accepted drops (normalized)', show=self.open_graphs.isChecked())
+                  x_label=self.graph_lang['histogram_norm']['xlabel'], y_label=self.graph_lang['histogram_norm']['ylabel'],
+                  title=self.graph_lang['histogram_norm']['title'], show=self.open_graphs.isChecked())
         g.histogram(self.normres, fit=True)
         g.saveSourceData()
         g.save()
@@ -1553,9 +1591,9 @@ class Compute(QtWidgets.QDialog, PATH):
         y = [i[0] for i in y]
         x = [i for i in range(1, self.ndrop + 1)]
         g = Graph(path=self.projDirPath + '/Graphs', name='effective_height2', project=self.stationData['ProjName'],
-                  x_label='Drop #', y_label='Effective measurement height /mm',
-                  title='Effective measurement height from top of the drop', show=self.open_graphs.isChecked())
-        g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height'])
+                  x_label=self.graph_lang['effective_height2']['xlabel'], y_label=self.graph_lang['effective_height2']['ylabel'],
+                  title=self.graph_lang['effective_height2']['title'], show=self.open_graphs.isChecked())
+        g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height2'])
         g.save()
 
     def estimLine(self, X, std, set, drop, m0, date_time):
@@ -2069,15 +2107,15 @@ class Compute(QtWidgets.QDialog, PATH):
         fig, ax1 = plt.subplots()
 
         color = 'tab:blue'
-        ax1.set_xlabel('Drop')
-        ax1.set_ylabel('Effective measurement height /mm', color=color)
+        ax1.set_xlabel(self.graph_lang['effective_height']['xlabel'])
+        ax1.set_ylabel(self.graph_lang['effective_height']['ylabel'], color=color)
         ax1.plot(t, data1, color=color, linewidth=0.5)
         ax1.tick_params(axis='y', labelcolor=color)
 
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
         color = 'tab:red'
-        ax2.set_ylabel('Top of the drop /mm', color=color)  # we already handled the x-label with ax1
+        ax2.set_ylabel(self.graph_lang['effective_height']['ylabel2'], color=color)  # we already handled the x-label with ax1
         ax2.plot(t, data2, color=color, linewidth=0.5)
         ax2.tick_params(axis='y', labelcolor=color)
 
@@ -2132,13 +2170,13 @@ class Compute(QtWidgets.QDialog, PATH):
 
         ax1.plot(x, self.ampar, 'r', lw=0.5)
         ax1.set(
-            title='Amplitudes and phases of the parasitic wave with L = {} m'.format(self.gravimeter['Lpar'] / 1e10),
-            xlabel='Drop #',
-            ylabel='Amplitude /nm')
+            title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10),
+            xlabel=self.graph_lang['parasitic2']['xlabel'],
+            ylabel=self.graph_lang['parasitic2']['ylabel1'])
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)
-        ax2.set(xlabel='Drop #', ylabel='Phase /rad')
+        ax2.set(xlabel=self.graph_lang['parasitic2']['xlabel'], ylabel=self.graph_lang['parasitic2']['ylabel2'])
 
         # save graph
         path = self.projDirPath + '/Graphs/'
@@ -2159,14 +2197,14 @@ class Compute(QtWidgets.QDialog, PATH):
 
         for i in range(self.dgl.shape[0]):
             p.plot(x, self.dgl[i, :], lw=0.7)
-            legend.append('Set {}'.format(i + 1))
+            legend.append('{} {}'.format(self.graph_lang['sensitivity_top']['set_description'], i + 1))
 
-        legend.append('Mean')
+        legend.append(self.graph_lang['sensitivity_top']['legend'])
         p.plot(x, self.dglm[0, :], 'k', lw=2)
         p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
-        p.title('Gravity change due to choice of the first fringe')
-        p.xlabel('Initial Fringe #')
-        p.ylabel(r'Δg $[nm.s^2]$')
+        p.title(self.graph_lang['sensitivity_top']['title'])
+        p.xlabel(self.graph_lang['sensitivity_top']['xlabel'])
+        p.ylabel(self.graph_lang['sensitivity_top']['ylabel'])
         p.ylim(ylim)
         p.legend(legend)
 

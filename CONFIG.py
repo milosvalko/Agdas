@@ -194,3 +194,35 @@ SAE = [0, 0, 0.006, 0.10, 0.077, 0.92, 0.087, 1, 0.177, 1.65, 0.200, 2, 0.215, 2
 
 tau = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800,
                900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500]
+
+sh1 = """"BG" - Bulgarian
+"CS" - Czech
+"DA" - Danish
+"DE" - German
+"EL" - Greek
+"EN-GB" - English
+"ES" - Spanish
+"ET" - Estonian
+"FI" - Finnish
+"FR" - French
+"HU" - Hungarian
+"ID" - Indonesian
+"IT" - Italian
+"JA" - Japanese
+"LT" - Lithuanian
+"LV" - Latvian
+"NL" - Dutch
+"PL" - Polish
+"PT-BR" - Brazilian Portuguese
+"RO" - Romanian
+"RU" - Russian
+"SK" - Slovak
+"SL" - Slovenian
+"SV" - Swedish
+"TR" - Turkish
+"ZH" - Chinese"""
+
+languages = {}
+for i in sh1.splitlines():
+    s, l = i.split('- ')
+    languages[s.split('"')[1]] = l
