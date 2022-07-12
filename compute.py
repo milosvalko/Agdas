@@ -139,6 +139,13 @@ class Compute(QtWidgets.QDialog, PATH):
     def fill_output_language(self):
         self.output_language.addItems(list(languages.values()))
 
+        ii = 0
+        for i in languages:
+            if languages[i] == 'English':
+                self.output_language.setCurrentIndex(ii)
+                break
+            ii += 1
+
     def complete_out_help(self):
 
         self.help_box.setText('pokus')
@@ -711,7 +718,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # close connection with database
         # self.matr_connection.close()
-        
+
         if self.outputs.isChecked():
             # create outputs which doesn't require statistic processing
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
