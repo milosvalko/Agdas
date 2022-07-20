@@ -534,6 +534,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
         compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'])
+        Polar = []
 
         ind_ = open('ind.txt', 'w')
         # loop for all drops
@@ -565,11 +566,15 @@ class Compute(QtWidgets.QDialog, PATH):
             # ===========================================================================#
             # polar correction from file
             if self.useFilePoleCorr.isChecked():
-                Polar = float(self.poleCorr_file.toPlainText())
+                Polar.append(float(self.poleCorr_file.toPlainText()))
 
             # polar correction calculated for each drop from IERS file
-            if self.useIERSPoleCorr.isChecked():
-                Polar = self.dg[i]
+            try:
+                if self.useIERSPoleCorr.isChecked():
+                    Polar.append(self.dg[i])
+            except AttributeError:
+                Warning(error=warning_window['pole_corr_service'], icon='critical', title='Warning')
+                break
             # ===========================================================================#
             # compute of LST
             fall = Fall()
@@ -605,7 +610,7 @@ class Compute(QtWidgets.QDialog, PATH):
             fall.effectiveHeightTop()
             fall.effectivePosition()
             fall.gTop()
-            fall.gTopCor(drop['Tide'], drop['Load'], drop['Baro'], Polar)
+            fall.gTopCor(drop['Tide'], drop['Load'], drop['Baro'], Polar[-1])
             self.tt = fall.tt
             self.Lambda = fall.Lambda
             # ===========================================================================#
@@ -667,7 +672,7 @@ class Compute(QtWidgets.QDialog, PATH):
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], fall.x_grad[0][7], fall.x_grad[0][8], fall.g0_Gr,
                              - fall.gradient * fall.Grad,
-                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar * 10,
+                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
                              fall.xef[0][3], fall.ssres, accepted, res]
@@ -682,7 +687,7 @@ class Compute(QtWidgets.QDialog, PATH):
                              fall.x_grad[0][0],
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], 0.0, 0.0, fall.g0_Gr, - fall.gradient * fall.Grad,
-                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar * 10,
+                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
                              fall.xef[0][3], fall.ssres, accepted, res]
@@ -749,6 +754,14 @@ class Compute(QtWidgets.QDialog, PATH):
                       show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'], y_label=self.graph_lang['tides']['ylabel'],
                       title=self.graph_lang['tides']['title'])
             g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
+            g.saveSourceData()
+            g.save()
+
+            g = Graph(path=self.projDirPath + '/Graphs', name='polar_corr', project=self.stationData['ProjName'],
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['polar_corr']['xlabel'],
+                      y_label=self.graph_lang['polar_corr']['ylabel'],
+                      title=self.graph_lang['polar_corr']['title'])
+            g.plotXY(x=[time_gr], y=[Polar], mark=['b+'], columns_name=['polar_corr'])
             g.saveSourceData()
             g.save()
 

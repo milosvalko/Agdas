@@ -10,7 +10,6 @@ from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
 from functions import printDict
-from comparison import Comparison
 import os
 
 script_path = os.path.dirname(os.path.realpath(__file__))
