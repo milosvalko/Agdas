@@ -1002,3 +1002,70 @@ class Graph():
             ret_code = subprocess.call(['start', self.path + '/' + self.project + '_' + self.name + '.png'], shell=True)
 
         self.gr.close()
+
+
+class Compare_gsoft_agdas():
+    """
+    This class compares values of gravity from G software and Agdas
+    The class generates compare_gsoft_agdas.csv file in Files folder with mean, standard deviation,
+    max difference and differences between Agdas an g software
+    """
+
+    def __init__(self, path, vgg):
+        self.gsoft = [] #
+        self.agdas = []
+        self.set = []
+        self.drp = []
+        self.vgg = float(vgg) # gradient from project file
+        self.path = os.path.join(path, 'Files', 'compare_gsoft_agdas.csv')
+        self.path_hist = os.path.join(path, 'Graphs')
+
+    def add_gsoft(self, drop, hef):
+        self.set.append(drop['Set'])
+        self.drp.append(drop['Drp'])
+
+        # reduce corrections
+        ffa_gsoft = float(drop['Gravity']) - float(drop['Tide']) - float(drop['Load']) - float(
+            drop['Baro']) - float(
+            drop['Polar']) - float(drop['Transfer'])
+        # compute g in effective height
+        ffa_gsoft_hef = ffa_gsoft - self.vgg * hef / 10
+
+        self.gsoft.append(ffa_gsoft_hef)
+
+    def add_agdas(self, EfH):
+        self.agdas.append(EfH / 10)
+
+    def print_file(self, acc, delimiter):
+        # compute absolute value of differences
+        self.diff_ = [abs(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft))]
+
+        # create summary
+        summ = """max_diff{}{:.2f}\navg_diff{}{:.2f}\nstd_diff{}{:.2f}\n
+        """.format(delimiter, np.max(self.diff_), delimiter, np.mean(self.diff_), delimiter, np.std(self.diff_, ddof=1))
+
+        # create header
+        # set ; drop ; acc ; gsoft ; agdas ; diff
+        header = 'set{0}drop{0}acc{0}gsoft{0}agdas{0}diff\n'.format(delimiter)
+        line = '{}{}{}{}{}{}{}{}{}{}{}\n'
+
+        # open a create file
+        file = open(self.path, 'w')
+        file.write(summ)
+        file.write(header)
+
+        for i in range(len(self.gsoft)):
+            line_ = line.format(self.set[i], delimiter, self.drp[i], delimiter, acc[i][0], delimiter,
+                                self.gsoft[i], delimiter, self.agdas[i], delimiter, self.diff_[i])
+            file.write(line_)
+
+        file.close()
+
+    def print_histogram(self, graph_lang):
+        g = Graph(path=self.path_hist, name='histogram', project='',
+                  x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
+                  title=graph_lang['histogram_diff']['title'],
+                  show=False)
+        g.histogram(self.diff_, fit=True)
+        g.saveSourceData()
+        g.save()

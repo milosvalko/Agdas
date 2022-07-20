@@ -3,7 +3,7 @@ from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QLabel
 from time import sleep, time
 from warning import Warning
-from classes import Fall, projectFile, rawFile, dropFile, estim, matr_db, res_final, Graph
+from classes import Fall, projectFile, rawFile, dropFile, estim, matr_db, res_final, Graph, Compare_gsoft_agdas
 from CONFIG import getFG5X, getFG5, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, \
     warning_window, tau, languages
 import sqlite3 as sql
@@ -533,7 +533,7 @@ class Compute(QtWidgets.QDialog, PATH):
             (self.ndrop, int(self.processingResults['totalFringes'])))  # All residuals from gradient estimation fit
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
-
+        compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'])
 
         ind_ = open('ind.txt', 'w')
         # loop for all drops
@@ -687,6 +687,9 @@ class Compute(QtWidgets.QDialog, PATH):
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
                              fall.xef[0][3], fall.ssres, accepted, res]
 
+            compare_gsoft_agdas.add_gsoft(drop, fall.h * 1e-6+fall.Grad * 1e-6)
+            compare_gsoft_agdas.add_agdas(fall.g0)
+
             # send line to database
             self.matr_connection.insert(matrDatabase['insert'].format(*matr_drop))
             # send message to logging window
@@ -781,6 +784,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.compute_normres()
             self.print_allanFile()
             self.ressets_res()
+            compare_gsoft_agdas.print_file(self.matr_connection.get('select Accepted from results'), self.delimiter)
+            compare_gsoft_agdas.print_histogram(self.graph_lang)
             # self.harmonic()
             if self.kpar.isChecked():
                 self.parasitic_wave()
