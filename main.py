@@ -43,7 +43,6 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.viewGraphs.triggered.connect(self.viewgraphs)
         self.closeProject.triggered.connect(self.closeproject)
         self.openProject.triggered.connect(self.open_project)
-        self.actionComparison.triggered.connect(self.compare)
 
         self.newproject.clicked.connect(self.new_Project)
 
@@ -129,11 +128,6 @@ class Main(QtWidgets.QMainWindow, PATH):
 
         except AttributeError:
             Warning(error=warning_window['import_data'], icon='critical', title='Warning')
-
-    def compare(self):
-
-        Comparison(',')
-
 
     def viewData(self):
         """

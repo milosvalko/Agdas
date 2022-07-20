@@ -140,7 +140,6 @@
     </property>
     <addaction name="computing"/>
     <addaction name="viewdata"/>
-    <addaction name="actionComparison"/>
    </widget>
    <addaction name="menuFile_s"/>
    <addaction name="menuData"/>
