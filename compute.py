@@ -77,22 +77,26 @@ class Compute(QtWidgets.QDialog, PATH):
         self.delimiter_combox.currentTextChanged.connect(self.setDelimiter)
         self.run.clicked.connect(self.Run)
         self.allDrop.stateChanged.connect(self.numDrops)
-        self.downloadPoleCorr.clicked.connect(self.downloadPole)
+        # self.downloadPoleCorr.clicked.connect(self.downloadPole)
         self.outputs.setDisabled(True)
         self.numDrop.valueChanged.connect(self.DisStat)
         self.split_set.stateChanged.connect(self.disabledSplit)
         self.sets_choose.activated.connect(self.currentSet)
-        self.complete_help.clicked.connect(self.complete_out_help)
 
         self.set_gravimeter()
         self.set_ui()
-        self.fill_output_language()
+
+        self.frminT.textChanged.connect(self.set_frmin_t)
+        self.frmaxT.textChanged.connect(self.set_frmax_t)
+        # self.fill_output_language()
 
         # self.Prescale()
         self.numDrops()
 
         # set l cable to ui
         self.lcable_ar.setText(str(self.gravimeter['Lcable']))
+
+        self.total_fringe.setText(str(self.processingResults['totalFringes']))
 
         # self.setMouseTracking(True)
 
@@ -118,37 +122,33 @@ class Compute(QtWidgets.QDialog, PATH):
         #     if event.y() > self.out_help.pos().y() and event.y() < self.out_help.pos().y() + self.out_help.height():
         #         print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
 
-    def set_graph_language(self, lang):
+    def set_graph_language(self):
         """
         Read ini files from "graphs_languages" and save it to graph_lang as dictionary
         :param lang: requiered language for graphs
         :return:
         """
 
-        # find shortcut of language, "languages" is imported from functions.py
-        for i in languages:
-            if languages[i] == lang:
-                lang_sh = i
+        # # find shortcut of language, "languages" is imported from functions.py
+        # for i in languages:
+        #     if languages[i] == lang:
+        #         lang_sh = i
 
-        lang_path = os.path.join(script_path, 'graphs_languages', 'graphs_description_' + lang_sh + '.ini')
+        lang_path = os.path.join(script_path, 'graphs_languages', 'graphs_description_EN-GB.ini')
 
         self.graph_lang = configparser.ConfigParser()
         self.graph_lang.read(filenames=lang_path, encoding='utf-8')
 
 
-    def fill_output_language(self):
-        self.output_language.addItems(list(languages.values()))
-
-        ii = 0
-        for i in languages:
-            if languages[i] == 'English':
-                self.output_language.setCurrentIndex(ii)
-                break
-            ii += 1
-
-    def complete_out_help(self):
-
-        self.help_box.setText('pokus')
+    # def fill_output_language(self):
+    #     self.output_language.addItems(list(languages.values()))
+    #
+    #     ii = 0
+    #     for i in languages:
+    #         if languages[i] == 'English':
+    #             self.output_language.setCurrentIndex(ii)
+    #             break
+    #         ii += 1
 
     def set_lcable_ui(self):
         self.lcable = float(self.lcable_ar.toPlainText())
@@ -158,10 +158,10 @@ class Compute(QtWidgets.QDialog, PATH):
         set gravimeter automatically by count of processed fringes
         @return:
         """
-        if int(self.processingResults['processedFringes']) < 8000:
-            self.gravimeter_box.setCurrentIndex(1)
-        else:
+        if int(self.processingResults['multiplex'])*int(self.processingResults['scaleFactor'])*int(self.processingResults['totalFringes']) > 1e6:
             self.gravimeter_box.setCurrentIndex(0)
+        else:
+            self.gravimeter_box.setCurrentIndex(1)
 
     def set_sensitivity_intervals(self):
         """
@@ -238,6 +238,33 @@ class Compute(QtWidgets.QDialog, PATH):
         self.set_modulation_frequency_ui()
         self.set_lpar_ui()
         self.set_pole_corr_ui()
+        self.set_frmin_t()
+        self.set_frmax_t()
+
+    def set_frmin_t(self):
+        try:
+            frmin = int(self.frminT.toPlainText())
+        except ValueError:
+            frmin = 1000000
+
+        if frmin > 0 and frmin < int(self.processingResults['totalFringes']):
+            t = float(self.raw_lines[0].split()[4+frmin])
+            self.frminT_t.setText('{:.4f} s'.format(t))
+        else:
+            self.frminT_t.setText('out')
+
+    def set_frmax_t(self):
+        try:
+            frmax = int(self.frmaxT.toPlainText())
+        except ValueError:
+            frmax = 1000000
+
+        if frmax > 0 and frmax < int(self.processingResults['totalFringes']):
+            t = float(self.raw_lines[0].split()[4+frmax])
+            self.frmaxT_t.setText('{:.4f} s'.format(t))
+        else:
+            self.frmaxT_t.setText('out')
+
 
     def set_gravimeter(self):
         """
@@ -418,7 +445,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             self.dg.append(-19.139 * np.sin(2 * fi) * (x_pole_interp * np.cos(lam) - y_pole_interp * np.sin(lam)))
 
-        self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
+        # self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
 
     def defineSets(self):
         """
@@ -461,7 +488,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.calc_time.setText('I am still running!')
 
         # Languages to output_languages
-        self.set_graph_language(self.output_language.currentText())
+        self.set_graph_language()
 
         # set l cable from ui
         self.set_lcable_ui()
@@ -489,6 +516,10 @@ class Compute(QtWidgets.QDialog, PATH):
                 Warning(error=warning_window['split_set'], icon='critical', title='Warning')
                 self.run.setStyleSheet("background-color :#f0f0f0;")
                 return
+
+        # download polar coordinates and compute polar corrections if correction from web is required
+        if self.useIERSPoleCorr.isChecked():
+            self.downloadPole()
 
         # count of the fringes
         self.nfringe = int(self.header1[-1])
@@ -553,7 +584,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # ===========================================================================#
             # create raw dictionary with data from rawfile
             raw_line = self.raw_lines[i].split()
-            d1 = dict(zip(self.columns_rawfile[0:5], raw_line[0:5]))
+            d1 = dict(zip(self.columns_rawfile[:5], raw_line[:5]))
             d1['ftime'] = raw_line[5:5 + self.nfringe]
             d2 = dict(zip(self.columns_rawfile[6:], raw_line[5 + self.nfringe:10 + self.nfringe]))
             raw = d1 | d2
@@ -793,6 +824,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.rejectBySigma()
             self.meanResidualsBySets()
             self.sensitivity()
+            self.sensitivity_time()
             self.fourier()
             self.compute_normres()
             self.print_allanFile()
@@ -2097,6 +2129,92 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.dgrrms = np.sqrt(np.sum(np.square(self.dgrc.transpose()), axis=0)) / np.sqrt(celk + 1)
         # ==============================================================================
+
+    def sensitivity_time(self):
+        """
+        Computing of sensitivity
+        """
+        self.logWindow.append(separator)
+        self.logWindow.append('Compute sensitivity - time')
+        QtCore.QCoreApplication.processEvents()
+
+        ttlinmin = floor(10000*self.tt[0])/10000
+        ttlinmax = floor(10000*self.tt[self.frmaxplot-1])/10000
+        ttlin = np.arange(ttlinmin, ttlinmax, 0.00001)
+        nttlin = len(ttlin)
+        tfrmin = self.tt[self.frmin-1]
+        tfrmax = self.tt[self.frmax-1]
+
+        indsenstn = 1
+        indsenstx = 1
+        indsensbn = 1
+        indsensbx = nttlin
+        indsensfrmin = 1
+        indsensfrmax = 1
+
+        for i in range(nttlin):
+            if abs(ttlin[i] - self.tt[0]) < 1e-5:
+                indsenstn = i
+
+            if abs(ttlin[i] - self.tt[self.sens_tx-1]) < 1e-5:
+                indsenstx = i
+
+            if abs(ttlin[i] - self.tt[self.sens_bn-1]) < 1e-5:
+                indsensbn = i
+
+            if abs(ttlin[i] - np.min([self.tt[self.sens_bx-1], ttlinmax])) < 1e-5:
+                indsensbx = i
+
+            if abs(ttlin[i] - tfrmin) < 1e-5:
+                indsensfrmin = i
+
+            if abs(ttlin[i] - tfrmax) < 1e-5:
+                indsensfrmax = i
+
+        print(indsenstn)
+        print(indsenstx)
+        print(indsensbn)
+        print(indsensbx)
+        print(indsensfrmin)
+        print(indsensfrmax)
+
+        # initialization of arrays for sensitivity
+        self.dglt = np.zeros((self.nset, indsenstx - indsenstn + 1))
+        self.dgrt = np.zeros((self.nset, abs(indsensbn - indsensbx) + 1))
+
+        self.dgltm = np.zeros((1, indsenstx - indsenstn + 1))
+        self.dgrtm = np.zeros((1, abs(indsensbn - indsensbx) + 1))
+
+        # sensitivity is calculated for averages by sets
+        for i in range(self.nset):
+            ttr = np.interp(ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
+            for j in range(indsenstn, indsenstx + 1):
+                # data for fitting by parabola on left side of drop
+                x = ttlin[j - 1: indsensfrmax]
+                y = ttr[j - 1: indsensfrmax]
+                # fitting by parabola
+                koef = np.polyfit(x, y, deg=2)
+                # storing quadratic coefficient of equation of fitted parabola
+                self.dglt[i, j - indsenstn] = koef[0] * 2
+
+            for j in range(indsensbn, indsensbx + 1):
+                # data for fitting by parabola on right side of drop
+                x = ttlin[indsensfrmin - 1: j]
+                y = ttr[indsensfrmin - 1: j]
+                # fitting by parabola
+                koef = np.polyfit(x, y, deg=2)
+                # storing quadratic coefficient of equation of fitted parabola
+                self.dgrt[i, j - indsensbn] = koef[0] * 2
+
+            self.dgltm += self.dglt[i, :]
+            self.dgrtm += self.dgrt[i, :]
+
+        # average
+        self.dgltm /= self.nset
+        self.dgrtm /= self.nset
+
+        np.savetxt('dgltm.csv', self.dgltm, delimiter=';')
+        np.savetxt('dgrtm.csv', self.dgrtm, delimiter=';')
 
     def Graph_EffHeight_CorToEffHeight(self, project):
 

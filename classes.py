@@ -657,7 +657,7 @@ class projectFile():
                 self.insert_to_units(gravityCorrections, i)
 
             if self.file[i] == 'Height:' and self.file[i + 2] == 'µGal':
-                gravityCorrections['transferHeight'] = self.file[i + 1]
+                gravityCorrections['transferHeightGal'] = self.file[i + 1]
                 self.insert_to_names(gravityCorrections, i)
                 self.insert_to_units(gravityCorrections, i)
 
