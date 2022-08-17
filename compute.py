@@ -12,7 +12,7 @@ from time import time
 import matplotlib.pyplot as plt
 from PyQt5.QtGui import QIcon, QPixmap
 from math import sin, cos, pi, sqrt, floor
-from functions import allan, roundList, date_to_mjd, rssq, movingAverage
+from functions import allan, roundList, date_to_mjd, rssq, movingAverage, mjd_to_jd, jd_to_date
 import numpy as np
 from scipy.stats import t
 import scipy.signal as sig
@@ -346,6 +346,7 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Download pole coordinates from IERS/naval and compute corrections for each drop
         """
+        finals_path = os.getcwd() + '/finals/finals2000A.all.csv'
 
         if self.service.currentText() == 'IERS':
             url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
@@ -353,10 +354,11 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.service.currentText() == 'Naval Observatory':
             url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
 
-        try:
-            urllib.request.urlretrieve(url, os.getcwd() + '/finals/finals2000A.all.csv')
-        except urllib.error.URLError:
-            Warning(error=warning_window['internet'], icon='critical', title='Warning')
+        if time() - os.path.getmtime(finals_path) > 604800:
+            try:
+                urllib.request.urlretrieve(url, finals_path)
+            except urllib.error.URLError:
+                Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
         # coordinations of point
         fi = float(self.stationData['lat']) * pi / 180
@@ -429,6 +431,8 @@ class Compute(QtWidgets.QDialog, PATH):
         y_para = np.polyfit(x, y_pole, deg)
 
         self.dg = []
+        self.x_pole_interp = []
+        self.y_pole_interp = []
         for i in range(len(self.lines)):
             split_line = self.lines[i].split()
             drop_date = \
@@ -440,10 +444,10 @@ class Compute(QtWidgets.QDialog, PATH):
             drop_time = split_line[2].split(':')
             drop_time = float(drop_time[0]) + (float(drop_time[2]) / 60 + float(drop_time[1])) / 24 + multi * 24
 
-            x_pole_interp = np.polyval(x_para, drop_time)
-            y_pole_interp = np.polyval(y_para, drop_time)
+            self.x_pole_interp.append(np.polyval(x_para, drop_time))
+            self.y_pole_interp.append(np.polyval(y_para, drop_time))
 
-            self.dg.append(-19.139 * np.sin(2 * fi) * (x_pole_interp * np.cos(lam) - y_pole_interp * np.sin(lam)))
+            self.dg.append(-19.139 * np.sin(2 * fi) * (self.x_pole_interp[-1] * np.cos(lam) - self.y_pole_interp[-1] * np.sin(lam)))
 
         # self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
 
@@ -551,7 +555,6 @@ class Compute(QtWidgets.QDialog, PATH):
             self.nset = int(self.processingResults['setsCollected'])
 
         files = False
-        self.ksol = 1
         atm = []  # atmospheric correction data
         time_gr = []  # data for x axis for atm/baro/tides data
         baro = []  # barometric correction data
@@ -564,8 +567,9 @@ class Compute(QtWidgets.QDialog, PATH):
             (self.ndrop, int(self.processingResults['totalFringes'])))  # All residuals from gradient estimation fit
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
-        compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'])
+        compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'], self.stationData['ProjName'])
         Polar = []
+        self.Press = []
 
         ind_ = open('ind.txt', 'w')
         # loop for all drops
@@ -580,6 +584,8 @@ class Compute(QtWidgets.QDialog, PATH):
             if self.split_set.isChecked():
                 drop['Set'] = self.sets[i]
                 drop['Drp'] = self.drop_in_set[i]
+
+            self.Press.append(float(drop['Pres']))
 
             # ===========================================================================#
             # create raw dictionary with data from rawfile
@@ -610,7 +616,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # compute of LST
             fall = Fall()
             # Setters
-            fall.set_ksol(ksol=self.ksol)
+            fall.set_ksol(ksol=self.ksol.isChecked())
             fall.setFringe(raw['ftime'])
             fall.setLambda(Lambda)
             fall.setScaleFactor(self.processingResults['scaleFactor'])
@@ -864,6 +870,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graph_sensitivity_top()
             self.graph_spectrum('spectrum')
             self.graph_spectrum('spectrum_avr')
+            self.print_results_dat()
 
             title = self.graph_lang['allan1_normalized']['title']
             ylabel = self.graph_lang['allan1_normalized']['ylabel']
@@ -874,6 +881,7 @@ class Compute(QtWidgets.QDialog, PATH):
             estim.close()
             estim_grad.close()
             self.matlog_file()
+
 
         # Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
@@ -934,7 +942,7 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(self.instrumentData['modulFreq'])
         line.append('0.' + self.instrumentData['rubiFreq'].split('.')[1])
         line.append(self.gravimeter['Lpar'] / 1e9)
-        line.append(self.ksol)
+        line.append(self.ksol.isChecked())
         line.append(self.ksae.isChecked())
         line.append(self.kdis.isChecked())
         line.append(self.kimp.isChecked())
@@ -991,11 +999,16 @@ class Compute(QtWidgets.QDialog, PATH):
         vggp2 = np.mean(gradients)
         mggp2 = np.std(gradients, ddof=1)
 
+        vggp3_list = []
+
         c = 0
         for i in gradients:
             if abs(vggp2 - i[0]) < 3 * mggp2:
                 c += 1
+                vggp3_list.append(i[0])
 
+        self.vggp3_ = np.mean(vggp3_list)
+        self.mggp3_ = np.std(vggp3_list, ddof=1)
         return c
 
     def get_avg_press(self):
@@ -1702,8 +1715,9 @@ class Compute(QtWidgets.QDialog, PATH):
         a = res_final(path=self.projDirPath, header=headers['matlogsets'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'matlogsets', delimiter=self.delimiter)
         it = 0
+        self.tst = []
         for i in r:
-            tst = abs((t.cdf(self.vv[it] / self.mm, len(r) - 1) - 0.5) * 200)
+            self.tst.append(abs((t.cdf(self.vv[it] / self.mm, len(r) - 1) - 0.5) * 200))
 
             vgg = np.median(self.matr_connection.get('select vgg from results where Set1 = {}'.format(i[0])))
 
@@ -1711,7 +1725,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             line = [self.stationData['ProjName'], i[0], int(i[1]), int(i[2]), int(i[3]), int(i[4]), int(i[5]),
                     int(i[6]), i[-1], self.stationData['gradient'], i[7], self.stodch[it], self.dglrms[it],
-                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, self.press[it], vgg, tst]
+                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, self.press[it], vgg, self.tst[-1]]
             a.printResult(line=roundList(line, round_line_ind['matlogsets']))
             it += 1
 
@@ -2171,13 +2185,6 @@ class Compute(QtWidgets.QDialog, PATH):
             if abs(ttlin[i] - tfrmax) < 1e-5:
                 indsensfrmax = i
 
-        print(indsenstn)
-        print(indsenstx)
-        print(indsensbn)
-        print(indsensbx)
-        print(indsensfrmin)
-        print(indsensfrmax)
-
         # initialization of arrays for sensitivity
         self.dglt = np.zeros((self.nset, indsenstx - indsenstn + 1))
         self.dgrt = np.zeros((self.nset, abs(indsensbn - indsensbx) + 1))
@@ -2213,8 +2220,8 @@ class Compute(QtWidgets.QDialog, PATH):
         self.dgltm /= self.nset
         self.dgrtm /= self.nset
 
-        np.savetxt('dgltm.csv', self.dgltm, delimiter=';')
-        np.savetxt('dgrtm.csv', self.dgrtm, delimiter=';')
+        # np.savetxt('dgltm.csv', self.dgltm, delimiter=';')
+        # np.savetxt('dgrtm.csv', self.dgrtm, delimiter=';')
 
     def Graph_EffHeight_CorToEffHeight(self, project):
 
@@ -2259,7 +2266,7 @@ class Compute(QtWidgets.QDialog, PATH):
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
-        fig.savefig(self.projDirPath + '/Graphs/' + project + '_' + 'effective_height.png', dpi=250)
+        fig.savefig(self.projDirPath + '/Graphs/' + project + '_' + 'effective_height.png')
         plt.close(fig)
 
     def parasitic_wave(self):
@@ -2353,6 +2360,149 @@ class Compute(QtWidgets.QDialog, PATH):
         project = self.stationData['ProjName']
         p.savefig(path + project + '_' + name + '.png', format='png', transparent=False)
         plt.close()
+
+    def print_results_dat(self):
+        """
+        This method generates results.dat file, sources for the file are in  "results_dat" folder.
+        The folder contains two files (results_dat_part1.txt, results_dat_part3.txt).
+        The first part contains content for part from start to table with mean by sets including head of the table.
+        The third part contains content from end of the table to end of file.
+        The second part is generated in this method from database.
+        :return:
+        """
+        # path of the file
+        part1_path = os.path.join(script_path, 'results_dat', 'results_dat_part1.txt')
+        part3_path = os.path.join(script_path, 'results_dat', 'results_dat_part3.txt')
+
+        # load first part of the file
+        f = open(part1_path, 'r')
+        part1 = f.read()
+        f.close()
+
+        # get data from databse to the file
+        sets = self.matr_connection.get('select Set1, substr(Date,0,5), substr(Date,6,2), substr(Date,9,2), substr(Date,12,2), substr(Date,15,2), substr(Date, 18, 2), count(*), round(avg(gTopCor),2), round(avg(Tide),2), round(avg(Polar),2), round(avg(Baro),2), round(avg(CorrToTop),2)  from results  where Accepted = 1 group by Set1')
+
+        # creare list with data to the file
+        part1_fill = []
+        part1_fill.append(1) # agdas version
+        part1_fill.append(self.stationData['ProjName']) # project name
+        part1_fill.append(self.stationData['name']) # station
+        part1_fill.append(self.stationData['SiteCode']) # site code
+        part1_fill.append(self.stationData['lat']) # lat
+        part1_fill.append(self.stationData['long']) # long
+        part1_fill.append(self.stationData['elev']) # elev
+        part1_fill.append(self.grad.toPlainText()) # gradient
+        part1_fill.append(self.stationData['setupHeight']) # setup height
+        part1_fill.append(self.gravityCorrections['transferHeightGal']) # transfer height
+        part1_fill.append(self.stationData['airPressure']) # nominal air pressure
+        part1_fill.append(self.stationData['barometricFactor']) # Barometric Admittance Factor
+        try:
+            part1_fill.append('{:.4f}'.format(np.mean(self.x_pole_interp))) # polar x
+        except AttributeError:
+            part1_fill.append('{}'.format(self.stationData['polarX'])) # polar x
+
+        try:
+            part1_fill.append('{:.4f}'.format(np.mean(self.y_pole_interp)))  # polar y
+        except AttributeError:
+            part1_fill.append('{}'.format(self.stationData['polarY']))  # polar y
+
+        part1_fill.append('{:.5f}'.format(self.matr_connection.get('select avg(mjd) from results')[0][0])) # mean mjd
+        part1_fill.append(self.instrumentData['rubiFreq']) # Rubidium Frequency
+        part1_fill.append(self.instrumentData['ID']) # laser wavelengths
+        part1_fill.append(self.instrumentData['IE'])
+        part1_fill.append(self.instrumentData['IF'])
+        part1_fill.append(self.instrumentData['IG'])
+        part1_fill.append(self.fmodf.toPlainText()) # modulation frequency
+        part1_fill.append(self.lpar.toPlainText()) # Parasitic wavelength
+        part1_fill.append(self.lcable_ar.toPlainText()) # TTL Cable length
+        part1_fill.append(self.nset) # Number of Sets Processed
+        part1_fill.append(int(self.ndrops/self.nset)) # Number of Drops/Set
+        part1_fill.append(self.processingResults['totalFringes']) # Total Fringes Acquired
+        part1_fill.append(self.processingResults['multiplex']) # GuideCard Multiplex
+        part1_fill.append(self.processingResults['scaleFactor']) # GuideCard Scale Factor
+        part1_fill.append(self.frminT.toPlainText()) # First FRINGE
+        part1_fill.append(self.frmaxT.toPlainText()) # Final FRINGE
+        part1_fill.append(self.kalpha.toPlainText()) # STD threshold for drop acceptance
+        part1_fill.append(self.rejsigma.toPlainText()) # Coverage factor for drop gravity acceptance
+        part1_fill.append(95) # Confidence level for set gravities
+        part1_fill.append(self.gravimeter['ksmooth']) # STD for set gravity systematic effects
+        part1_fill.append(self.ksol.isChecked()) # Speed of light
+        part1_fill.append(self.ksae.isChecked()) # Self-attration
+        part1_fill.append(self.kdis.isChecked()) # Dispersion in TTL cable
+        part1_fill.append(self.kimp.isChecked()) # Impedance mismatch
+        part1_fill.append(self.kpar.isChecked()) # Parasitic wave
+        part1_fill.append(float(self.stationData['actualHeight'])/100) # TOP OF THE DROP
+        
+        part1 = part1.format(*part1_fill)
+
+        l = '{}  {}  {}  {}   {} {} {}    {}    {}    {}   {}  {}   {}    {}     {}'
+        part2 = ''
+        it = 0
+        for i in sets:
+            l_ = []
+
+            l_.append(str(i[0]).rjust(2, ' '))
+            l_.extend(i[1:7])
+            l_.append(str(i[7]).rjust(3, ' '))
+            l_.append(str(i[8]).ljust(13, '0'))
+            l_.append('{:.2f}'.format(self.stodch[it]).ljust(4, '0'))
+            l_.append(str(i[9]).ljust(7, '0'))
+            l_.append(str(i[10]).ljust(6, '0'))
+            l_.append(str(i[11]).ljust(6, '0'))
+            l_.append(i[12])
+            l_.append('{:.2f}'.format(self.tst[it]).ljust(5, '0'))
+
+            part2 += l.format(*l_) + '\n'
+            it += 1
+
+        f = open(part3_path, 'r')
+        part3 = f.read()
+        f.close()
+
+        outliers = self.get_count_gradients()
+        part3_fill = []
+        drops = self.matr_connection.get('select max(n) from results')[0][0]
+        part3_fill.append(drops) # measured drops
+        part3_fill.append(self.matr_connection.get('select count(*) from results where Accepted = 1')[0][0]) # accepted drops
+        mjd = self.matr_connection.get('select avg(mjd) from results')[0][0]
+        jd = mjd_to_jd(mjd)
+        date = jd_to_date(jd)
+        part3_fill.extend(list(date)) # date
+        part3_fill.append('{:.2f}'.format(self.gfinal)) # final g
+        part3_fill.append('{:.2f}'.format(self.gstd)) # std of final g
+        hefm = self.matr_connection.get('select avg(EffHeight + CorToEffHeight) from '
+                                                                   'results where Accepted = 1')[0][0]
+        part3_fill.append('{:.4f}'.format(hefm)) # EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
+        part3_fill.append('{:.4f}'.format(
+            np.std(self.matr_connection.get('select EffHeight + CorToEffHeight from results where Accepted = 1'), ddof=1))) # STD OF EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
+        part3_fill.append('{:.5f}'.format(float(self.stationData['actualHeight'])/100 - hefm/1000)) # EFFECTIVE INSTRUMENTAL HEIGHT
+        grefer = '{:.2f}'.format(self.gfinal - float(self.stationData['gradient'])*hefm)
+        part3_fill.append(grefer) # g @ EFFECTIVE INSTRUMENTAL HEIGHT
+        part3_fill.append(self.stationData['gradient']) # Vertical gravity gradient
+        part3_fill.append('{:.5f}'.format(float(self.gravityCorrections['transferHeightGal'])/100)) # DATUM HEIGHT
+        g00 = self.gfinal - (float(self.stationData['gradient'])/1e6)*(float(self.stationData['actualHeight'])/100 - float(self.gravityCorrections['transferHeightGal'])/100 )*1e9 # g @ DATUM HEIGHT
+        part3_fill.append('{:.2f}'.format(g00)) # g @ DATUM HEIGHT
+        part3_fill.append('{:.3f}'.format(np.mean(self.Press))) # AIR PRESSURE
+        part3_fill.append('{:.3f}'.format(np.max(self.Press) - np.min(self.Press)))
+        part3_fill.append('{:.3f}'.format(np.mean(self.tides))) # tides
+        part3_fill.append('{:.3f}'.format(np.max(self.tides) - np.min(self.tides)))
+        vgg = self.matr_connection.get('select Gradient from results')
+        part3_fill.append('{:.3f}'.format(np.mean(vgg))) # Estimated gravity gradient
+        part3_fill.append('{:.3f}'.format(np.std(vgg, ddof=1)/drops))
+        part3_fill.append('{:.3f}'.format(self.vggp3_)) # Estimated gravity gradient after removing outliers
+        part3_fill.append('{:.3f}'.format(self.mggp3_/outliers))
+        part3_fill.append(drops-outliers) # outliers
+
+        part3 = part3.format(*part3_fill)
+
+        path = self.projDirPath + '/Files/' + self.stationData['ProjName'] + '_results.dat'
+        e = open(path, 'w')
+        e.write(part1)
+        e.write('\n')
+        e.write(part2)
+        e.write('\n')
+        e.write(part3)
+        e.close()
 
     def end(self):
         self.logWindow.append(separator)

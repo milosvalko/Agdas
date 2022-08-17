@@ -1,0 +1,45 @@
+AGDAS version:  {}
+Project name:  {}
+Station:  {}
+Site Code: {}
+Lat: {}
+Long: {}
+Elev: {} m
+Gradient: {}  Gal/cm
+Setup Height: {} cm
+Transfer Height: {}  Gal
+Nominal Air Pressure: {} mBar
+Barometric Admittance Factor: {}
+Polar Motion Coord:  {} "  {} " (mjd:  {})
+Rubidium Frequency: {} Hz
+ID: {} nm, IE: {} nm, IF: {} nm, IG: {} nm
+Modulation Frequency: {} nm
+Parasitic wavelength: {} m
+TTL Cable length:  {} m
+Number of Sets Processed: {}
+Number of Drops/Set: {}
+Total Fringes Acquired: {}
+GuideCard Multiplex: {}
+GuideCard Scale Factor: {}
+First FRINGE: {}
+Final FRINGE: {}
+STD threshold for drop acceptance: {} nm
+Coverage factor for drop gravity acceptance: {}
+Confidence level for set gravities: {} %
+STD for set gravity systematic effects: {} nm/s/s
+
+=======================================================
+Correction of time-distance pairs are enabled/disabled (1/0) for effects of:
+Speed of light: {}
+Self-attration: {}
+Dispersion in TTL cable: {}
+Impedance mismatch: {}
+Parasitic wave: {}
+
+!!! g @ TOP OF THE DROP
+TOP OF THE DROP:   {} [m]
+
+SET RESULTS 
+Set  Date          Time     Accept     g(TOD)     Std_set    Tide    Polar     Baro     TOD     t-Stud
+ #                                    [nm.s-2]    [nm.s-2] [nm.s-2] [nm.s-2] [nm.s-2] [nm.s-2]   [%] 
+------------------------------------------------------------------------------------------------------

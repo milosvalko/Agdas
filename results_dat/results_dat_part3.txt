@@ -1,0 +1,34 @@
+Measured vs. Accepted drops  {}   {}
+ 
+RESULTS AFTER CORRECTIONS @ TOP OF THE DROP 
+Date         Time           g           Std   
+                         [nm.s-2]     [nm.s-2]
+----------------------------------------------
+{}  {}  {}   {}  {} {}    {}   {}
+
+!!! g @ EFFECTIVE INSTRUMENTAL HEIGHT/EFFECTIVE INSTRUMENTAL HEIGHT
+EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop:  {} +/- {} [mm]
+EFFECTIVE INSTRUMENTAL HEIGHT:  {} [m]
+g @ EFFECTIVE INSTRUMENTAL HEIGHT:    {} [nm.s-2]
+
+!!! g @ DATUM HEIGHT
+Vertical gravity gradient: {} [nm.s-2/mm]
+DATUM HEIGHT:      {} [m]
+g @ DATUM HEIGHT:  {} [nm.s-2]
+
+AIR PRESSURE
+Average: {} hPa
+MAX-MIN:   {} hPa
+
+TIDES
+Average: {} uGal
+MAX-MIN:  {} uGal
+
+Estimated gravity gradient:
+Value=   {} nm.s-2/mm
+STD=   {} nm.s-2/mm
+
+Estimated gravity gradient after removing outliers:
+Value=   {} nm.s-2/mm
+STD=   {} nm.s-2/mm
+Outliers:  {}

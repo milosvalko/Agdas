@@ -323,8 +323,7 @@ class Fall():
         """
         Load correction from tide, load, baro and polar to gTop
         """
-        self.gTopCor = self.gTop + 10 * float(tide) + 10 * float(load) + 10 * float(baro) + 10 * float(polar)
-
+        self.gTopCor = self.gTop + 10 * float(tide) + 10 * float(load) + 10 * float(baro) + 10 * polar
 
 class projectFile():
 
@@ -1011,14 +1010,15 @@ class Compare_gsoft_agdas():
     max difference and differences between Agdas an g software
     """
 
-    def __init__(self, path, vgg):
+    def __init__(self, path, vgg, project):
         self.gsoft = [] #
         self.agdas = []
         self.set = []
         self.drp = []
         self.vgg = float(vgg) # gradient from project file
-        self.path = os.path.join(path, 'Files', 'compare_gsoft_agdas.csv')
+        self.path = os.path.join(path, 'Files', project,  '_compare_gsoft_agdas.csv')
         self.path_hist = os.path.join(path, 'Graphs')
+        self.project = project
 
     def add_gsoft(self, drop, hef):
         self.set.append(drop['Set'])
@@ -1037,12 +1037,14 @@ class Compare_gsoft_agdas():
         self.agdas.append(EfH / 10)
 
     def print_file(self, acc, delimiter):
-        # compute absolute value of differences
-        self.diff_ = [abs(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft))]
+
+        # compute absolute value of differences for accepted drops
+        self.diff_abs = [abs(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft)) if acc[i][0] == 1]
+        self.diff_ = [self.gsoft[i] - self.agdas[i] for i in range(len(self.gsoft))]
 
         # create summary
-        summ = """max_diff{}{:.2f}\navg_diff{}{:.2f}\nstd_diff{}{:.2f}\n
-        """.format(delimiter, np.max(self.diff_), delimiter, np.mean(self.diff_), delimiter, np.std(self.diff_, ddof=1))
+        summ = """max_diff{}{:.2f}\nmin_diff{}{:.2f}\navg_diff{}{:.2f}\nstd_diff{}{:.2f}\n
+        """.format(delimiter, np.max(self.diff_), delimiter, np.min(self.diff_), delimiter, np.mean(self.diff_abs), delimiter, np.std(self.diff_abs, ddof=1))
 
         # create header
         # set ; drop ; acc ; gsoft ; agdas ; diff
@@ -1062,7 +1064,7 @@ class Compare_gsoft_agdas():
         file.close()
 
     def print_histogram(self, graph_lang):
-        g = Graph(path=self.path_hist, name='histogram', project='',
+        g = Graph(path=self.path_hist, name=self.project + 'histogram', project='',
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
                   title=graph_lang['histogram_diff']['title'],
                   show=False)
