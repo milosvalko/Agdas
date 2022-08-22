@@ -85,7 +85,6 @@ class NewProject(QtWidgets.QDialog, PATH):
             Warning(error='Something is missing', icon='critical', title='Warning')
 
 
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     main = NewProject()

@@ -103,12 +103,6 @@ class Main(QtWidgets.QMainWindow, PATH):
             self.succ_upload.setText('Following input files have been uploaded successfully!')
 
             self.label_2.clear()
-        # try:
-        #     self.newProjectWin.pathDir
-        #     pixmap = QPixmap('picture/checked.png')
-        #     self.check.setPixmap(pixmap)
-        # except AttributeError:
-        #     pass
 
     def Computing(self):
         """

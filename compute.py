@@ -18,6 +18,7 @@ from scipy.stats import t
 import scipy.signal as sig
 import os
 import configparser
+from winotify import Notification, audio
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -888,6 +889,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # Set time of run calculation
         self.calc_time.setText('Calculation time: {:.2f} s'.format(time() - self.t))
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
+        self.notification()
 
     def ressets_res(self):
         """
@@ -924,6 +926,21 @@ class Compute(QtWidgets.QDialog, PATH):
 
             for j in range(1, self.frmaxplot):
                 self.zzh[j, i] = self.zzh[0, i] + self.Lambda * 1e-9 / 2 * prescale * j
+
+    def notification(self):
+        """
+        Show notification about end of calculating
+        :return:
+        """
+        logo_path = os.path.join(script_path, 'picture', 'logo.ico')
+        g = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1')[0][0]
+
+        t = Notification(app_id='pyAgdas', title='Computing is done!', msg='Average g at top of drops: {:.2f}'.format(g), icon=logo_path, duration='long')
+        t.set_audio(audio.Reminder, loop=False)
+        t.add_actions(label='Outputs', launch=self.projDirPath)
+        t.show()
+
+
 
     def matlog_file(self):
         line = []
