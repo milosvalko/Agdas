@@ -59,6 +59,20 @@ class Main(QtWidgets.QMainWindow, PATH):
         except FileExistsError:
             pass
 
+    def set_info(self):
+        """
+        Set some information on the main page
+        :return:
+        """
+
+        self.campaign.setText(self.newProjectWin.stationData['ProjName'])
+        self.sitecode.setText(self.newProjectWin.stationData['SiteCode'])
+        self.trasnferheight.setText('{} {}'.format(self.newProjectWin.stationData['transferHeight'], self.newProjectWin.units['transferHeight']))
+        self.gradient.setText('{} {}'.format(self.newProjectWin.stationData['gradient'], self.newProjectWin.units['gradient']))
+        self.totaldrops.setText(self.newProjectWin.processingResults['totalFringes'])
+        self.gravity.setText('{} {}'.format(self.newProjectWin.processingResults['gravity'], self.newProjectWin.units['gravity']))
+        self.setscatter.setText('{} {}'.format(self.newProjectWin.processingResults['setScatter'], self.newProjectWin.units['setScatter']))
+
     @staticmethod
     def splashScreen():
         """
@@ -97,7 +111,7 @@ class Main(QtWidgets.QMainWindow, PATH):
             self.check.setPixmap(pixmap)
 
             # Set name of campaign
-            self.campaign.setText(self.newProjectWin.stationData['ProjName'])
+            self.set_info()
 
             # Info about successfully upload
             self.succ_upload.setText('Following input files have been uploaded successfully!')
