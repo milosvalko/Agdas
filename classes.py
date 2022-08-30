@@ -1016,7 +1016,7 @@ class Compare_gsoft_agdas():
         self.set = []
         self.drp = []
         self.vgg = float(vgg) # gradient from project file
-        self.path = os.path.join(path, 'Files', project,  '_compare_gsoft_agdas.csv')
+        self.path = os.path.join(path, 'Files', project + '_compare_gsoft_agdas.csv')
         self.path_hist = os.path.join(path, 'Graphs')
         self.project = project
 

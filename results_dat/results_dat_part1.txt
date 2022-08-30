@@ -10,7 +10,7 @@ Setup Height: {} cm
 Transfer Height: {}  Gal
 Nominal Air Pressure: {} mBar
 Barometric Admittance Factor: {}
-Polar Motion Coord:  {} "  {} " (mjd:  {})
+Polar Motion Coord:  {} "  {} " (mjd:  {}), (date of downloading of polar coordinates file from {}: {})
 Rubidium Frequency: {} Hz
 ID: {} nm, IE: {} nm, IF: {} nm, IG: {} nm
 Modulation Frequency: {} nm

@@ -347,19 +347,28 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Download pole coordinates from IERS/naval and compute corrections for each drop
         """
-        finals_path = os.getcwd() + '/finals/finals2000A.all.csv'
 
         if self.service.currentText() == 'IERS':
+
+            finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
             url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
 
+            if time() - os.path.getmtime(finals_path) > 604800:
+                try:
+                    urllib.request.urlretrieve(url, finals_path)
+                except urllib.error.URLError:
+                    Warning(error=warning_window['internet'], icon='critical', title='Warning')
+
         if self.service.currentText() == 'Naval Observatory':
+
+            finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
             url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
 
-        if time() - os.path.getmtime(finals_path) > 604800:
-            try:
-                urllib.request.urlretrieve(url, finals_path)
-            except urllib.error.URLError:
-                Warning(error=warning_window['internet'], icon='critical', title='Warning')
+            if time() - os.path.getmtime(finals_path) > 604800:
+                try:
+                    urllib.request.urlretrieve(url, finals_path)
+                except urllib.error.URLError:
+                    Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
         # coordinations of point
         fi = float(self.stationData['lat']) * pi / 180
@@ -380,7 +389,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if self.service.currentText() == 'IERS':
             # open and load file from IERS
-            file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
+            file = open(finals_path, 'r')
+            self.polar_file_date = os.path.getmtime(finals_path)
             reader = csv.reader(file, delimiter=';')
             rows = list(reader)
             file.close()
@@ -404,7 +414,8 @@ class Compute(QtWidgets.QDialog, PATH):
                 x.append(x[-1] + 24)
 
         if self.service.currentText() == 'Naval Observatory':
-            file = open(os.getcwd() + '/finals/finals2000A.all.csv', 'r')
+            file = open(finals_path, 'r')
+            self.polar_file_date = os.path.getmtime(finals_path)
             file_l = file.read()
             file.close()
             file = file_l.splitlines()
@@ -428,6 +439,8 @@ class Compute(QtWidgets.QDialog, PATH):
                 x.append(x[-1] + 24)
 
         # fit pole coordinates
+        print(x)
+        print(x_pole)
         x_para = np.polyfit(x, x_pole, deg)
         y_para = np.polyfit(x, y_pole, deg)
 
@@ -486,6 +499,8 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         In this method is managed the whole calculating
         """
+        # set color of text - i am stil running
+        self.calc_time.setStyleSheet('color: black; font-size: 10pt')
         # set color of RUN button on green
         self.run.setStyleSheet("background-color : green")
         # delete information about time of calculating from last computing
@@ -755,6 +770,7 @@ class Compute(QtWidgets.QDialog, PATH):
             QtCore.QCoreApplication.processEvents()
             # QtCore.QCoreApplication.sendPostedEvents()
 
+
         # commit data to database
         self.matr_connection.commit()
 
@@ -861,6 +877,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graphHistogramAccDropsNorm()
             self.graphHistogramAccDrops()
             self.graphSensitivityStd()
+            self.graphGravityChange_time()
+            self.graph_sensitivity_top_time()
             self.graphResidualsBySets()
             self.graphResiduals()
             self.graphResidualsGradient()
@@ -1578,6 +1596,45 @@ class Compute(QtWidgets.QDialog, PATH):
         del X
         del Y
 
+    def graphGravityChange_time(self):
+        Y = []
+        X = []
+        l = []
+        cn = []
+        m = []
+        lw = []
+
+        # sensitivity data
+        for i in range(self.nset):
+            # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
+            X.append(self.ttttlin)
+            Y.append(self.dgrt[i, :len(self.ttttlin)])
+            l.append('{} '.format(self.graph_lang['sensitivity_bottom_time']['set_description']) + str(i + 1))
+            cn.append('Set ' + str(i + 1))
+            m.append('C' + str((i) % 10) + '-')
+            lw.append(0.3)
+
+        X.append(self.ttttlin)
+        Y.append(self.dgrtm.T[:len(self.ttttlin)])
+        l.append(self.graph_lang['sensitivity_bottom_time']['legend'])
+        cn.append(self.graph_lang['sensitivity_bottom_time']['legend'])
+        m.append('k-')
+        lw.append(1)
+
+        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom_time', project=self.stationData['ProjName'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'], y_label='',
+                  title=self.graph_lang['sensitivity_bottom']['title'])
+        # g.plotXY(x=[self.ttttlin], y=[[0 for i in range(len(self.ttr[i, :]))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
+        # g.plotXY(x=[[self.ttr[self.frmax], self.ttr[self.frmax]]], y=[[-10, 10]], mark=['b-'],
+        #          columns_name='xx', legend='',
+        #          lw=[0.3])
+        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
+        g.saveSourceData()
+        g.save()
+
+        del X
+        del Y
+
     def graphSetG(self):
 
         g0 = 1000 * (floor(self.gfinal / 1000))
@@ -2209,9 +2266,16 @@ class Compute(QtWidgets.QDialog, PATH):
         self.dgltm = np.zeros((1, indsenstx - indsenstn + 1))
         self.dgrtm = np.zeros((1, abs(indsensbn - indsensbx) + 1))
 
+        self.ttr = np.zeros((self.nset, len(ttlin)))
+
+        self.ttttlin = ttlin[indsensbn: indsensbx]
+
         # sensitivity is calculated for averages by sets
         for i in range(self.nset):
+
             ttr = np.interp(ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
+            self.ttr[i, :] = ttr
+
             for j in range(indsenstn, indsenstx + 1):
                 # data for fitting by parabola on left side of drop
                 x = ttlin[j - 1: indsensfrmax]
@@ -2378,6 +2442,36 @@ class Compute(QtWidgets.QDialog, PATH):
         p.savefig(path + project + '_' + name + '.png', format='png', transparent=False)
         plt.close()
 
+    def graph_sensitivity_top_time(self):
+
+        xlim = [self.frmin]
+        # ylim = [-20, 20]
+        legend = []
+
+        p = plt
+
+        x = self.ttttlin
+
+        for i in range(self.dglt.shape[0]):
+            p.plot(x, self.dglt[i, :len(self.ttttlin)], lw=0.7)
+            legend.append('{} {}'.format(self.graph_lang['sensitivity_top_time']['set_description'], i + 1))
+
+        legend.append(self.graph_lang['sensitivity_top_time']['legend'])
+        p.plot(x, self.dgltm[0, :len(self.ttttlin)], 'k', lw=2)
+        # p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
+        p.title(self.graph_lang['sensitivity_top_time']['title'])
+        p.xlabel(self.graph_lang['sensitivity_top_time']['xlabel'])
+        p.ylabel(self.graph_lang['sensitivity_top_time']['ylabel'])
+        # p.ylim(ylim)
+        p.legend(legend)
+
+        # save graph
+        path = self.projDirPath + '/Graphs/'
+        name = 'sensitivity_top_time'
+        project = self.stationData['ProjName']
+        p.savefig(path + project + '_' + name + '.png', format='png', transparent=False)
+        plt.close()
+
     def print_results_dat(self):
         """
         This method generates results.dat file, sources for the file are in  "results_dat" folder.
@@ -2424,6 +2518,12 @@ class Compute(QtWidgets.QDialog, PATH):
             part1_fill.append('{}'.format(self.stationData['polarY']))  # polar y
 
         part1_fill.append('{:.5f}'.format(self.matr_connection.get('select avg(mjd) from results')[0][0])) # mean mjd
+        if self.useIERSPoleCorr.isChecked():
+            part1_fill.append(self.service.currentText()) # polar coord service
+            part1_fill.append(datetime.fromtimestamp(self.polar_file_date).date()) # date of downloading polar coordinates
+        else:
+            part1_fill.append('Project file')
+            part1_fill.append('-')
         part1_fill.append(self.instrumentData['rubiFreq']) # Rubidium Frequency
         part1_fill.append(self.instrumentData['ID']) # laser wavelengths
         part1_fill.append(self.instrumentData['IE'])
