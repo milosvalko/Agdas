@@ -1048,8 +1048,8 @@ class Compare_gsoft_agdas():
 
         # create header
         # set ; drop ; acc ; gsoft ; agdas ; diff
-        header = 'set{0}drop{0}acc{0}gsoft{0}agdas{0}diff\n'.format(delimiter)
-        line = '{}{}{}{}{}{}{}{}{}{}{}\n'
+        header = 'set{0}drop{0}acc{0}gsoft [nm.s-2]{0}agdas [nm.s-2]{0}diff\n'.format(delimiter)
+        line = '{}{}{}{}{}{}{:.3f}{}{:.3f}{}{:.3f}\n'
 
         # open a create file
         file = open(self.path, 'w')
@@ -1058,7 +1058,7 @@ class Compare_gsoft_agdas():
 
         for i in range(len(self.gsoft)):
             line_ = line.format(self.set[i], delimiter, self.drp[i], delimiter, acc[i][0], delimiter,
-                                self.gsoft[i], delimiter, self.agdas[i], delimiter, self.diff_[i])
+                                self.gsoft[i]*10, delimiter, self.agdas[i]*10, delimiter, self.diff_[i]*10)
             file.write(line_)
 
         file.close()

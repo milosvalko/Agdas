@@ -439,8 +439,6 @@ class Compute(QtWidgets.QDialog, PATH):
                 x.append(x[-1] + 24)
 
         # fit pole coordinates
-        print(x)
-        print(x_pole)
         x_para = np.polyfit(x, x_pole, deg)
         y_para = np.polyfit(x, y_pole, deg)
 
@@ -1607,15 +1605,15 @@ class Compute(QtWidgets.QDialog, PATH):
         # sensitivity data
         for i in range(self.nset):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
-            X.append(self.ttttlin)
-            Y.append(self.dgrt[i, :len(self.ttttlin)])
+            X.append(self.tttt_plot)
+            Y.append(self.dgrt[i, :len(self.tttt_plot)])
             l.append('{} '.format(self.graph_lang['sensitivity_bottom_time']['set_description']) + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
-        X.append(self.ttttlin)
-        Y.append(self.dgrtm.T[:len(self.ttttlin)])
+        X.append(self.tttt_plot)
+        Y.append(self.dgrtm.T[:len(self.tttt_plot)])
         l.append(self.graph_lang['sensitivity_bottom_time']['legend'])
         cn.append(self.graph_lang['sensitivity_bottom_time']['legend'])
         m.append('k-')
@@ -2226,6 +2224,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Compute sensitivity - time')
         QtCore.QCoreApplication.processEvents()
 
+        step = 20 # step for faster computing of sensitivity
         ttlinmin = floor(10000*self.tt[0])/10000
         ttlinmax = floor(10000*self.tt[self.frmaxplot-1])/10000
         ttlin = np.arange(ttlinmin, ttlinmax, 0.00001)
@@ -2260,15 +2259,17 @@ class Compute(QtWidgets.QDialog, PATH):
                 indsensfrmax = i
 
         # initialization of arrays for sensitivity
-        self.dglt = np.zeros((self.nset, indsenstx - indsenstn + 1))
-        self.dgrt = np.zeros((self.nset, abs(indsensbn - indsensbx) + 1))
+        self.dglt = np.zeros((self.nset, len(range(indsenstn, indsenstx + 1, step))))
+        self.dgrt = np.zeros((self.nset, len(range(indsensbn, indsensbx + 1, step))))
 
-        self.dgltm = np.zeros((1, indsenstx - indsenstn + 1))
-        self.dgrtm = np.zeros((1, abs(indsensbn - indsensbx) + 1))
+        self.dgltm = np.zeros((1, len(range(indsenstn, indsenstx + 1, step))))
+        self.dgrtm = np.zeros((1, len(range(indsensbn, indsensbx + 1, step))))
 
         self.ttr = np.zeros((self.nset, len(ttlin)))
 
         self.ttttlin = ttlin[indsensbn: indsensbx]
+
+        self.tttt_plot = [self.ttttlin[i] for i in range(0, len(self.ttttlin), step)]
 
         # sensitivity is calculated for averages by sets
         for i in range(self.nset):
@@ -2276,23 +2277,29 @@ class Compute(QtWidgets.QDialog, PATH):
             ttr = np.interp(ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
             self.ttr[i, :] = ttr
 
-            for j in range(indsenstn, indsenstx + 1):
+            indj = 0
+            for j in range(indsenstn, indsenstx + 1, step):
                 # data for fitting by parabola on left side of drop
                 x = ttlin[j - 1: indsensfrmax]
                 y = ttr[j - 1: indsensfrmax]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
-                self.dglt[i, j - indsenstn] = koef[0] * 2
+                # self.dglt[i, j - indsenstn] = koef[0] * 2
+                self.dglt[i, indj] = koef[0] * 2
+                indj += 1
 
-            for j in range(indsensbn, indsensbx + 1):
+            indj = 0
+            for j in range(indsensbn, indsensbx + 1, step):
                 # data for fitting by parabola on right side of drop
                 x = ttlin[indsensfrmin - 1: j]
                 y = ttr[indsensfrmin - 1: j]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
-                self.dgrt[i, j - indsensbn] = koef[0] * 2
+                # self.dgrt[i, j - indsensbn] = koef[0] * 2
+                self.dgrt[i, indj] = koef[0] * 2
+                indj += 1
 
             self.dgltm += self.dglt[i, :]
             self.dgrtm += self.dgrt[i, :]
@@ -2450,14 +2457,14 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p = plt
 
-        x = self.ttttlin
+        x = self.tttt_plot
 
         for i in range(self.dglt.shape[0]):
-            p.plot(x, self.dglt[i, :len(self.ttttlin)], lw=0.7)
+            p.plot(x, self.dglt[i, :len(x)], lw=0.7)
             legend.append('{} {}'.format(self.graph_lang['sensitivity_top_time']['set_description'], i + 1))
 
         legend.append(self.graph_lang['sensitivity_top_time']['legend'])
-        p.plot(x, self.dgltm[0, :len(self.ttttlin)], 'k', lw=2)
+        p.plot(x, self.dgltm[0, :len(x)], 'k', lw=2)
         # p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
         p.title(self.graph_lang['sensitivity_top_time']['title'])
         p.xlabel(self.graph_lang['sensitivity_top_time']['xlabel'])
