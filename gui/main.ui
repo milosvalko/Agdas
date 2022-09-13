@@ -14,7 +14,7 @@
    <string>pyAgdas</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -547,6 +547,7 @@
      <string>Data</string>
     </property>
     <addaction name="computing"/>
+    <addaction name="Process_data_batch"/>
     <addaction name="viewdata"/>
    </widget>
    <addaction name="menuFile_s"/>
@@ -591,6 +592,11 @@
   <action name="actionComparison">
    <property name="text">
     <string>Comparison</string>
+   </property>
+  </action>
+  <action name="Process_data_batch">
+   <property name="text">
+    <string>Process data - batch</string>
    </property>
   </action>
  </widget>

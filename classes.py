@@ -27,6 +27,9 @@ class Fall():
         self.kimp = False
         self.ksae = False
 
+    def set_ksol_k(self, ksol_k):
+        self.ksol_k = ksol_k
+
     def set_ksol(self, ksol):
         self.ksol = ksol
 
@@ -1041,10 +1044,11 @@ class Compare_gsoft_agdas():
         # compute absolute value of differences for accepted drops
         self.diff_abs = [abs(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft)) if acc[i][0] == 1]
         self.diff_ = [self.gsoft[i] - self.agdas[i] for i in range(len(self.gsoft))]
+        self.diff__ = [(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft)) if acc[i][0] == 1]
 
         # create summary
-        summ = """max_diff{}{:.2f}\nmin_diff{}{:.2f}\navg_diff{}{:.2f}\nstd_diff{}{:.2f}\n
-        """.format(delimiter, np.max(self.diff_), delimiter, np.min(self.diff_), delimiter, np.mean(self.diff_abs), delimiter, np.std(self.diff_abs, ddof=1))
+        summ = """max_diff_acc [nm.s-2]{}{:.2f}\nmin_diff_acc [nm.s-2]{}{:.2f}\navg_diff_acc [nm.s-2]{}{:.2f}\nstd_diff_acc [nm.s-2]{}{:.2f}\n
+        """.format(delimiter, np.max(self.diff__)*10, delimiter, np.min(self.diff__)*10, delimiter, np.mean(self.diff__)*10, delimiter, np.std(self.diff__, ddof=1)*10)
 
         # create header
         # set ; drop ; acc ; gsoft ; agdas ; diff
@@ -1064,10 +1068,10 @@ class Compare_gsoft_agdas():
         file.close()
 
     def print_histogram(self, graph_lang):
-        g = Graph(path=self.path_hist, name=self.project + 'histogram', project='',
+        g = Graph(path=self.path_hist, name=self.project + '_histogram', project='',
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
                   title=graph_lang['histogram_diff']['title'],
                   show=False)
-        g.histogram(self.diff_, fit=True)
+        g.histogram(self.diff_*10, fit=True)
         g.saveSourceData()
         g.save()

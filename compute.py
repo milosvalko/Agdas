@@ -1,4 +1,5 @@
 import sys, glob, os, urllib.request, csv
+from fractions import Fraction
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QLabel
 from time import sleep, time
@@ -77,6 +78,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.gravimeter_box.currentTextChanged.connect(self.set_gravimeter)
         self.delimiter_combox.currentTextChanged.connect(self.setDelimiter)
         self.run.clicked.connect(self.Run)
+        # self.run.clicked.connect(self.Run_batch)
         self.allDrop.stateChanged.connect(self.numDrops)
         # self.downloadPoleCorr.clicked.connect(self.downloadPole)
         self.outputs.setDisabled(True)
@@ -122,6 +124,26 @@ class Compute(QtWidgets.QDialog, PATH):
         # if event.x() > self.out_help.pos().x() and event.x() < self.out_help.pos().x() + self.out_help.width():
         #     if event.y() > self.out_help.pos().y() and event.y() < self.out_help.pos().y() + self.out_help.height():
         #         print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
+
+    # def Run_batch(self):
+    #
+    #     for i in range(1):
+    #         self.set_init(self.path, self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections, self.columns_rawfile, self.raw_lines,
+    #              self.header1, self.projDirPath, self.setFile)
+    #         self.Run()
+    #
+    # def set_init(self, path, stationData, instrumentData, processingResults, gravityCorrections, header2, rawlines,
+    #              header1, projDirPath, setFile):
+    #     self.path = path
+    #     self.stationData = stationData
+    #     self.instrumentData = instrumentData
+    #     self.processingResults = processingResults
+    #     self.gravityCorrections = gravityCorrections
+    #     self.columns_rawfile = header2
+    #     self.raw_lines = rawlines
+    #     self.header1 = header1
+    #     self.projDirPath = projDirPath
+    #     self.setFile = setFile
 
     def set_graph_language(self):
         """
@@ -585,7 +607,7 @@ class Compute(QtWidgets.QDialog, PATH):
         Polar = []
         self.Press = []
 
-        ind_ = open('ind.txt', 'w')
+        # ind_ = open('ind.txt', 'w')
         # loop for all drops
         for i in range(self.ndrop):
 
@@ -630,7 +652,9 @@ class Compute(QtWidgets.QDialog, PATH):
             # compute of LST
             fall = Fall()
             # Setters
-            fall.set_ksol(ksol=self.ksol.isChecked())
+            if self.ksol.isChecked():
+                ksol = Fraction((self.ksol_k.currentText()).split()[1])
+                fall.set_ksol(ksol=ksol)
             fall.setFringe(raw['ftime'])
             fall.setLambda(Lambda)
             fall.setScaleFactor(self.processingResults['scaleFactor'])
@@ -2556,7 +2580,7 @@ class Compute(QtWidgets.QDialog, PATH):
         part1_fill.append(self.kimp.isChecked()) # Impedance mismatch
         part1_fill.append(self.kpar.isChecked()) # Parasitic wave
         part1_fill.append(float(self.stationData['actualHeight'])/100) # TOP OF THE DROP
-        
+
         part1 = part1.format(*part1_fill)
 
         l = '{}  {}  {}  {}   {} {} {}    {}    {}    {}   {}  {}   {}    {}     {}'

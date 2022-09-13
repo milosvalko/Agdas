@@ -37,6 +37,7 @@ class Main(QtWidgets.QMainWindow, PATH):
 
         # connect buttons with method
         self.newProject.triggered.connect(self.new_Project)
+        # self.Process_data_batch.triggered.connect(self.new_Project_batch)
         self.computing.triggered.connect(self.Computing)
         self.viewdata.triggered.connect(self.viewData)
         self.viewGraphs.triggered.connect(self.viewgraphs)
@@ -58,6 +59,9 @@ class Main(QtWidgets.QMainWindow, PATH):
             os.mkdir('finals')
         except FileExistsError:
             pass
+
+    # def new_Project_batch(self):
+
 
     def set_info(self):
         """
@@ -132,6 +136,7 @@ class Main(QtWidgets.QMainWindow, PATH):
                                   header2=self.newProjectWin.header2, rawlines=self.newProjectWin.rawlines,
                                   header1=self.newProjectWin.header1, projDirPath=self.newProjectWin.pathDir,
                                   setFile=self.newProjectWin.setFile)
+            # self.result.Run()
 
         except AttributeError:
             Warning(error=warning_window['import_data'], icon='critical', title='Warning')
