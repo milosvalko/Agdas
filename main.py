@@ -1,4 +1,7 @@
-﻿from PyQt5 import uic, QtWidgets
+﻿import threading
+
+import winapps
+from PyQt5 import uic, QtWidgets
 from newProject import NewProject
 from compute import Compute
 from warning import Warning
@@ -10,7 +13,7 @@ from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
 from functions import printDict
-import os
+import os, subprocess,platform
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -143,13 +146,34 @@ class Main(QtWidgets.QMainWindow, PATH):
 
     def viewData(self):
         """
-        Open dialog with view to the database
+        This method is for viewing of processed data by DB Browser for SQLite.
         :return:
         """
+
         try:
-            Data(self.newProjectWin.pathDir)
+            # For windows system
+            if 'Win' in platform.platform():
+                # Find install location of DB browser
+                for item in winapps.list_installed():
+                    if 'DB Browser' in item.name:
+                        browser_path = item.install_location
+                        browser_name = item.name
+
+                # Open DB browser in another thread
+                command = ["{}".format(os.path.join(browser_path, browser_name)), "{}".format(os.path.join(self.newProjectWin.pathDir, 'data.db'))]
+                subprocess.Popen(command)
+            else:
+                Warning(error='Support for Linux is in process!', icon='critical', title='Warning')
+
+        # If DB browser is not installed
+        except UnboundLocalError:
+            url_link = "<a href=\"https://sqlitebrowser.org/dl/\">Click this link to go to DB Browser for SQLite " \
+                       "Download</a> "
+            Warning(error=url_link, icon='critical', title='Warning')
+
+        # If project is not opened
         except AttributeError:
-            Warning(error=warning_window['import_data'], icon='critical', title='Warning')
+            Warning(error='Opened project is necessary!', icon='critical', title='Warning')
 
     def viewgraphs(self):
         try:

@@ -547,7 +547,6 @@
      <string>Data</string>
     </property>
     <addaction name="computing"/>
-    <addaction name="Process_data_batch"/>
     <addaction name="viewdata"/>
    </widget>
    <addaction name="menuFile_s"/>
