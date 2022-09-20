@@ -142,9 +142,9 @@ headers = {
     'drops': ' Set{0} Drop{0} Date{0} g"(t=0s){0} STD{0} TOD{0} Tide{0} Load{0} Baro{0} Polar{0} g(TOD){0} g(Ef.H){0} Ef.H1{0} c.EfH{0} Acc',
     'matlogsets': 'Campaign{0} Set{0} Year{0} Month{0} Day{0} Hour{0} Minute{0} Second{0} MJD{0} VGG_inp{0} g{0} g_std{0} STD-Start{0}STD-Final{0}Accepted{0} Top height{0} Pressure{0} VGG{0} T-stat',
     'allan': 'n{0}ALLAN1{0}STD1{0}ALLAN2{0}STD2{0}ALLAN3{0}STD3',
-    'residuals_final': 'Fringe{0} z [m]{0}Time [s]{0}Time Top [s]{0}Value [nm]{0}Filtered value [nm]',
-    'residuals_final1000': 'Fringe{0} z [m]{0} Time [s]{0} Time Top [s]{0} resid [nm]{0} Filtered resid [nm]',
-    'residuals_sets': 'Fringe{0} Time [s]{0}Time Top [s]{0}Value [nm]',
+    'residuals_final': 'Fringe{0} z [m]{0}Time [s]{0}Time Top [s]{0}Resid [nm]{0}Filtered value [nm]',
+    'residuals_final1000': 'Fringe{0} z [m]{0} Time [s]{0} Time Top [s]{0} Resid [nm]{0} Filtered resid [nm]',
+    'residuals_sets': 'Fringe{0} Time [s]{0}Time Top [s]{0}Resid [nm]',
     'spectrum': 'Frequency [Hz]{0}Avr res [nm]{0}Avr spec [nm]',
     'estim_grad': """   {0}    {0}Fit with gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Fit without gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Gradient estimation{0}{0}
                         Set{0}Drop{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}vgg{0}vgg-std
