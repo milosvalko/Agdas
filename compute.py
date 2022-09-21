@@ -2020,9 +2020,9 @@ class Compute(QtWidgets.QDialog, PATH):
         rejsigma = float(self.rejsigma.toPlainText())
 
         # Median of
-        resMed = np.median(self.ssresAr)
+        resMed = np.median(np.sqrt(self.ssresAr))
 
-        m0grad4Med = np.median(self.m0grad4Sig)
+        m0grad4Med = np.median(np.sqrt(self.m0grad4Sig))
         self.resgradsum4Mean = np.zeros((1, int(self.processingResults['totalFringes'])))
 
         kalpha = float(self.kalpha.toPlainText())
