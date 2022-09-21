@@ -731,8 +731,6 @@ class Compute(QtWidgets.QDialog, PATH):
             # residuals added into matrix with all residuals
             self.allRes[i, :] = fall.res_grad1
 
-            # transfer residuals to string for adding into database
-            res = ', '.join(str(r) for r in fall.res_grad1[0:self.frmaxplot])
             # date for database
             date_database = drop['Year'] + ':' + str(date.month).zfill(2) + ':' + str(date.day).zfill(2) + ' ' + drop[
                 'Time']
@@ -750,7 +748,7 @@ class Compute(QtWidgets.QDialog, PATH):
                              float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
-                             fall.xef[0][3], fall.ssres, accepted, res]
+                             fall.xef[0][3], fall.ssres, accepted]
 
 
             except UnboundLocalError:
@@ -765,7 +763,7 @@ class Compute(QtWidgets.QDialog, PATH):
                              float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
-                             fall.xef[0][3], fall.ssres, accepted, res]
+                             fall.xef[0][3], fall.ssres, accepted]
 
             compare_gsoft_agdas.add_gsoft(drop, fall.h * 1e-6+fall.Grad * 1e-6)
             compare_gsoft_agdas.add_agdas(fall.g0)
@@ -860,6 +858,11 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graphParasitic()
             self.graphEffectiveHeights2()
             self.allResGraph()
+
+            # Binary save of residuals
+            residuals_path = os.path.join(self.projDirPath, 'Files', self.stationData['ProjName'] + '_residuals')
+            np.save(residuals_path, self.allRes)
+
 
 
         # Compute statistics
@@ -2082,6 +2085,10 @@ class Compute(QtWidgets.QDialog, PATH):
 
         it = 0
         for i in d:
+            for j in range(25):
+                if self.allRes[it, j] > 1:
+                    self.allRes[it, j] = 0
+
             if i[0] == 1:
                 # mean the residuals
                 self.meanResSets[i[1] - 1, :] += self.allRes[it, :] / c[i[1] - 1][0]

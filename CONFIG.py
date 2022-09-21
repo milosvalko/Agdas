@@ -92,12 +92,11 @@ matrDatabase = {
              std REAL,
              vgg REAL,
              ssres REAL,
-             Accepted INTEGER,
-             Res TEXT)''',
+             Accepted INTEGER)''',
     'insert': '''INSERT INTO results ( n, m0, Set1, Drop1, Date, mjd, z0_withGR, v0_withGR, a_withGR, b_withGR,
     c_withGR, d_withGR, e_withGR, f_withGR, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight,
-    CorToEffHeight, Gradient, GradientLSTm0, std, vgg, ssres, Accepted, Res) values({},{},{},{},"{}",{},{},{},{},{},
-    {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"{}")''',
+    CorToEffHeight, Gradient, GradientLSTm0, std, vgg, ssres, Accepted) values({},{},{},{},"{}",{},{},{},{},{},
+    {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{})''',
 
     'updateAcc': '''UPDATE results
                 SET Accepted = 0
