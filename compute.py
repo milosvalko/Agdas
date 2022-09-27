@@ -807,7 +807,7 @@ class Compute(QtWidgets.QDialog, PATH):
                       show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_corr']['xlabel'], y_label=self.graph_lang['atm_corr']['ylabel'],
                       title=self.graph_lang['atm_corr']['title'])
             g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
-            g.saveSourceData()
+            # g.saveSourceData()
             g.save()
 
             # g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
@@ -821,14 +821,14 @@ class Compute(QtWidgets.QDialog, PATH):
                       show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'], y_label=self.graph_lang['atm_press']['ylabel'],
                       title=self.graph_lang['atm_press']['title'])
             g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
-            g.saveSourceData()
+            # g.saveSourceData()
             g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'], y_label=self.graph_lang['tides']['ylabel'],
                       title=self.graph_lang['tides']['title'])
             g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
-            g.saveSourceData()
+            # g.saveSourceData()
             g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='polar_corr', project=self.stationData['ProjName'],
@@ -836,7 +836,7 @@ class Compute(QtWidgets.QDialog, PATH):
                       y_label=self.graph_lang['polar_corr']['ylabel'],
                       title=self.graph_lang['polar_corr']['title'])
             g.plotXY(x=[time_gr], y=[Polar], mark=['b+'], columns_name=['polar_corr'])
-            g.saveSourceData()
+            # g.saveSourceData()
             g.save()
 
             r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
@@ -1514,7 +1514,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=XX, y=YY, mark=markk, columns_name=col_name, lw=lww)
         g.text(x=[x[self.frmin], x[self.frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
         g.text(x=text_x, y=text_y, t=col_name, c=text_color)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
         del X, Y, XX, YY, x
@@ -1573,7 +1573,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
                  legend=[l1, l2],
                  lw=[1, 1])
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphGravityChange(self):
@@ -1615,7 +1615,7 @@ class Compute(QtWidgets.QDialog, PATH):
                  columns_name='xx', legend='',
                  lw=[0.3])
         g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
         del X
@@ -1654,7 +1654,7 @@ class Compute(QtWidgets.QDialog, PATH):
         #          columns_name='xx', legend='',
         #          lw=[0.3])
         g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
         del X
@@ -1677,7 +1677,7 @@ class Compute(QtWidgets.QDialog, PATH):
                  y=[[self.gfinal - g0, self.gfinal - g0], [self.gfinal - g0 - self.gstd, self.gfinal - g0 - self.gstd],
                     [self.gfinal - g0 + self.gstd, self.gfinal - g0 + self.gstd]], mark=['b-', 'g-', 'g-'],
                  columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend=self.graph_lang['set_g']['legend'].split(','))
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
         # Standart deviation for set g-values
@@ -1686,7 +1686,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   title=self.graph_lang['set_std']['title'])
         # g.plotXY(x=[x, x, x], y=[[gfinal-g0, gfinal-g0], [gfinal-g0-gstd, gfinal-g0-gstd], [gfinal-g0+gstd, gfinal-g0+gstd]], mark=['b-', 'g-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Set g-values', 'Avegare g-value', '1 range'])
         g.error_bar(range(1, x[1]), self.stodch, self.stodchs, 'r')
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphRes(self):
@@ -1699,7 +1699,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   show=self.open_graphs.isChecked(), x_label=self.graph_lang['resid_RMS']['xlabel'], y_label=self.graph_lang['resid_RMS']['ylabel'],
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
         # acc = self.matr_connection.get('select Accepted from results')
@@ -1727,7 +1727,7 @@ class Compute(QtWidgets.QDialog, PATH):
                       float(self.lpar.toPlainText())))
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
                  legend=self.graph_lang['parasitic']['xlabel'].split(','))
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphHistogramAccDrops(self):
@@ -1739,7 +1739,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'], title=self.graph_lang['histogram']['title'],
                   show=self.open_graphs.isChecked())
         g.histogram(r, fit=True)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphHistogramAccDropsNorm(self):
@@ -1747,7 +1747,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   x_label=self.graph_lang['histogram_norm']['xlabel'], y_label=self.graph_lang['histogram_norm']['ylabel'],
                   title=self.graph_lang['histogram_norm']['title'], show=self.open_graphs.isChecked())
         g.histogram(self.normres, fit=True)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()
 
     def graphEffectiveHeights2(self):
@@ -2040,12 +2040,12 @@ class Compute(QtWidgets.QDialog, PATH):
             set_mean = mean1[j[0] - 1]
 
             # accepted if m0 < 1.5*median m0
-            if self.m0grad4Sig[it] < (1 + kalpha / 100) * m0grad4Med:
+            if np.sqrt(self.m0grad4Sig[it]) < (1 + kalpha / 100) * m0grad4Med:
                 self.resgradsum4Mean[0, :] += self.resgradsum4[it, :]
                 grad4Acc += 1
 
             # accepted if m0 < 1.5*median m0
-            if self.ssresAr[it] > (1 + kalpha / 100) * resMed:
+            if np.sqrt(self.ssresAr[it]) > (1 + kalpha / 100) * resMed:
                 update = matrDatabase['updateAcc'].format(j[0], j[1])
                 self.matr_connection.insert(update)
 
