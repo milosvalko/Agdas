@@ -20,6 +20,7 @@ import scipy.signal as sig
 import os
 import configparser
 from winotify import Notification, audio
+# from astropy.stats import sigma_clip, mad_std
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -578,7 +579,10 @@ class Compute(QtWidgets.QDialog, PATH):
                                    name=self.stationData['ProjName'] + '_' + 'estimgrad', delimiter=self.delimiter)
 
         # create database for save every measuring
-        self.matr_connection = matr_db(self.projDirPath + '/data.db')
+        try:
+            self.matr_connection = matr_db(self.projDirPath + '/data.db')
+        except sql.OperationalError:
+            Warning(error=warning_window['locked_database'], icon='critical', title='Warning')
 
         # measuring time of run computing
         self.t = time()
@@ -869,6 +873,7 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.complete_out.isChecked():
             # ===========================================================================================================#
             # compute statistics for printing files
+            self.reject_by_median_m0()
             self.rejectBySigma()
             self.meanResidualsBySets()
             self.sensitivity()
@@ -1402,7 +1407,7 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(xlim, ylim, '-b')
         p.plot(xxlim, ylim, '-b')
         for i in self.meanResSets:
-            p.plot(self.tt[:self.frmaxplot], i[ :self.frmaxplot], '-', lw=1, color='0.75')
+            p.plot(self.tt[:self.frmaxplot], i[:self.frmaxplot], '-', lw=1, color='0.75')
 
         p.plot(self.tt[:self.frmaxplot], self.meanRes[0, :], '-k', lw=2)
         p.plot(self.tinc, self.yn, '-', lw=3, color='tab:pink')
@@ -1412,6 +1417,8 @@ class Compute(QtWidgets.QDialog, PATH):
         p.title(self.graph_lang['residuals']['title'])
         p.ylabel(self.graph_lang['residuals']['ylabel'])
         p.xlabel(self.graph_lang['residuals']['xlabel'])
+
+        p.ylim([-1, 1])
 
         path = self.projDirPath + '/Graphs/'
         name = 'residuals'
@@ -2000,6 +2007,35 @@ class Compute(QtWidgets.QDialog, PATH):
         resgradsum.close()
         a1000.close()
 
+    def reject_by_median_m0(self):
+        """
+        This method filters drops by their m0.
+        Each drop with m0 > 1.5*median all medians is rejected
+        :return:
+        """
+        self.logWindow.append(separator)
+        self.logWindow.append('Reject drops by their m0')
+        QtCore.QCoreApplication.processEvents()
+
+        # Data from database
+        data = self.matr_connection.get('select gTopCor, sqrt(m0), Set1, Drop1 from results')
+
+        # Median of m0
+        resMed = np.median([i[1] for i in data])
+
+        # Drop acceptance limit
+        kalpha = float(self.kalpha.toPlainText())
+
+        it = 0
+        # grad4Acc = 0
+        for j in data:
+            # accepted if m0 < 1.5*median m0
+            if j[1] > (1 + kalpha / 100) * resMed:
+                update = matrDatabase['updateAcc'].format(j[2], j[3])
+                self.matr_connection.insert(update)
+
+        self.matr_connection.commit()
+
     def rejectBySigma(self):
         """
         Reject drops by sigma
@@ -2007,56 +2043,51 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         # Print to logWindow
         self.logWindow.append(separator)
-        self.logWindow.append('Reject drops with rejsigma>3*std and by median')
+        self.logWindow.append('Reject drops with rejsigma>3*std')
         QtCore.QCoreApplication.processEvents()
 
         # Get mean and v*v by sets from database
         mean = self.matr_connection.get(statistic['mean:vxv'])
-        # Get gTopCor from databse
-        res = self.matr_connection.get('select Set1, Drop1, gTopCor, Accepted from results where Accepted = 1')
 
+        # Get gTopCor from databse
+        res = self.matr_connection.get('select Set1, Drop1, gTopCor, Accepted, n from results where Accepted = 1')
+
+        # Count of drops in sets
         n = int(self.processingResults['dropsInSet'])
+
         # Get rejsigma from GUI
         rejsigma = float(self.rejsigma.toPlainText())
 
-        # Median of
-        resMed = np.median(np.sqrt(self.ssresAr))
-
-        m0grad4Med = np.median(np.sqrt(self.m0grad4Sig))
+        # Variable for mean residuals
         self.resgradsum4Mean = np.zeros((1, int(self.processingResults['totalFringes'])))
 
-        kalpha = float(self.kalpha.toPlainText())
-
+        # Calculate standard deviation and average by sets, possible improve with math extension of sql
         std = []
         mean1 = []
         for i in mean:
             std.append(sqrt(i[3] / (n - 1)))
             mean1.append(i[2])
 
-        it = 0
-        grad4Acc = 0
+        grad4_acc = 0
         for j in res:
             set_std = std[j[0] - 1]
             set_mean = mean1[j[0] - 1]
 
-            # accepted if m0 < 1.5*median m0
-            if np.sqrt(self.m0grad4Sig[it]) < (1 + kalpha / 100) * m0grad4Med:
-                self.resgradsum4Mean[0, :] += self.resgradsum4[it, :]
-                grad4Acc += 1
-
-            # accepted if m0 < 1.5*median m0
-            if np.sqrt(self.ssresAr[it]) > (1 + kalpha / 100) * resMed:
-                update = matrDatabase['updateAcc'].format(j[0], j[1])
-                self.matr_connection.insert(update)
+            acc = True
 
             # accepted if v < sigma*std
             if abs(j[2] - set_mean) > rejsigma * set_std:
                 update = matrDatabase['updateAcc'].format(j[0], j[1])
                 self.matr_connection.insert(update)
 
-            it += 1
+                acc = False
 
-        self.resgradsum4Mean = self.resgradsum4Mean / grad4Acc
+            # Filter data if drop is accepted
+            if acc:
+                self.resgradsum4Mean[0, :] += self.resgradsum4[j[4] - 1, :]
+                grad4_acc += 1
+
+        self.resgradsum4Mean = self.resgradsum4Mean / grad4_acc
 
         self.matr_connection.commit()
 
@@ -2085,14 +2116,11 @@ class Compute(QtWidgets.QDialog, PATH):
 
         it = 0
         for i in d:
-            for j in range(25):
-                if self.allRes[it, j] > 1:
-                    self.allRes[it, j] = 0
-
             if i[0] == 1:
                 # mean the residuals
                 self.meanResSets[i[1] - 1, :] += self.allRes[it, :] / c[i[1] - 1][0]
                 self.meanRes[0, :] += self.allRes[it, :self.frmaxplot]
+
 
             it += 1
 
