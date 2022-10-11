@@ -17,6 +17,7 @@ import scipy.stats
 # font = {'size' : 18}
 # matplotlib.rc('font', **font)
 
+script_path = os.path.dirname(os.path.realpath(__file__))
 
 class Fall():
 
@@ -823,6 +824,8 @@ class matr_db():
         Create connection with matr database
         """
         self.matr_db = sql.connect(path)
+        self.matr_db.enable_load_extension(True)
+        self.matr_db.load_extension(os.path.join(script_path, 'math.dll'))
         self.cursor = self.matr_db.cursor()
         try:
             self.cursor.execute(matrDatabase['schema'])
