@@ -993,6 +993,9 @@ class Graph():
         for i in range(len(x)):
             self.gr.text(x[i], y[i], t[i], color=c[i])
 
+    def ylim(self, lim):
+        self.gr.ylim(lim)
+
     def save(self):
         # Save plot to direction as png
         self.gr.xlabel(self.x_label)

@@ -1657,10 +1657,13 @@ class Compute(QtWidgets.QDialog, PATH):
                   show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'], y_label='',
                   title=self.graph_lang['sensitivity_bottom']['title'])
         # g.plotXY(x=[self.ttttlin], y=[[0 for i in range(len(self.ttr[i, :]))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
+        g.plotXY(x=[[self.tttt_plot[0], self.tttt_plot[-1]]], y=[[0, 0]], mark=['b-'])
+        g.plotXY(x=[[self.ttlin[self.indsensfrmax], self.ttlin[self.indsensfrmax]]], y=[[-20, 20]], mark=['b-'])
         # g.plotXY(x=[[self.ttr[self.frmax], self.ttr[self.frmax]]], y=[[-10, 10]], mark=['b-'],
         #          columns_name='xx', legend='',
         #          lw=[0.3])
         g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
+        g.ylim([-20, 20])
         # g.saveSourceData()
         g.save()
 
@@ -2283,11 +2286,11 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Compute sensitivity - time')
         QtCore.QCoreApplication.processEvents()
 
-        step = 20 # step for faster computing of sensitivity
+        self.step = 20 # step for faster computing of sensitivity
         ttlinmin = floor(10000*self.tt[0])/10000
         ttlinmax = floor(10000*self.tt[self.frmaxplot-1])/10000
-        ttlin = np.arange(ttlinmin, ttlinmax, 0.00001)
-        nttlin = len(ttlin)
+        self.ttlin = np.arange(ttlinmin, ttlinmax, 0.00001)
+        nttlin = len(self.ttlin)
         tfrmin = self.tt[self.frmin-1]
         tfrmax = self.tt[self.frmax-1]
 
@@ -2299,47 +2302,54 @@ class Compute(QtWidgets.QDialog, PATH):
         indsensfrmax = 1
 
         for i in range(nttlin):
-            if abs(ttlin[i] - self.tt[0]) < 1e-5:
+            if abs(self.ttlin[i] - self.tt[0]) < 1e-5:
                 indsenstn = i
 
-            if abs(ttlin[i] - self.tt[self.sens_tx-1]) < 1e-5:
+            if abs(self.ttlin[i] - self.tt[self.sens_tx-1]) < 1e-5:
                 indsenstx = i
 
-            if abs(ttlin[i] - self.tt[self.sens_bn-1]) < 1e-5:
+            if abs(self.ttlin[i] - self.tt[self.sens_bn-1]) < 1e-5:
                 indsensbn = i
 
-            if abs(ttlin[i] - np.min([self.tt[self.sens_bx-1], ttlinmax])) < 1e-5:
+            if abs(self.ttlin[i] - np.min([self.tt[self.sens_bx-1], ttlinmax])) < 1e-5:
                 indsensbx = i
 
-            if abs(ttlin[i] - tfrmin) < 1e-5:
+            if abs(self.ttlin[i] - tfrmin) < 1e-5:
                 indsensfrmin = i
 
-            if abs(ttlin[i] - tfrmax) < 1e-5:
+            if abs(self.ttlin[i] - tfrmax) < 1e-5:
                 indsensfrmax = i
 
+        self.indsensfrmax = indsensfrmax
+        self.indsensfrmin = indsensfrmin
+        self.indsenstx = indsenstx
+        self.indsenstn = indsenstn
+
+
         # initialization of arrays for sensitivity
-        self.dglt = np.zeros((self.nset, len(range(indsenstn, indsenstx + 1, step))))
-        self.dgrt = np.zeros((self.nset, len(range(indsensbn, indsensbx + 1, step))))
+        self.dglt = np.zeros((self.nset, len(range(indsenstn, indsenstx + 1, self.step))))
+        self.dgrt = np.zeros((self.nset, len(range(indsensbn, indsensbx + 1, self.step))))
 
-        self.dgltm = np.zeros((1, len(range(indsenstn, indsenstx + 1, step))))
-        self.dgrtm = np.zeros((1, len(range(indsensbn, indsensbx + 1, step))))
+        self.dgltm = np.zeros((1, len(range(indsenstn, indsenstx + 1, self.step))))
+        self.dgrtm = np.zeros((1, len(range(indsensbn, indsensbx + 1, self.step))))
 
-        self.ttr = np.zeros((self.nset, len(ttlin)))
+        self.ttr = np.zeros((self.nset, len(self.ttlin)))
 
-        self.ttttlin = ttlin[indsensbn: indsensbx]
+        self.ttttlin = self.ttlin[indsensbn: indsensbx]
 
-        self.tttt_plot = [self.ttttlin[i] for i in range(0, len(self.ttttlin), step)]
+        self.tttt_plot = [self.ttttlin[i] for i in range(0, len(self.ttttlin), self.step)]
+        self.tttt_indexes = [i for i in range(0, len(self.ttlin), self.step)]
 
         # sensitivity is calculated for averages by sets
         for i in range(self.nset):
 
-            ttr = np.interp(ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
+            ttr = np.interp(self.ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
             self.ttr[i, :] = ttr
 
             indj = 0
-            for j in range(indsenstn, indsenstx + 1, step):
+            for j in range(indsenstn, indsenstx + 1, self.step):
                 # data for fitting by parabola on left side of drop
-                x = ttlin[j - 1: indsensfrmax]
+                x = self.ttlin[j - 1: indsensfrmax]
                 y = ttr[j - 1: indsensfrmax]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
@@ -2349,9 +2359,9 @@ class Compute(QtWidgets.QDialog, PATH):
                 indj += 1
 
             indj = 0
-            for j in range(indsensbn, indsensbx + 1, step):
+            for j in range(indsensbn, indsensbx + 1, self.step):
                 # data for fitting by parabola on right side of drop
-                x = ttlin[indsensfrmin - 1: j]
+                x = self.ttlin[indsensfrmin - 1: j]
                 y = ttr[indsensfrmin - 1: j]
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
@@ -2516,19 +2526,22 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p = plt
 
-        x = self.tttt_plot
+        # x = self.ttlin[self]
+        x = [self.ttlin[i] for i in range(self.indsenstn, self.indsenstx, self.step)]
 
         for i in range(self.dglt.shape[0]):
-            p.plot(x, self.dglt[i, :len(x)], lw=0.7)
+            p.plot(x, self.dglt[i, :], lw=0.7)
             legend.append('{} {}'.format(self.graph_lang['sensitivity_top_time']['set_description'], i + 1))
 
         legend.append(self.graph_lang['sensitivity_top_time']['legend'])
         p.plot(x, self.dgltm[0, :len(x)], 'k', lw=2)
         # p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
+        p.plot([x[0], x[-1]], [0, 0], 'b-', lw=0.6)
+        p.plot([self.ttlin[self.indsensfrmin], self.ttlin[self.indsensfrmin]], [-20, 20], 'b-', lw=0.6)
         p.title(self.graph_lang['sensitivity_top_time']['title'])
         p.xlabel(self.graph_lang['sensitivity_top_time']['xlabel'])
         p.ylabel(self.graph_lang['sensitivity_top_time']['ylabel'])
-        # p.ylim(ylim)
+        p.ylim([-20, 20])
         p.legend(legend)
 
         # save graph
