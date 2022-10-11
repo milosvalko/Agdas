@@ -184,7 +184,8 @@ warning_window = {
     'pole_corr': 'Choose polar correction',
     'cannot_wrtite_file': 'Cannot write file due statistic is not computed',
     'comparison': 'Files successfully compared',
-    'pole_corr_service': 'Choose polar corrections service'
+    'pole_corr_service': 'Choose polar corrections service',
+    'locked_database': 'Database is locked. Close DB Browser!'
 }
 
 # colors = ['b', 'g', 'r', ]
