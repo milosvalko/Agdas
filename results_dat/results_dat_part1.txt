@@ -23,7 +23,7 @@ GuideCard Multiplex: {}
 GuideCard Scale Factor: {}
 First FRINGE: {}
 Final FRINGE: {}
-STD threshold for drop acceptance: {} nm
+Drop acceptance limit: {} %
 Coverage factor for drop gravity acceptance: {}
 Confidence level for set gravities: {} %
 STD for set gravity systematic effects: {} nm/s/s
