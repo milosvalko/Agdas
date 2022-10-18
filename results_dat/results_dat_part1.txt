@@ -2,18 +2,18 @@ AGDAS version:  {}
 Project name:  {}
 Station:  {}
 Site Code: {}
-Lat: {}
-Long: {}
+Lat: {}°
+Long: {}°
 Elev: {} m
 Gradient: {}  Gal/cm
 Setup Height: {} cm
-Transfer Height: {}  Gal
+Transfer Height: {}  cm
 Nominal Air Pressure: {} mBar
-Barometric Admittance Factor: {}
-Polar Motion Coord:  {} "  {} " (mjd:  {}), (date of downloading of polar coordinates file from {}: {})
+Barometric Admittance Factor: {} nm.s-2/hPa
+Polar Motion Coord:  {} "  {} " (mjd:  {}), (coordinates downloaded from {} on: {})
 Rubidium Frequency: {} Hz
 ID: {} nm, IE: {} nm, IF: {} nm, IG: {} nm
-Modulation Frequency: {} nm
+Modulation Frequency: {} Hz
 Parasitic wavelength: {} m
 TTL Cable length:  {} m
 Number of Sets Processed: {}
@@ -24,9 +24,9 @@ GuideCard Scale Factor: {}
 First FRINGE: {}
 Final FRINGE: {}
 Drop acceptance limit: {} %
-Coverage factor for drop gravity acceptance: {}
-Confidence level for set gravities: {} %
-STD for set gravity systematic effects: {} nm/s/s
+Coverage factor for drop acceptance within a set: {}
+Confidence level for acceptance set g-values: {} %
+STD of systematic effects for set g-values: {} nm.s-2
 
 =======================================================
 Correction of time-distance pairs are enabled/disabled (1/0) for effects of:

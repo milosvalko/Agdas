@@ -2583,7 +2583,7 @@ class Compute(QtWidgets.QDialog, PATH):
         part1_fill.append(self.stationData['elev']) # elev
         part1_fill.append(self.grad.toPlainText()) # gradient
         part1_fill.append(self.stationData['setupHeight']) # setup height
-        part1_fill.append(self.gravityCorrections['transferHeightGal']) # transfer height
+        part1_fill.append(self.stationData['transferHeight']) # transfer height
         part1_fill.append(self.stationData['airPressure']) # nominal air pressure
         part1_fill.append(self.stationData['barometricFactor']) # Barometric Admittance Factor
         try:
@@ -2622,12 +2622,12 @@ class Compute(QtWidgets.QDialog, PATH):
         part1_fill.append(self.rejsigma.toPlainText()) # Coverage factor for drop gravity acceptance
         part1_fill.append(95) # Confidence level for set gravities
         part1_fill.append(self.gravimeter['ksmooth']) # STD for set gravity systematic effects
-        part1_fill.append(self.ksol.isChecked()) # Speed of light
-        part1_fill.append(self.ksae.isChecked()) # Self-attration
-        part1_fill.append(self.kdis.isChecked()) # Dispersion in TTL cable
-        part1_fill.append(self.kimp.isChecked()) # Impedance mismatch
-        part1_fill.append(self.kpar.isChecked()) # Parasitic wave
-        part1_fill.append(float(self.stationData['actualHeight'])/100) # TOP OF THE DROP
+        part1_fill.append(int(self.ksol.isChecked())) # Speed of light
+        part1_fill.append(int(self.ksae.isChecked())) # Self-attration
+        part1_fill.append(int(self.kdis.isChecked())) # Dispersion in TTL cable
+        part1_fill.append(int(self.kimp.isChecked())) # Impedance mismatch
+        part1_fill.append(int(self.kpar.isChecked())) # Parasitic wave
+        part1_fill.append('{:.5f}'.format(float(self.stationData['actualHeight'])/100)) # TOP OF THE DROP
 
         part1 = part1.format(*part1_fill)
 
@@ -2675,7 +2675,7 @@ class Compute(QtWidgets.QDialog, PATH):
         grefer = '{:.2f}'.format(self.gfinal - float(self.stationData['gradient'])*hefm)
         part3_fill.append(grefer) # g @ EFFECTIVE INSTRUMENTAL HEIGHT
         part3_fill.append(self.stationData['gradient']) # Vertical gravity gradient
-        part3_fill.append('{:.5f}'.format(float(self.gravityCorrections['transferHeightGal'])/100)) # DATUM HEIGHT
+        part3_fill.append('{:.5f}'.format(float(self.stationData['transferHeight'])/100)) # DATUM HEIGHT
         g00 = self.gfinal - (float(self.stationData['gradient'])/1e6)*(float(self.stationData['actualHeight'])/100 - float(self.gravityCorrections['transferHeightGal'])/100 )*1e9 # g @ DATUM HEIGHT
         part3_fill.append('{:.2f}'.format(g00)) # g @ DATUM HEIGHT
         part3_fill.append('{:.3f}'.format(np.mean(self.Press))) # AIR PRESSURE

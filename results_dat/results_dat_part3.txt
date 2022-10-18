@@ -6,7 +6,7 @@ Date         Time           g           Std
 ----------------------------------------------
 {}  {}  {}   {}  {} {}    {}   {}
 
-!!! g @ EFFECTIVE INSTRUMENTAL HEIGHT/EFFECTIVE INSTRUMENTAL HEIGHT
+!!! g @ EFFECTIVE INSTRUMENTAL HEIGHT
 EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop:  {} +/- {} [mm]
 EFFECTIVE INSTRUMENTAL HEIGHT:  {} [m]
 g @ EFFECTIVE INSTRUMENTAL HEIGHT:    {} [nm.s-2]
@@ -25,10 +25,10 @@ Average: {} uGal
 MAX-MIN:  {} uGal
 
 Estimated gravity gradient:
-Value=   {} nm.s-2/mm
-STD=   {} nm.s-2/mm
+Value=   {} nm.s-2/m
+STD=   {} nm.s-2/m
 
 Estimated gravity gradient after removing outliers:
-Value=   {} nm.s-2/mm
-STD=   {} nm.s-2/mm
+Value=   {} nm.s-2/m
+STD=   {} nm.s-2/m
 Outliers:  {}
