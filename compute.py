@@ -1249,8 +1249,8 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot([0, len(data_centered)], [5 * median1, 5 * median1], 'r', lw=0.5)
         p.plot([0, len(data_centered)], [-5 * median1, -5 * median1], 'r', lw=0.5)
         p.title(title)
-        p.xlabel('Drop #')
-        p.ylabel(ylabel)
+        p.xlabel('Drop #', fontsize=15)
+        p.ylabel(ylabel, fontsize=15)
 
         path = self.projDirPath + '/Graphs/'
         project = self.stationData['ProjName']
@@ -1279,13 +1279,16 @@ class Compute(QtWidgets.QDialog, PATH):
         p, (ax1, ax2) = plt.subplots(2, 1)
 
         ax1.loglog(fr[n:], self.yffa[n:], '-r', fr[n:], self.yfdMean[0, n:], '-b', lw=0.5)
-        ax1.set(title=self.graph_lang['spectrum_ratio']['title'], xlabel=self.graph_lang['spectrum_ratio']['xlabel'], ylabel=self.graph_lang['spectrum_ratio']['ylabel'])
+        ax1.set(title=self.graph_lang['spectrum_ratio']['title'])
         ax1.legend(self.graph_lang['spectrum_ratio']['legend1'].split(','))
+        ax1.set_xlabel(xlabel=self.graph_lang['spectrum_ratio']['xlabel'], fontsize=15)
+        ax1.set_ylabel(ylabel=self.graph_lang['spectrum_ratio']['ylabel'], fontsize=15)
 
         ax2.loglog(fr, ratio, color=(0.64, 0, 1), lw=0.5)
         ax2.loglog([np.min(fr), fs], [np.sqrt(indexpad), np.sqrt(indexpad)], '-k', lw=0.5)
-        ax2.set(xlabel=self.graph_lang['spectrum_ratio']['xlabel'], ylabel=self.graph_lang['spectrum_ratio']['ylabel2'])
         ax2.legend(self.graph_lang['spectrum_ratio']['legend2'].split(','))
+        ax2.set_xlabel(xlabel=self.graph_lang['spectrum_ratio']['xlabel'], fontsize=15)
+        ax2.set_ylabel(ylabel=self.graph_lang['spectrum_ratio']['ylabel2'], fontsize=15)
 
         p.tight_layout()
 
@@ -1336,12 +1339,15 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10))
         ax1.loglog(frx, yres1x, '-r', frx, yres2x, '-b', lw=0.5)
-        ax1.set(title=self.graph_lang['spectrum_parts']['title'], xlabel=self.graph_lang['spectrum_parts']['xlabel'], ylabel=self.graph_lang['spectrum_parts']['ylabel'])
+        ax1.set(title=self.graph_lang['spectrum_parts']['title'])
+        ax1.set_xlabel(xlabel=self.graph_lang['spectrum_parts']['xlabel'], fontsize=15)
+        ax1.set_ylabel(ylabel=self.graph_lang['spectrum_parts']['ylabel'], fontsize=15)
         ax1.legend(self.graph_lang['spectrum_parts']['legend1'].split(','))
 
         ax2.loglog(frx, ratio, color=(0.64, 0, 1), lw=0.5)
         ax2.loglog([np.min(frx), fs], [1, 1], '-k', lw=0.5)
-        ax2.set(xlabel=self.graph_lang['spectrum_parts']['xlabel'], ylabel=self.graph_lang['spectrum_parts']['ylabel'])
+        ax2.set_xlabel(xlabel=self.graph_lang['spectrum_parts']['xlabel'], fontsize=15)
+        ax2.set_ylabel(ylabel=self.graph_lang['spectrum_parts']['ylabel'], fontsize=15)
         ax2.legend(self.graph_lang['spectrum_parts']['legend2'])
 
         p.tight_layout()
@@ -1392,9 +1398,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.loglog(frenv[start:], valenv_y[start:], 'r')
 
         legend.append(self.graph_lang['spectrum']['legend'].split(',')[1])
-        p.title(title)
-        p.xlabel(self.graph_lang['spectrum']['xlabel'])
-        p.ylabel(self.graph_lang['spectrum']['ylabel'])
+        p.title(title, fontsize=15)
+        p.xlabel(self.graph_lang['spectrum']['xlabel'], fontsize=15)
+        p.ylabel(self.graph_lang['spectrum']['ylabel'], fontsize=15)
         p.ylim([1e-5, 1])
         p.xlim([1, 1e5])
         p.legend(legend)
@@ -1440,9 +1446,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[0], color='b')
         p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[1], color='b')
 
-        p.title(self.graph_lang['residuals_gradient']['title'])
-        p.ylabel(self.graph_lang['residuals_gradient']['ylabel'])
-        p.xlabel(self.graph_lang['residuals_gradient']['xlabel'])
+        p.title(self.graph_lang['residuals_gradient']['title'], fontsize=15)
+        p.ylabel(self.graph_lang['residuals_gradient']['ylabel'], fontsize=15)
+        p.xlabel(self.graph_lang['residuals_gradient']['xlabel'], fontsize=15)
 
         path = self.projDirPath + '/Graphs/'
         name = 'residuals_gradient'
@@ -1483,9 +1489,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[0], color='b')
         p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[1], color='b')
 
-        p.title(self.graph_lang['residuals']['title'])
-        p.ylabel(self.graph_lang['residuals']['ylabel'])
-        p.xlabel(self.graph_lang['residuals']['xlabel'])
+        p.title(self.graph_lang['residuals']['title'], fontsize=15)
+        p.ylabel(self.graph_lang['residuals']['ylabel'], fontsize=15)
+        p.xlabel(self.graph_lang['residuals']['xlabel'], fontsize=15)
 
         p.ylim([-1, 1])
 
@@ -1511,8 +1517,8 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot([self.frmin, self.frmin], [-siz, siz], '-b', lw=1)
         p.plot([self.frmax, self.frmax], [-siz, siz], '-b', lw=1)
         p.title(self.graph_lang['resid_all']['title'])
-        p.ylabel(self.graph_lang['resid_all']['ylabel'])
-        p.xlabel(self.graph_lang['resid_all']['xlabel'])
+        p.ylabel(self.graph_lang['resid_all']['ylabel'], fontsize=15)
+        p.xlabel(self.graph_lang['resid_all']['xlabel'], fontsize=15)
         x = range(1, self.frmaxplot + 1)
         for i in range(len(r)):
             acc = r[i]
@@ -2558,13 +2564,14 @@ class Compute(QtWidgets.QDialog, PATH):
 
         ax1.plot(x, self.ampar, 'r', lw=0.5)
         ax1.set(
-            title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10),
-            xlabel=self.graph_lang['parasitic2']['xlabel'],
-            ylabel=self.graph_lang['parasitic2']['ylabel1'])
+            title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10))
+        ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=15)
+        ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'], fontsize=15)
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)
-        ax2.set(xlabel=self.graph_lang['parasitic2']['xlabel'], ylabel=self.graph_lang['parasitic2']['ylabel2'])
+        ax2.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=15)
+        ax2.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel2'], fontsize=15)
 
         # save graph
         path = self.projDirPath + '/Graphs/'
@@ -2590,9 +2597,9 @@ class Compute(QtWidgets.QDialog, PATH):
         legend.append(self.graph_lang['sensitivity_top']['legend'])
         p.plot(x, self.dglm[0, :], 'k', lw=2)
         p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
-        p.title(self.graph_lang['sensitivity_top']['title'])
-        p.xlabel(self.graph_lang['sensitivity_top']['xlabel'])
-        p.ylabel(self.graph_lang['sensitivity_top']['ylabel'])
+        p.title(self.graph_lang['sensitivity_top']['title'], fontsize=15)
+        p.xlabel(self.graph_lang['sensitivity_top']['xlabel'], fontsize=15)
+        p.ylabel(self.graph_lang['sensitivity_top']['ylabel'], fontsize=15)
         p.ylim(ylim)
         p.legend(legend)
 
