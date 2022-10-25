@@ -1025,7 +1025,7 @@ class Compare_gsoft_agdas():
         self.set = []
         self.drp = []
         self.vgg = float(vgg) # gradient from project file
-        self.path = os.path.join(path, 'Files', project + '_compare_gsoft_agdas.csv')
+        self.path = os.path.join(path, 'Files', project + 'compare_gsoft_agdas.csv')
         self.path_hist = os.path.join(path, 'Graphs')
         self.project = project
 
@@ -1074,10 +1074,10 @@ class Compare_gsoft_agdas():
         file.close()
 
     def print_histogram(self, graph_lang):
-        g = Graph(path=self.path_hist, name=self.project + '_histogram', project='',
+        g = Graph(path=self.path_hist, name=self.project + '_histogram_compare_gsoft_pyagdas', project='',
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
                   title=graph_lang['histogram_diff']['title'],
                   show=False)
         g.histogram(self.diff_*10, fit=True)
-        g.saveSourceData()
+        # g.saveSourceData()
         g.save()

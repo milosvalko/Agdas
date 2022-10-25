@@ -5,7 +5,6 @@ from math import floor, trunc
 import math
 
 
-
 def allan(data, tau):
     """
     Allan standard deviation
@@ -138,6 +137,7 @@ def date_to_mjd(year, month, day):
 
     return jd - 2400000.5
 
+
 def mjd_to_jd(mjd):
     """
     :Author: Matt Davis
@@ -225,11 +225,12 @@ def jd_to_date(jd):
     else:
         year = D - 4715
 
-    hour = (day - math.floor(day))*24
-    minut = (hour - math.floor(hour))*60
-    sec = (minut - math.floor(minut))*60
+    hour = (day - math.floor(day)) * 24
+    minut = (hour - math.floor(hour)) * 60
+    sec = (minut - math.floor(minut)) * 60
 
     return year, month, math.floor(day), math.floor(hour), math.floor(minut), math.floor(sec)
+
 
 def rssq(x):
     """
@@ -269,3 +270,4 @@ def movingAverage(x, n=50):
         plot_range.append(i)
 
     return res, plot_range
+

@@ -20,6 +20,7 @@ import scipy.signal as sig
 import os
 import configparser
 from winotify import Notification, audio
+import re
 # from astropy.stats import sigma_clip, mad_std
 
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -875,6 +876,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # ===========================================================================================================#
             # compute statistics for printing files
             self.reject_by_median_m0()
+            self.graphHistogramAccDrops(name='_median_filter')
             self.rejectBySigma()
             self.meanResidualsBySets()
             self.sensitivity()
@@ -899,14 +901,14 @@ class Compute(QtWidgets.QDialog, PATH):
             try:
                 self.write_res_final()
             except AttributeError:
-                Warning(error=warning_window['cannot_wrtite_file'], icon='critical', title='Warning')
+                Warning(error=warning_window['cannot_write_file'], icon='critical', title='Warning')
 
             # ===========================================================================================================#
             self.graphGravityChange()
             self.graphVGG()
             self.graphSetG()
             self.graphHistogramAccDropsNorm()
-            self.graphHistogramAccDrops()
+            self.graphHistogramAccDrops(name='_fully_filtered')
             self.graphSensitivityStd()
             self.graphGravityChange_time()
             self.graph_sensitivity_top_time()
@@ -1074,11 +1076,11 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(self.instrumentData['modulFreq'])
         line.append('0.' + self.instrumentData['rubiFreq'].split('.')[1])
         line.append(self.gravimeter['Lpar'] / 1e9)
-        line.append(self.ksol.isChecked())
-        line.append(self.ksae.isChecked())
-        line.append(self.kdis.isChecked())
-        line.append(self.kimp.isChecked())
-        line.append(self.kpar.isChecked())
+        line.append(int(self.ksol.isChecked()))
+        line.append(int(self.ksae.isChecked()))
+        line.append(int(self.kdis.isChecked()))
+        line.append(int(self.kimp.isChecked()))
+        line.append(int(self.kpar.isChecked()))
         line.append(self.lcable)
         line.append(self.frmin)
         line.append(self.frmax)
@@ -1807,12 +1809,12 @@ class Compute(QtWidgets.QDialog, PATH):
         # g.saveSourceData()
         g.save()
 
-    def graphHistogramAccDrops(self):
+    def graphHistogramAccDrops(self, name):
 
         r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
         r = [i[0] for i in r]
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='histogram', project=self.stationData['ProjName'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='histogram'+name, project=self.stationData['ProjName'],
                   x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'], title=self.graph_lang['histogram']['title'],
                   show=self.open_graphs.isChecked())
         g.histogram(r, fit=True)
@@ -1860,19 +1862,29 @@ class Compute(QtWidgets.QDialog, PATH):
     def writeDropsFile(self):
 
         r = self.matr_connection.get(
-            'SELECT Set1, Drop1, Date, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, CorToEffHeight, Accepted from results')
+            'SELECT Set1, Drop1, Date, mjd, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, CorToEffHeight, Accepted from results')
         a = res_final(path=self.projDirPath, header=headers['drops'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'drops', delimiter=self.delimiter)
 
-        for i in r:
-            k = list(i[:4])
+        for ind, i in enumerate(r):
+            k = list(i[:2])
+            k.extend(re.split(':| ', i[2]))
+            k.append(i[3])
+            k.append(i[4])
+
 
             k.append(self.stdodchpadu[i[0] - 1])
 
-            for j in range(4, len(i)):
+            for j in range(5, len(i)):
                 k.append(i[j])
 
-            k = roundList(k, round_line_ind['drops'])
+            if self.kpar.isChecked():
+                k.append(self.ampar[ind])
+                k.append(self.fazepar[ind])
+            else:
+                k.append('-')
+                k.append('-')
+            # k = roundList(k, round_line_ind['drops'])
             a.printResult(line=k)
 
         a.close()
@@ -2460,7 +2472,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # Open result file
         # file=open(self.projDirPath+'/Graphs/'+project+'_'+'effective_height_corr.csv', 'w')
         file = res_final(path=self.projDirPath, header=headers['effective_height_corr'].format(self.delimiter),
-                         name=self.stationData['ProjName'] + '_' + 'effective_height_corr', files='/Graphs/',
+                         name=self.stationData['ProjName'] + '_' + 'effective_height_corr',
                          delimiter=self.delimiter)
 
         # Create lists print graph and print lines of result file
