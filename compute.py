@@ -197,6 +197,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.sens_tn = 1  # Sensitivity top - minimum
         self.sens_tx = self.frmin + INTsens  # Sensitivity top - maximum
+        self.sens_tx = self.frmin + INTsens  # Sensitivity top - maximum
 
         self.sens_bn = self.frmax - INTsens  # Sensitivity bottom - minimum
 
@@ -920,6 +921,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graph_spectrum('spectrum')
             self.graph_spectrum('spectrum_avr')
             self.print_results_dat()
+            self.sensitivity_file1()
+            self.sensitivity_file2()
 
             title = self.graph_lang['allan1_normalized']['title']
             ylabel = self.graph_lang['allan1_normalized']['ylabel']
@@ -938,6 +941,70 @@ class Compute(QtWidgets.QDialog, PATH):
         self.calc_time.setText('Calculation time: {:.2f} s'.format(time() - self.t))
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
         self.notification()
+
+    def sensitivity_file1(self):
+        """
+        print sens1.csv file
+        :return:
+        """
+
+        path = self.projDirPath + '/Files/' + self.stationData['ProjName'] + '_sens1.csv'
+        sens = open(path, 'w')
+
+        header = """ Start{0}   delta_g{0}    Final{0}   delta_g 
+                            fringe{0}    [nm.s-2]{0} fringe{0}    [nm.s-2]
+                            ------------------------------------ \n""".format(self.delimiter)
+
+        sens.write(header)
+
+        for i in range(self.frmin + int(0.1*self.nfringe)):
+            line = '{:.0f}{} {:.3f}{} {:.0f}{} {:.3f} \n'.format(i+1, self.delimiter, self.dglm[0, i], self.delimiter, self.sens_bn+i-1, self.delimiter, self.dgrm[0, i])
+            sens.write(line)
+
+        for i in range(self.frmin + int(0.1*self.nfringe) + 1, self.dgrm.shape[1]):
+            line = '{}{} {:.5f}{} {:.3f} \n'.format(self.delimiter, self.delimiter, self.sens_bn+1-1, self.delimiter, self.dgrm[0, i])
+            sens.write(line)
+
+        sens.close()
+
+    def sensitivity_file2(self):
+        """
+        print sens2.csv file
+        :return:
+        """
+
+        header = """ Start{0}   delta_g{0}    Final{0}   delta_g 
+                     time{0}    [nm.s-2]{0}   time{0}    [nm.s-2]
+                     ------------------------------------ \n""".format(self.delimiter)
+
+        # open file with path
+        path = self.projDirPath + '/Files/' + self.stationData['ProjName'] + '_sens2.csv'
+        sens2 = open(path, 'w')
+
+        sens2.write(header)
+
+        # set indexes for self.ttlin vector due to step in sensitivity calculating
+        indsenstn_ind = self.indsenstn-1
+        indsensbn_ind = self.indsensbn-1
+
+        for i in range(self.dgrtm.shape[1]):
+            # create line
+            line = '{:.5f}{} {:.3f}{} {:.5f}{} {:.3f} \n'.format(self.ttlin[indsenstn_ind], self.delimiter, self.dgltm[0, i], self.delimiter, self.ttlin[indsensbn_ind], self.delimiter, self.dgrtm[0, i])
+            sens2.write(line)
+
+            # increase indexes by step
+            indsenstn_ind += self.step
+            indsensbn_ind += self.step
+
+        for i in range(self.dgrtm.shape[1], self.dgltm.shape[1]):
+            # create line
+            line = '{:.5f}{} {:.2f}{} \n'.format(self.ttlin[indsenstn_ind], self.delimiter, self.dgltm[0, i], self.delimiter)
+            sens2.write(line)
+
+            # increase index by step
+            indsenstn_ind += self.step
+
+        sens2.close()
 
     def ressets_res(self):
         """
@@ -2324,6 +2391,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.indsensfrmin = indsensfrmin
         self.indsenstx = indsenstx
         self.indsenstn = indsenstn
+        self.indsensbn = indsensbn
 
 
         # initialization of arrays for sensitivity
@@ -2336,6 +2404,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.ttr = np.zeros((self.nset, len(self.ttlin)))
 
         self.ttttlin = self.ttlin[indsensbn: indsensbx]
+        self.tttlin = self.ttlin[indsenstn: indsenstx]
 
         self.tttt_plot = [self.ttttlin[i] for i in range(0, len(self.ttttlin), self.step)]
         self.tttt_indexes = [i for i in range(0, len(self.ttlin), self.step)]
@@ -2345,12 +2414,15 @@ class Compute(QtWidgets.QDialog, PATH):
 
             ttr = np.interp(self.ttlin, self.tt[:self.frmaxplot], self.meanResSets[i, :self.frmaxplot])
             self.ttr[i, :] = ttr
+            bleble = []
+            ble = []
 
             indj = 0
             for j in range(indsenstn, indsenstx + 1, self.step):
                 # data for fitting by parabola on left side of drop
                 x = self.ttlin[j - 1: indsensfrmax]
                 y = ttr[j - 1: indsensfrmax]
+                bleble.append(self.ttlin[j-1])
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
@@ -2363,6 +2435,7 @@ class Compute(QtWidgets.QDialog, PATH):
                 # data for fitting by parabola on right side of drop
                 x = self.ttlin[indsensfrmin - 1: j]
                 y = ttr[indsensfrmin - 1: j]
+                ble.append(self.ttlin[j - 1])
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
