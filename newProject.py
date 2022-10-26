@@ -10,6 +10,7 @@ from CONFIG import logo_picture
 # PATH, _ = uic.loadUiType('gui/newProject.ui')
 PATH, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'gui/newProject.ui'))
 
+script_path = os.path.dirname(os.path.realpath(__file__))
 
 class NewProject(QtWidgets.QDialog, PATH):
     """
@@ -24,12 +25,22 @@ class NewProject(QtWidgets.QDialog, PATH):
         # connect buttons with methods
         self.loadFiles.clicked.connect(self.load_files)
         self.projDir.clicked.connect(self.saveDir)
+        self.load_test.clicked.connect(self.load_test_data)
 
         # info if upload of input files was successfully
         self.succ = False
 
         self.show()
         self.exec()
+
+    def load_test_data(self):
+        """
+        load tested data
+        measuring from GO Pecny 02/11/21 by FG5X
+        :return:
+        """
+        path = os.path.join(script_path, 'test_data')
+        self.name.setText(path)
 
     def load_files(self):
         """

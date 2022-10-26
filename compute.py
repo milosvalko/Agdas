@@ -13,7 +13,8 @@ from time import time
 import matplotlib.pyplot as plt
 from PyQt5.QtGui import QIcon, QPixmap
 from math import sin, cos, pi, sqrt, floor
-from functions import allan, roundList, date_to_mjd, rssq, movingAverage, mjd_to_jd, jd_to_date
+from functions import allan, roundList, date_to_mjd, rssq, movingAverage, mjd_to_jd, jd_to_date, get_date_last_version, \
+    write_last_version
 import numpy as np
 from scipy.stats import t
 import scipy.signal as sig
@@ -780,7 +781,7 @@ class Compute(QtWidgets.QDialog, PATH):
             mess = 'Drop: {} >> g0: {:.2f} std: {:.2f}  eff.height: {:.2f}  gtop: {:.2f}'.format(str(i + 1).rjust(len(str(self.ndrop))), fall.g0_Gr,
                                                           np.sqrt(fall.m02_grad[0]), fall.h/1e7, fall.gTopCor)
             self.logWindow.append(mess)
-            self.progressBar.setValue(float((i + 1) * 100 / self.ndrop))
+            self.progressBar.setValue(int((i + 1) * 100 / self.ndrop))
 
             # data for atmsorefic graphs
             atm.append(float(drop['Baro']))
@@ -943,6 +944,9 @@ class Compute(QtWidgets.QDialog, PATH):
         self.calc_time.setText('Calculation time: {:.2f} s'.format(time() - self.t))
         self.calc_time.setStyleSheet('color: red; font-size: 10pt')
         self.notification()
+        date_last_version = get_date_last_version()
+        write_last_version(date_last_version)
+
 
     def sensitivity_file1(self):
         """
@@ -2229,7 +2233,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         x = int((self.gravimeter['nforfft'] - 1) / 2)
         # arrays with results
-        self.yfda = np.zeros((len(self.allRes[:self.frmaxplot]), self.gravimeter['nforfft']), dtype=complex)
+        self.yfda = np.zeros((self.ndrops, self.gravimeter['nforfft']), dtype=complex)
         self.yfdMeanBySet = np.zeros((self.nset, x))
         self.yfdMean = np.zeros((1, x))
         yfs = np.zeros((self.nset, self.gravimeter['nforfft']), dtype=complex)

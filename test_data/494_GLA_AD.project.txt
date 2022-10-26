@@ -1,0 +1,151 @@
+Micro-g LaCoste g Processing Report
+File Created: 02/23/21, 14:42:55
+
+Project Name: 494_GLA_AD
+g Acquisition Version: 2.032000
+g Processing Version: 9.120423
+
+Company/Institution: 
+Operator: Kostelecky, Palinkas
+
+Station Data
+Name: PECNY_GLA
+Site Code: 80.10
+Lat:  49.91381 Long:   14.78559 Elev:  544.80 m
+Setup Height: 49.40 cm
+Transfer Height: 125.00 cm
+Actual Height: 130.15 cm
+Gradient: -3.646 µGal/cm
+Nominal Air Pressure:  949.49 mBar
+Barometric Admittance Factor:  0.30
+Polar Motion Coord: 0.0077 " 0.3817 "
+Earth Tide (ETGTAB) Selected
+Potential Filename: C:\gData\gWavefiles\ETCPOT.dat
+Delta Factor Filename: C:\gData\gWavefiles\PE_SG_3Y.ini
+Delta Factors
+     Start   Stop     Amplitude    Phase Term
+  0.000000 0.000001    1.00000    0.0000   M0S0 
+  0.000140 0.249951    1.16000    0.0000   long 
+  0.501370 0.842147    1.15581   -0.4235   SGQ1 
+  0.842148 0.860293    1.14742   -0.2427   2Q1  
+  0.860294 0.878675    1.14989   -0.5245   SGM1 
+  0.878676 0.896968    1.14754   -0.0706   Q1   
+  0.896969 0.911390    1.14518   -0.1717   RO1  
+  0.911391 0.931206    1.15004    0.1209   O1   
+  0.931207 0.947991    1.14932    0.0242   TAU1 
+  0.947992 0.967660    1.15310    0.1944   NO1  
+  0.967661 0.981854    1.14765   -0.0262   CHI1 
+  0.981855 0.996055    1.15092    0.1140   PI1  
+  0.996056 0.998631    1.14984    0.1134   P1   
+  0.998632 1.001369    1.19273    7.8817   S1   
+  1.001370 1.004107    1.13682    0.1925   K1   
+  1.004108 1.006845    1.26606    0.4260   PSI1 
+  1.006846 1.023622    1.16344   -0.0734   PHI1 
+  1.023623 1.035379    1.15672    0.1744   TET1 
+  1.035380 1.057485    1.15816    0.0814   J1   
+  1.057486 1.071833    1.15428    0.3816   SO1  
+  1.071834 1.090052    1.15436    0.1209   OO1  
+  1.090053 1.470243    1.15377    0.2186   NU1  
+  1.470244 1.845944    1.15233    1.6139   EPS2 
+  1.845945 1.863026    1.16566    1.8437   2N2  
+  1.863027 1.880264    1.16280    1.7932   MU2  
+  1.880265 1.897351    1.17710    1.6110   N2   
+  1.897352 1.914128    1.17897    1.6365   NU2  
+  1.914129 1.950419    1.18505    1.2350   M2   
+  1.950420 1.964767    1.18872    0.5813   LAM2 
+  1.964768 1.984282    1.20835    1.2098   L2   
+  1.984283 1.998996    1.18467    0.0774   T2   
+  1.998997 2.002736    1.18209    0.1523   S2   
+  2.002737 2.022488    1.18371    0.3857   K2   
+  2.022489 2.057484    1.17578    0.1381   ETA2 
+  2.057485 2.451943    1.16795   -0.4533   2K2  
+  2.451944 2.881176    1.06801    0.3430   MN3  
+  2.881177 3.381378    1.07336    0.3597   M3   
+  3.381379 4.347615    0.41999   41.9125   M4   
+
+Instrument Data
+Meter Type: FG5
+Meter S/N: 215
+Factory Height: 80.75 cm
+Rubidium Frequency:  10000000.00370 Hz
+Laser: WEO100 (184)
+ID: 632.99117749 nm (  0.69 V)
+IE: 632.99119468 nm (  0.25 V)
+IF: 632.99121255 nm ( -0.13 V)
+IG: 632.99123018 nm ( -0.49 V)
+IH: 632.99136885 nm ( -2.20 V)
+II: 632.99139817 nm ( -2.60 V)
+IJ: 632.99142700 nm ( -3.00 V)
+Modulation Frequency:  8333.283 Hz
+
+Processing Results
+Date: 04/04/17
+Time: 13:48:23
+DOY: 094
+Year: 2017
+Time Offset (D h:m:s): 0 0:0:0
+Gravity:   980930208.70 µGal
+Set Scatter:  1.35 µGal 
+Measurement Precision:  0.43 µGal
+Total Uncertainty:  0.43 µGal
+Number of Sets Collected:   10
+Number of Sets Processed:   10
+Set #s Processed: 1,2,3,4,5,6,7,8,9,10
+Number of Sets NOT Processed:    0
+Set #s NOT Processed: 
+Number of Drops/Set:  100
+Total Drops Accepted:     991
+Total Drops Rejected:       9
+Total Fringes Acquired:     700
+Fringe Start:   30
+Processed Fringes:    600
+GuideCard Multiplex:    4
+GuideCard Scale Factor:    250
+
+Acquisition Settings
+Set Interval: 20 min
+Drop Interval: 10 sec
+Number of Sets: 10
+Number of Drops: 100
+
+Gravity Corrections
+Earth Tide (ETGTAB): -2.27 µGal
+Polar Motion:  1.70 µGal
+Barometric Pressure:  2.53 µGal
+Transfer Height: 18.77 µGal
+Reference Xo: -0.00 µGal
+
+Uncertainties
+Sigma Reject:  3.00
+Earth Tide Factor: 0.000 
+Average Earth Tide Uncertainty:  0.00 µGal
+Ocean Load Factor:  0.00 
+Average Ocean Load Uncertainty:  0.00 µGal
+Barometric:  0.00 µGal
+Polar Motion:  0.00 µGal
+Laser:  0.00 µGal
+Clock:  0.00 µGal
+System Type:  0.00 µGal
+Tidal Swell:  0.00 µGal
+Water Table:  0.00 µGal
+Unmodeled:  0.00 µGal
+System Setup:  0.00 µGal
+Gradient: 0.000 µGal (0.000 µGal/cm)
+
+
+Comments
+Comments:
+
+
+
+Files Merged:
+494_GLA_A.fg5
+494_GLA_D.fg5
+
+
+
+Files Merged:
+494_GLA_A.fg5
+494_GLA_D.fg5
+494_GLA_A.fg5
+494_GLA_D.fg5
