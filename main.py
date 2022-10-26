@@ -1,5 +1,4 @@
 ﻿import threading
-
 import winapps
 from PyQt5 import uic, QtWidgets
 from newProject import NewProject
@@ -12,7 +11,7 @@ from data import Data
 from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
-from functions import printDict
+from functions import printDict, read_last_version, get_date_last_version
 import os, subprocess,platform
 
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -51,7 +50,16 @@ class Main(QtWidgets.QMainWindow, PATH):
 
         self.finals_folder()
 
+        self.last_version()
+
         # self.Import_data.triggered.connect(self.importdata)
+
+    def last_version(self):
+        last = get_date_last_version()
+        file = read_last_version()
+
+        if last != file:
+            Warning(error=warning_window['commits'], icon='', title='Warning')
 
     def finals_folder(self):
         """

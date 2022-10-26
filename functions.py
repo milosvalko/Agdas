@@ -2,7 +2,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from math import floor, trunc
-import math
+import math, requests, os
 
 
 def allan(data, tau):
@@ -271,3 +271,32 @@ def movingAverage(x, n=50):
 
     return res, plot_range
 
+
+def get_date_last_version():
+    """
+    Check date of last commit
+    :return: date of last commit
+    0 in case that connection failed
+    """
+    repo = 'jakubsimek97/Agdas'
+    try:
+        r = requests.get('https://api.github.com/repos/{0}/commits?per_page=1'.format(repo))
+        return r.json()[0]['commit']['author']['date']
+    except requests.exceptions.ConnectionError:
+        return 0
+
+
+def write_last_version(version_date):
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(script_path, 'last_version.txt')
+    f = open(path, 'w')
+    f.write(version_date)
+    f.close()
+
+def read_last_version():
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(script_path, 'last_version.txt')
+    f = open(path, 'r')
+    r = f.read()
+    f.close()
+    return r

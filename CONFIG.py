@@ -187,7 +187,8 @@ warning_window = {
     'cannot_write_file': 'Cannot write file due statistic is not computed',
     'comparison': 'Files successfully compared',
     'pole_corr_service': 'Choose polar corrections service',
-    'locked_database': 'Database is locked. Close DB Browser!'
+    'locked_database': 'Database is locked. Close DB Browser!',
+    'commits': 'New commits are available'
 }
 
 # colors = ['b', 'g', 'r', ]
