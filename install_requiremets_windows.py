@@ -6,8 +6,19 @@ Install requirements for Agdas
 # path of agdas project
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-# create requirements.txt by pipreqs
-os.system('python -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(script_path))
+# install pipreqs
+try:
+    importlib.import_module('pipreqs')
+    # create requirements.txt by pipreqs
+    os.system('python -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(script_path))
+except ModuleNotFoundError:
+    print('=======================================')
+    mess = '{} is not installed'.format('pipreqs')
+    print(mess)
+    cmd = 'python -m pip install {}'.format('pipreqs')
+    print(cmd)
+    os.system(cmd)
+    print('=======================================')
 
 # open requirements
 with open('requirements.txt', 'r') as f:

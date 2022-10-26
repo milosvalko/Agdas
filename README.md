@@ -19,6 +19,10 @@ In the project are used some libraries require to be installed before starting u
 *winapps==0.2.0*
 
 ## Installation of Python packages
+Run *install_requirements.py* for automatic installation of required libraries. \
+`python install_requirements_windows.py` - command 
+
+Or you can do it manually... \
 Command installation for packages in Python has this form: \
 `pip install [package name]`\
 For Windows it has this form: \
