@@ -1,4 +1,4 @@
-import importlib, os
+import importlib, os, sys
 """
 Install requirements for Agdas
 """
@@ -10,7 +10,7 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 try:
     importlib.import_module('pipreqs')
     # create requirements.txt by pipreqs
-    os.system('python -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(script_path))
+    os.system('{} -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(sys.executable, script_path))
 except ModuleNotFoundError:
     print('=======================================')
     mess = '{} is not installed'.format('pipreqs')
@@ -37,7 +37,7 @@ with open('requirements.txt', 'r') as f:
             print('=======================================')
             mess = '{} is not installed'.format(library)
             print(mess)
-            cmd = 'python -m pip install {}'.format(library)
+            cmd = '{} -m pip install {}'.format(sys.executable, library)
             print(cmd)
             os.system(cmd)
             print('=======================================')
