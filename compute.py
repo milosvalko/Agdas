@@ -22,6 +22,7 @@ import os
 import configparser
 from winotify import Notification, audio
 import re
+
 # from astropy.stats import sigma_clip, mad_std
 
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -109,44 +110,8 @@ class Compute(QtWidgets.QDialog, PATH):
         self.show()
         self.exec()
 
-    # def setMouseTracking(self, flag):
-    #     def recursive_set(parent):
-    #         for child in parent.findChildren(QtCore.QObject):
-    #             try:
-    #                 child.setMouseTracking(flag)
-    #             except:
-    #                 pass
-    #             recursive_set(child)
-    #
-    #     QtWidgets.QWidget.setMouseTracking(self, flag)
-    #     recursive_set(self)
-
-    # def mouseMoveEvent(self, event):
-    #     print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
-
-        # if event.x() > self.out_help.pos().x() and event.x() < self.out_help.pos().x() + self.out_help.width():
-        #     if event.y() > self.out_help.pos().y() and event.y() < self.out_help.pos().y() + self.out_help.height():
-        #         print(('Mouse coords: ( {} : {} )'.format(event.x(), event.y())))
-
-    # def Run_batch(self):
-    #
-    #     for i in range(1):
-    #         self.set_init(self.path, self.stationData, self.instrumentData, self.processingResults, self.gravityCorrections, self.columns_rawfile, self.raw_lines,
-    #              self.header1, self.projDirPath, self.setFile)
-    #         self.Run()
-    #
-    # def set_init(self, path, stationData, instrumentData, processingResults, gravityCorrections, header2, rawlines,
-    #              header1, projDirPath, setFile):
-    #     self.path = path
-    #     self.stationData = stationData
-    #     self.instrumentData = instrumentData
-    #     self.processingResults = processingResults
-    #     self.gravityCorrections = gravityCorrections
-    #     self.columns_rawfile = header2
-    #     self.raw_lines = rawlines
-    #     self.header1 = header1
-    #     self.projDirPath = projDirPath
-    #     self.setFile = setFile
+    def set_nforfft(self):
+        self.nforfft = round(self.frmax / (4 * self.tt[self.frmax - 1]))
 
     def set_graph_language(self):
         """
@@ -164,7 +129,6 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.graph_lang = configparser.ConfigParser()
         self.graph_lang.read(filenames=lang_path, encoding='utf-8')
-
 
     # def fill_output_language(self):
     #     self.output_language.addItems(list(languages.values()))
@@ -184,7 +148,8 @@ class Compute(QtWidgets.QDialog, PATH):
         set gravimeter automatically by count of processed fringes
         @return:
         """
-        if int(self.processingResults['multiplex'])*int(self.processingResults['scaleFactor'])*int(self.processingResults['totalFringes']) > 1e6:
+        if int(self.processingResults['multiplex']) * int(self.processingResults['scaleFactor']) * int(
+                self.processingResults['totalFringes']) > 1e6:
             self.gravimeter_box.setCurrentIndex(0)
         else:
             self.gravimeter_box.setCurrentIndex(1)
@@ -204,10 +169,10 @@ class Compute(QtWidgets.QDialog, PATH):
         self.sens_bn = self.frmax - INTsens  # Sensitivity bottom - minimum
 
         # Sensitivity bottom - maximum
-        if self.frmax + INTsens <= (self.frmax + int(self.processingResults['totalFringes']))/2:
+        if self.frmax + INTsens <= (self.frmax + int(self.processingResults['totalFringes'])) / 2:
             self.sens_bx = self.frmax + INTsens
         else:
-            self.sens_bx = int((self.frmax + int(self.processingResults['totalFringes']))/2)
+            self.sens_bx = int((self.frmax + int(self.processingResults['totalFringes'])) / 2)
 
         self.sensa_tn = self.frmin - int(self.total_fringes / 100)  # Sensitivity top - minimum (for rms computing)
         self.sensa_tx = self.frmin + int(self.total_fringes / 20)  # Sensitivity top - maximum (for rms computing)
@@ -275,7 +240,7 @@ class Compute(QtWidgets.QDialog, PATH):
             frmin = 1000000
 
         if frmin > 0 and frmin < int(self.processingResults['totalFringes']):
-            t = float(self.raw_lines[0].split()[4+frmin])
+            t = float(self.raw_lines[0].split()[4 + frmin])
             self.frminT_t.setText('{:.4f} s'.format(t))
         else:
             self.frminT_t.setText('out')
@@ -287,11 +252,10 @@ class Compute(QtWidgets.QDialog, PATH):
             frmax = 1000000
 
         if frmax > 0 and frmax < int(self.processingResults['totalFringes']):
-            t = float(self.raw_lines[0].split()[4+frmax])
+            t = float(self.raw_lines[0].split()[4 + frmax])
             self.frmaxT_t.setText('{:.4f} s'.format(t))
         else:
             self.frmaxT_t.setText('out')
-
 
     def set_gravimeter(self):
         """
@@ -485,7 +449,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.x_pole_interp.append(np.polyval(x_para, drop_time))
             self.y_pole_interp.append(np.polyval(y_para, drop_time))
 
-            self.dg.append(-19.139 * np.sin(2 * fi) * (self.x_pole_interp[-1] * np.cos(lam) - self.y_pole_interp[-1] * np.sin(lam)))
+            self.dg.append(-19.139 * np.sin(2 * fi) * (
+                        self.x_pole_interp[-1] * np.cos(lam) - self.y_pole_interp[-1] * np.sin(lam)))
 
         # self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
 
@@ -610,7 +575,8 @@ class Compute(QtWidgets.QDialog, PATH):
             (self.ndrop, int(self.processingResults['totalFringes'])))  # All residuals from gradient estimation fit
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
-        compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'], self.stationData['ProjName'])
+        compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'],
+                                                  self.stationData['ProjName'])
         Polar = []
         self.Press = []
 
@@ -671,7 +637,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # fall.setModulFreq(self.instrumentData['modulFreq'])
             fall.setModulFreq(float(self.fmodf.toPlainText()))
             # fall.setLpar(self.FG5X['Lpar'])
-            fall.setLpar(float(self.lpar.toPlainText())*1e9)
+            fall.setLpar(float(self.lpar.toPlainText()) * 1e9)
             fall.setRubiFreq(self.instrumentData['rubiFreq'])
             fall.setFrRange(self.frmin, self.frmax)
             # fall.setFrRange(frmin,frmax)
@@ -711,7 +677,8 @@ class Compute(QtWidgets.QDialog, PATH):
             # ===========================================================================#
             if self.outputs.isChecked():
                 # create line for estim file
-                estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad, date_time)
+                estim_line = self.estimLine(fall.x_grad[0], fall.std_grad, drop['Set'], drop['Drp'], fall.m02_grad,
+                                            date_time)
                 # print line to the estim file
                 estim.printResult(line=roundList(estim_line, round_line_ind['estim']))
 
@@ -752,7 +719,8 @@ class Compute(QtWidgets.QDialog, PATH):
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], fall.x_grad[0][7], fall.x_grad[0][8], fall.g0_Gr,
                              - fall.gradient * fall.Grad,
-                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
+                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10,
+                             Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
                              fall.xef[0][3], fall.ssres, accepted]
@@ -767,19 +735,21 @@ class Compute(QtWidgets.QDialog, PATH):
                              fall.x_grad[0][0],
                              fall.x_grad[0][1], fall.x_grad[0][3], fall.x_grad[0][4], fall.x_grad[0][5],
                              fall.x_grad[0][6], 0.0, 0.0, fall.g0_Gr, - fall.gradient * fall.Grad,
-                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10, Polar[-1] * 10,
+                             float(drop['Tide']) * 10, float(drop['Load']) * 10, float(drop['Baro']) * 10,
+                             Polar[-1] * 10,
                              fall.gTopCor, fall.g0,
                              fall.h * 1e-6, fall.Grad * 1e-6, fall.xgrad4[0][2], fall.m0gradient, fall.std,
                              fall.xef[0][3], fall.ssres, accepted]
 
-            compare_gsoft_agdas.add_gsoft(drop, fall.h * 1e-6+fall.Grad * 1e-6)
+            compare_gsoft_agdas.add_gsoft(drop, fall.h * 1e-6 + fall.Grad * 1e-6)
             compare_gsoft_agdas.add_agdas(fall.g0)
 
             # send line to database
             self.matr_connection.insert(matrDatabase['insert'].format(*matr_drop))
             # send message to logging window
-            mess = 'Drop: {} >> g0: {:.2f} std: {:.2f}  eff.height: {:.2f}  gtop: {:.2f}'.format(str(i + 1).rjust(len(str(self.ndrop))), fall.g0_Gr,
-                                                          np.sqrt(fall.m02_grad[0]), fall.h/1e7, fall.gTopCor)
+            mess = 'Drop: {} >> g0: {:.2f} std: {:.2f}  eff.height: {:.2f}  gtop: {:.2f}'.format(
+                str(i + 1).rjust(len(str(self.ndrop))), fall.g0_Gr,
+                np.sqrt(fall.m02_grad[0]), fall.h / 1e7, fall.gTopCor)
             self.logWindow.append(mess)
             self.progressBar.setValue(int((i + 1) * 100 / self.ndrop))
 
@@ -797,7 +767,6 @@ class Compute(QtWidgets.QDialog, PATH):
             QtCore.QCoreApplication.processEvents()
             # QtCore.QCoreApplication.sendPostedEvents()
 
-
         # commit data to database
         self.matr_connection.commit()
 
@@ -811,7 +780,8 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.outputs.isChecked():
             # create outputs which doesn't require statistic processing
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_corr']['xlabel'], y_label=self.graph_lang['atm_corr']['ylabel'],
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_corr']['xlabel'],
+                      y_label=self.graph_lang['atm_corr']['ylabel'],
                       title=self.graph_lang['atm_corr']['title'])
             g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
             # g.saveSourceData()
@@ -825,14 +795,16 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_press', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'], y_label=self.graph_lang['atm_press']['ylabel'],
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'],
+                      y_label=self.graph_lang['atm_press']['ylabel'],
                       title=self.graph_lang['atm_press']['title'])
             g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
             # g.saveSourceData()
             g.save()
 
             g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'], y_label=self.graph_lang['tides']['ylabel'],
+                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'],
+                      y_label=self.graph_lang['tides']['ylabel'],
                       title=self.graph_lang['tides']['title'])
             g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
             # g.saveSourceData()
@@ -870,10 +842,10 @@ class Compute(QtWidgets.QDialog, PATH):
             residuals_path = os.path.join(self.projDirPath, 'Files', self.stationData['ProjName'] + '_residuals')
             np.save(residuals_path, self.allRes)
 
-
-
         # Compute statistics
         if self.complete_out.isChecked():
+            # set nforfft = number of values for x vector for fft
+            self.set_nforfft()
             # ===========================================================================================================#
             # compute statistics for printing files
             self.reject_by_median_m0()
@@ -883,6 +855,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.sensitivity()
             self.sensitivity_time()
             self.fourier()
+            self.print_avr_residuals_spectrum()
             self.compute_normres()
             self.print_allanFile()
             self.ressets_res()
@@ -937,7 +910,6 @@ class Compute(QtWidgets.QDialog, PATH):
             estim_grad.close()
             self.matlog_file()
 
-
         # Change color of Run button
         self.run.setStyleSheet("background-color:#f0f0f0;")
         # Set time of run calculation
@@ -946,7 +918,6 @@ class Compute(QtWidgets.QDialog, PATH):
         self.notification()
         date_last_version = get_date_last_version()
         write_last_version(date_last_version)
-
 
     def sensitivity_file1(self):
         """
@@ -963,12 +934,14 @@ class Compute(QtWidgets.QDialog, PATH):
 
         sens.write(header)
 
-        for i in range(self.frmin + int(0.1*self.nfringe)):
-            line = '{:.0f}{} {:.3f}{} {:.0f}{} {:.3f} \n'.format(i+1, self.delimiter, self.dglm[0, i], self.delimiter, self.sens_bn+i-1, self.delimiter, self.dgrm[0, i])
+        for i in range(self.frmin + int(0.1 * self.nfringe)):
+            line = '{:.0f}{} {:.3f}{} {:.0f}{} {:.3f} \n'.format(i + 1, self.delimiter, self.dglm[0, i], self.delimiter,
+                                                                 self.sens_bn + i - 1, self.delimiter, self.dgrm[0, i])
             sens.write(line)
 
-        for i in range(self.frmin + int(0.1*self.nfringe) + 1, self.dgrm.shape[1]):
-            line = '{}{} {:.5f}{} {:.3f} \n'.format(self.delimiter, self.delimiter, self.sens_bn+1-1, self.delimiter, self.dgrm[0, i])
+        for i in range(self.frmin + int(0.1 * self.nfringe) + 1, self.dgrm.shape[1]):
+            line = '{}{} {:.5f}{} {:.3f} \n'.format(self.delimiter, self.delimiter, self.sens_bn + 1 - 1,
+                                                    self.delimiter, self.dgrm[0, i])
             sens.write(line)
 
         sens.close()
@@ -990,12 +963,15 @@ class Compute(QtWidgets.QDialog, PATH):
         sens2.write(header)
 
         # set indexes for self.ttlin vector due to step in sensitivity calculating
-        indsenstn_ind = self.indsenstn-1
-        indsensbn_ind = self.indsensbn-1
+        indsenstn_ind = self.indsenstn - 1
+        indsensbn_ind = self.indsensbn - 1
 
         for i in range(self.dgrtm.shape[1]):
             # create line
-            line = '{:.5f}{} {:.3f}{} {:.5f}{} {:.3f} \n'.format(self.ttlin[indsenstn_ind], self.delimiter, self.dgltm[0, i], self.delimiter, self.ttlin[indsensbn_ind], self.delimiter, self.dgrtm[0, i])
+            line = '{:.5f}{} {:.3f}{} {:.5f}{} {:.3f} \n'.format(self.ttlin[indsenstn_ind], self.delimiter,
+                                                                 self.dgltm[0, i], self.delimiter,
+                                                                 self.ttlin[indsensbn_ind], self.delimiter,
+                                                                 self.dgrtm[0, i])
             sens2.write(line)
 
             # increase indexes by step
@@ -1004,7 +980,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         for i in range(self.dgrtm.shape[1], self.dgltm.shape[1]):
             # create line
-            line = '{:.5f}{} {:.2f}{} \n'.format(self.ttlin[indsenstn_ind], self.delimiter, self.dgltm[0, i], self.delimiter)
+            line = '{:.5f}{} {:.2f}{} \n'.format(self.ttlin[indsenstn_ind], self.delimiter, self.dgltm[0, i],
+                                                 self.delimiter)
             sens2.write(line)
 
             # increase index by step
@@ -1056,12 +1033,11 @@ class Compute(QtWidgets.QDialog, PATH):
         logo_path = os.path.join(script_path, 'picture', 'logo.ico')
         g = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1')[0][0]
 
-        t = Notification(app_id='pyAgdas', title='Computing is done!', msg='Average g at top of drops: {:.2f}'.format(g), icon=logo_path, duration='long')
+        t = Notification(app_id='pyAgdas', title='Computing is done!',
+                         msg='Average g at top of drops: {:.2f}'.format(g), icon=logo_path, duration='long')
         t.set_audio(audio.Reminder, loop=False)
         t.add_actions(label='Outputs', launch=self.projDirPath)
         t.show()
-
-
 
     def matlog_file(self):
         line = []
@@ -1214,13 +1190,13 @@ class Compute(QtWidgets.QDialog, PATH):
         # [legend.append('data {}'.format(i+1)) for i in range(len(tau))]
         # p.legend(legend)
 
-        if type=='normalized data':
+        if type == 'normalized data':
             title = self.graph_lang['allan_deviation']['title']
             xlabel = self.graph_lang['allan_deviation']['xlabel']
             ylabel = self.graph_lang['allan_deviation']['ylabel']
             legend = self.graph_lang['allan_deviation']['legend'].split(',')
 
-        if type=='VGG':
+        if type == 'VGG':
             title = self.graph_lang['allan_gradient']['title']
             xlabel = self.graph_lang['allan_gradient']['xlabel']
             ylabel = self.graph_lang['allan_gradient']['ylabel']
@@ -1269,11 +1245,11 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         # frmin = self.gravimeter['frmin']
         # frmax = self.gravimeter['frmax']
-        nforfft = self.gravimeter['nforfft']
+        # nforfft = self.gravimeter['nforfft']
         indexpad = self.matr_connection.get('select count(*) from results where Accepted = 1')[0]
 
-        fs = nforfft / (2 * (self.tin[nforfft - 1] - self.tin[0]))
-        frk = 2 * fs / (nforfft - 3)
+        fs = self.nforfft / (2 * (self.tin[self.nforfft - 1] - self.tin[0]))
+        frk = 2 * fs / (self.nforfft - 3)
         fr = np.arange(0, fs + 1, frk)
         n = 1
         # ratio of arrays
@@ -1309,30 +1285,32 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         # frmin = self.gravimeter['frmin']
         # frmax = self.gravimeter['frmax']
-        nforfft = self.gravimeter['nforfft']
+        # nforfft = self.gravimeter['nforfft']
 
-        self.tin = np.linspace(self.tt[self.frmin - 1], self.tt[self.frmax - 1], nforfft)
-        tin1 = np.linspace(self.tt[self.frmin - 1], self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2 - 1)], nforfft)
-        tin2 = np.linspace(self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2)], self.tt[self.frmax - 1], nforfft)
+        self.tin = np.linspace(self.tt[self.frmin - 1], self.tt[self.frmax - 1], self.nforfft)
+        tin1 = np.linspace(self.tt[self.frmin - 1],
+                           self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2 - 1)], self.nforfft)
+        tin2 = np.linspace(self.tt[int(self.frmin + (self.frmax - self.frmin + self.ps) / 2)], self.tt[self.frmax - 1],
+                           self.nforfft)
 
         res1 = np.interp(tin1, self.tt[:self.frmaxplot], self.meanRes[0, :])
         res2 = np.interp(tin2, self.tt[:self.frmaxplot], self.meanRes[0, :])
 
-        yres1 = 2 / nforfft * np.fft.fft(res1)
-        yres1a = np.abs(yres1[:int((nforfft - 1) / 2)])
+        yres1 = 2 / self.nforfft * np.fft.fft(res1)
+        yres1a = np.abs(yres1[:int((self.nforfft - 1) / 2)])
 
-        yres2 = 2 / nforfft * np.fft.fft(res2)
-        yres2a = np.abs(yres2[:int((nforfft - 1) / 2)])
+        yres2 = 2 / self.nforfft * np.fft.fft(res2)
+        yres2a = np.abs(yres2[:int((self.nforfft - 1) / 2)])
 
-        fs = nforfft / (2 * (self.tin[nforfft - 1] - self.tin[0]))
+        fs = self.nforfft / (2 * (self.tin[self.nforfft - 1] - self.tin[0]))
 
-        fs1 = nforfft / (2 * (tin1[nforfft - 1] - tin1[0]))
-        frk1 = 2 * fs1 / (nforfft - 3)
-        fr1 = [i * frk1 for i in range(0, int((nforfft - 1) / 2))]
+        fs1 = self.nforfft / (2 * (tin1[self.nforfft - 1] - tin1[0]))
+        frk1 = 2 * fs1 / (self.nforfft - 3)
+        fr1 = [i * frk1 for i in range(0, int((self.nforfft - 1) / 2))]
 
-        fs2 = nforfft / (2 * (tin2[nforfft - 1] - tin2[0]))
-        frk2 = 2 * fs2 / (nforfft - 3)
-        fr2 = [i * frk2 for i in range(0, int((nforfft - 1) / 2))]
+        fs2 = self.nforfft / (2 * (tin2[self.nforfft - 1] - tin2[0]))
+        frk2 = 2 * fs2 / (self.nforfft - 3)
+        fr2 = [i * frk2 for i in range(0, int((self.nforfft - 1) / 2))]
 
         frx = range(5, int(1e4) + 1)
 
@@ -1377,9 +1355,9 @@ class Compute(QtWidgets.QDialog, PATH):
         start = 1
         legend = []
 
-        fs = self.gravimeter['nforfft'] / (2 * (self.tin[self.gravimeter['nforfft'] - 1] - self.tin[0]))
+        fs = self.nforfft / (2 * (self.tin[self.nforfft - 1] - self.tin[0]))
 
-        frk = 2 * fs / (self.gravimeter['nforfft'] - 3)
+        frk = 2 * fs / (self.nforfft - 3)
 
         fr = np.arange(0, fs + 1, frk)
 
@@ -1565,7 +1543,7 @@ class Compute(QtWidgets.QDialog, PATH):
         text_color = []
         for l in self.meanResSets:
             X.append(x)
-            y = [k + j for k in l[ :self.frmaxplot]]
+            y = [k + j for k in l[:self.frmaxplot]]
             Y.append(y)
             mark.append('-k')
             col_name.append('{}{}'.format(self.graph_lang['residuals_shifted']['set_description'], j))
@@ -1594,7 +1572,8 @@ class Compute(QtWidgets.QDialog, PATH):
         lww.append(0.3)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='residuals_shifted', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['residuals_shifted']['xlabel'], y_label=self.graph_lang['residuals_shifted']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['residuals_shifted']['xlabel'],
+                  y_label=self.graph_lang['residuals_shifted']['ylabel'],
                   title=self.graph_lang['residuals_shifted']['title'], winsize=(15, 10))
         g.plotXY(x=X, y=Y, mark=mark, columns_name=col_name, lw=lw)
         g.plotXY(x=XX, y=YY, mark=markk, columns_name=col_name, lw=lww)
@@ -1631,7 +1610,8 @@ class Compute(QtWidgets.QDialog, PATH):
             cumulative_average.append(sum(grad[:i]) / len(grad[:i]))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['vgg']['xlabel'], y_label=self.graph_lang['vgg']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['vgg']['xlabel'],
+                  y_label=self.graph_lang['vgg']['ylabel'],
                   title=self.graph_lang['vgg']['title'], winsize=(13, 8))
         g.error_bar(x, grad, m0, 'r', ms=5, capsize=5)
         g.plotXY(x=[x, moving_avg_x, xlim, xlim, xlim], y=[cumulative_average, moving_average, ylim, yylim, yyylim],
@@ -1650,11 +1630,14 @@ class Compute(QtWidgets.QDialog, PATH):
         ts = np.linspace(1, self.nset, self.nset)
 
         # legend
-        l1 = self.graph_lang['sensitivity_std']['legend'].split(',')[0].format(self.sensa_tn, self.sensa_tx, np.mean(self.dglrms))
-        l2 = self.graph_lang['sensitivity_std']['legend'].split(',')[1].format(self.sensa_bn, self.sensa_bx, np.mean(self.dgrrms))
+        l1 = self.graph_lang['sensitivity_std']['legend'].split(',')[0].format(self.sensa_tn, self.sensa_tx,
+                                                                               np.mean(self.dglrms))
+        l2 = self.graph_lang['sensitivity_std']['legend'].split(',')[1].format(self.sensa_bn, self.sensa_bx,
+                                                                               np.mean(self.dgrrms))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_std']['xlabel'], y_label=self.graph_lang['sensitivity_std']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_std']['xlabel'],
+                  y_label=self.graph_lang['sensitivity_std']['ylabel'],
                   title=self.graph_lang['sensitivity_std']['title'])
         g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
                  legend=[l1, l2],
@@ -1694,7 +1677,8 @@ class Compute(QtWidgets.QDialog, PATH):
         lw.append(1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom']['xlabel'], y_label='',
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom']['xlabel'],
+                  y_label='',
                   title=self.graph_lang['sensitivity_bottom']['title'])
         g.plotXY(x=[tttt], y=[[0 for i in range(len(tttt))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
         g.plotXY(x=[[self.frmax, self.frmax]], y=[[-10, 10]], mark=['b-'],
@@ -1732,8 +1716,10 @@ class Compute(QtWidgets.QDialog, PATH):
         m.append('k-')
         lw.append(1)
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom_time', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'], y_label='',
+        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom_time',
+                  project=self.stationData['ProjName'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'],
+                  y_label='',
                   title=self.graph_lang['sensitivity_bottom']['title'])
         # g.plotXY(x=[self.ttttlin], y=[[0 for i in range(len(self.ttr[i, :]))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
         g.plotXY(x=[[self.tttt_plot[0], self.tttt_plot[-1]]], y=[[0, 0]], mark=['b-'])
@@ -1771,7 +1757,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # Standart deviation for set g-values
         g = Graph(path=self.projDirPath + '/Graphs', name='set_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_std']['xlabel'], y_label=self.graph_lang['set_std']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_std']['xlabel'],
+                  y_label=self.graph_lang['set_std']['ylabel'],
                   title=self.graph_lang['set_std']['title'])
         # g.plotXY(x=[x, x, x], y=[[gfinal-g0, gfinal-g0], [gfinal-g0-gstd, gfinal-g0-gstd], [gfinal-g0+gstd, gfinal-g0+gstd]], mark=['b-', 'g-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Set g-values', 'Avegare g-value', '1 range'])
         g.error_bar(range(1, x[1]), self.stodch, self.stodchs, 'r')
@@ -1785,7 +1772,8 @@ class Compute(QtWidgets.QDialog, PATH):
         n = range(1, len(std) + 1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='resid_RMS', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['resid_RMS']['xlabel'], y_label=self.graph_lang['resid_RMS']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['resid_RMS']['xlabel'],
+                  y_label=self.graph_lang['resid_RMS']['ylabel'],
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
         # g.saveSourceData()
@@ -1811,7 +1799,8 @@ class Compute(QtWidgets.QDialog, PATH):
         x = range(1, len(e) + 1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['parasitic']['xlabel'], y_label=self.graph_lang['parasitic']['ylabel'],
+                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['parasitic']['xlabel'],
+                  y_label=self.graph_lang['parasitic']['ylabel'],
                   title=self.graph_lang['parasitic']['title'].format(
                       float(self.lpar.toPlainText())))
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
@@ -1824,8 +1813,9 @@ class Compute(QtWidgets.QDialog, PATH):
         r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
         r = [i[0] for i in r]
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='histogram'+name, project=self.stationData['ProjName'],
-                  x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'], title=self.graph_lang['histogram']['title'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='histogram' + name, project=self.stationData['ProjName'],
+                  x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'],
+                  title=self.graph_lang['histogram']['title'],
                   show=self.open_graphs.isChecked())
         g.histogram(r, fit=True)
         # g.saveSourceData()
@@ -1833,7 +1823,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphHistogramAccDropsNorm(self):
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram_norm', project=self.stationData['ProjName'],
-                  x_label=self.graph_lang['histogram_norm']['xlabel'], y_label=self.graph_lang['histogram_norm']['ylabel'],
+                  x_label=self.graph_lang['histogram_norm']['xlabel'],
+                  y_label=self.graph_lang['histogram_norm']['ylabel'],
                   title=self.graph_lang['histogram_norm']['title'], show=self.open_graphs.isChecked())
         g.histogram(self.normres, fit=True)
         # g.saveSourceData()
@@ -1845,7 +1836,8 @@ class Compute(QtWidgets.QDialog, PATH):
         y = [i[0] for i in y]
         x = [i for i in range(1, self.ndrop + 1)]
         g = Graph(path=self.projDirPath + '/Graphs', name='effective_height2', project=self.stationData['ProjName'],
-                  x_label=self.graph_lang['effective_height2']['xlabel'], y_label=self.graph_lang['effective_height2']['ylabel'],
+                  x_label=self.graph_lang['effective_height2']['xlabel'],
+                  y_label=self.graph_lang['effective_height2']['ylabel'],
                   title=self.graph_lang['effective_height2']['title'], show=self.open_graphs.isChecked())
         g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height2'])
         g.save()
@@ -1881,7 +1873,6 @@ class Compute(QtWidgets.QDialog, PATH):
             k.extend(re.split(':| ', i[2]))
             k.append(i[3])
             k.append(i[4])
-
 
             k.append(self.stdodchpadu[i[0] - 1])
 
@@ -1923,7 +1914,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
             line = [self.stationData['ProjName'], i[0], int(i[1]), int(i[2]), int(i[3]), int(i[4]), int(i[5]),
                     int(i[6]), i[-1], self.stationData['gradient'], i[7], self.stodch[it], self.dglrms[it],
-                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, self.press[it], vgg, self.tst[-1]]
+                    self.dgrrms[it], i[8], float(self.stationData['actualHeight']) / 100, self.press[it], vgg,
+                    self.tst[-1]]
             a.printResult(line=roundList(line, round_line_ind['matlogsets']))
             it += 1
 
@@ -2042,7 +2034,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.g0m = np.median(self.g0) / 10e9
         v0mg0mkor = (-self.v0m / self.g0m) / 10
 
-        self.tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot], self.gravimeter['nforfft'])
+        self.tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot], self.nforfft)
 
         a = res_final(path=self.projDirPath, header=headers['residuals_final'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'residuals_final', delimiter=self.delimiter)
@@ -2059,7 +2051,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         coff = int(self.coff.toPlainText())
         n = 4
-        self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.gravimeter['nforfft']
+        self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.nforfft
 
         aa, bb = sig.butter(n, self.kcutoff, btype='low')
         self.yn = sig.filtfilt(aa, bb, resyyy)
@@ -2213,10 +2205,25 @@ class Compute(QtWidgets.QDialog, PATH):
                 self.meanResSets[i[1] - 1, :] += self.allRes[it, :] / c[i[1] - 1][0]
                 self.meanRes[0, :] += self.allRes[it, :self.frmaxplot]
 
-
             it += 1
 
         self.meanRes = self.meanRes / self.allAcc
+
+    def fft(self, tin, t_frmin_frmax, residuals):
+        """
+        This method compute fft
+        :param tin:
+        :param t_frmin_frmax:
+        :param residuals:
+        :return:
+        """
+
+        # transformation of residuals = f(t_frmin_frmax) => tin
+        resd = np.interp(tin, t_frmin_frmax, residuals)
+        resd = resd - np.mean(resd)
+
+        # fft
+        return 2 / self.nforfft * np.fft.fft(resd)
 
     def fourier(self):
         """
@@ -2228,38 +2235,33 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # split tt on nforfft parts
         tin = np.linspace(self.tt[self.frmin - 1], self.tt[self.frmax - 1],
-                          self.gravimeter['nforfft'])
+                          self.nforfft)
         ttx = self.tt[self.frmin - 1:self.frmax]
 
-        x = int((self.gravimeter['nforfft'] - 1) / 2)
+        x = int((self.nforfft - 1) / 2)
         # arrays with results
-        self.yfda = np.zeros((self.ndrops, self.gravimeter['nforfft']), dtype=complex)
-        self.yfdMeanBySet = np.zeros((self.nset, x))
+        self.yfda = np.zeros((self.ndrops, self.nforfft), dtype=complex)
+        self.yfdMeanBySet = np.zeros((self.nset, x), dtype=np.float64)
         self.yfdMean = np.zeros((1, x))
-        yfs = np.zeros((self.nset, self.gravimeter['nforfft']), dtype=complex)
-        self.yfsa = np.zeros((self.nset, x))  # by set
+        # yfs = np.zeros((self.nset, self.nforfft), dtype=complex)
+        self.yfsa = np.zeros((self.nset, x), dtype=np.float64)  # by set
 
         it = 0
         # fourier transformation for all drops
         for ress in self.allRes:
             # for accepted drops
             if self.d[it][0] == 1:
-                ress = ress[self.frmin - 1: self.frmax]
+                res = ress[self.frmin - 1: self.frmax]
 
-                # transformation of ress = f(ttx) => tin
-                resd = np.interp(tin, ttx, ress)
-                resd = resd - np.mean(resd)
-
-                # fft
-                fft = 2 / self.gravimeter['nforfft'] * np.fft.fft(resd)
+                fft = self.fft(tin=tin, t_frmin_frmax=ttx, residuals=res)
 
                 # fft for all residuals
                 self.yfda[it, :] = np.abs(fft)
 
                 set = self.d[it][1]
 
-                l = np.absolute(fft[0:x]) / self.count[set - 1][0]
-                self.yfdMeanBySet[set - 1, :] += np.real(l)
+                l = np.abs(fft[:x]) / self.count[set - 1][0]
+                self.yfdMeanBySet[set - 1, :] += l
 
                 l = np.absolute(fft[0:x] / self.allAcc)
                 self.yfdMean[0, :] += np.real(l)
@@ -2268,43 +2270,69 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # fourier transformation for mean residuals by set
         for i in range(self.nset):
-            ress = np.interp(tin, ttx, self.meanResSets[i, self.frmin - 1:self.frmax])
+            # ress = np.interp(tin, ttx, self.meanResSets[i, self.frmin - 1:self.frmax])
+            #
+            # ressm = ress - np.mean(ress)
+            #
+            # fft = 2 / self.nforfft * np.fft.fft(ressm)
 
-            ressm = ress - np.mean(ress)
+            fft = self.fft(tin=tin, t_frmin_frmax=ttx, residuals=self.meanResSets[i, self.frmin - 1:self.frmax])
 
-            fft = 2 / self.gravimeter['nforfft'] * np.fft.fft(ressm)
-
-            yfs[i, :] = fft
-
-            self.yfsa[i, :] = np.real(np.absolute(fft[0:x]))
+            self.yfsa[i, :] = np.abs(fft[:x])
 
         # spectrum for mean all residuals
-        resf = np.interp(tin, ttx, self.meanRes[0, self.frmin - 1:self.frmax])
-        resfm = resf - np.mean(resf)
-        yff = 2 / self.gravimeter['nforfft'] * np.fft.fft(resfm)
+        # resf = np.interp(tin, ttx, self.meanRes[0, self.frmin - 1:self.frmax])
+        # resfm = resf - np.mean(resf)
+        # yff = 2 / self.nforfft * np.fft.fft(resfm)
+
+        yff = self.fft(tin=tin, t_frmin_frmax=ttx, residuals=self.meanRes[0, self.frmin - 1:self.frmax])
         self.yffa = np.real(np.absolute(yff[0:x]))
 
         # writing data to text files
         if self.outputs.isChecked():
-            tins = np.linspace(0, 10000, 2151)
-            fs = self.gravimeter['nforfft'] / (2 * (tin[-1] - tin[0]))
-            frk = 2 * fs / (self.gravimeter['nforfft'] - 3)
-            # k=0
-            # fr=[0]
-            # for i in yffa:
-            #     fr.append(fr[-1]+frk)
-            fr = [i * frk for i in range(len(self.yffa))]
-            yffas = np.interp(tins, fr, self.yffa)
-            self.yfdamm = np.interp(tins, fr, self.yfdMean[0, :])
+            # create vector of frequencies for printing output file
+            fs = self.nforfft / (2 * (tin[self.nforfft - 1] - tin[0]))
+            frk = 2 * fs / (self.nforfft - 3)
+            self.fr = np.arange(0, fs, frk)
 
             # np.savetxt()
             a = res_final(path=self.projDirPath, header=headers['spectrum'].format(self.delimiter),
                           name=self.stationData['ProjName'] + '_' + 'spectrum', delimiter=self.delimiter)
-            for i in range(len(tins)):
-                line = [tins[i], yffas[i], self.yfdamm[i]]
+            for i in range(int((self.nforfft - 3) / 2)):
+                line = [self.fr[i], self.yffa[i], self.yfdMean[0, i]]
                 a.printResult(line=roundList(line, round_line_ind['spectrum']))
 
             a.close()
+
+    def print_avr_residuals_spectrum(self):
+
+        header = 'Frequency'
+
+        for i in range(self.nset):
+            header += '{}Set {}'.format(self.delimiter, i + 1)
+
+        avr_res = res_final(path=self.projDirPath, header=header,
+                            name=self.stationData['ProjName'] + '_' + 'set_spectrum_avr_res',
+                            delimiter=self.delimiter)
+
+        avr_spec = res_final(path=self.projDirPath, header=header,
+                             name=self.stationData['ProjName'] + '_' + 'set_spectrum_avr_spec',
+                             delimiter=self.delimiter)
+
+        for i in range(int((self.nforfft - 1) / 2)):
+            line_res = line_spec = '{:.4f}'.format(self.fr[i])
+
+            for j in range(self.nset):
+                line_res += '{}{:.4f}'.format(self.delimiter, self.yfsa[j, i])
+
+                line_spec += '{}{:.4f}'.format(self.delimiter, self.yfdMeanBySet[j, i])
+
+            avr_res.write_line(line_res)
+
+            avr_spec.write_line(line_spec)
+
+        avr_res.close()
+        avr_spec.close()
 
     def sensitivity(self):
         """
@@ -2375,13 +2403,13 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Compute sensitivity - time')
         QtCore.QCoreApplication.processEvents()
 
-        self.step = 20 # step for faster computing of sensitivity
-        ttlinmin = floor(10000*self.tt[0])/10000
-        ttlinmax = floor(10000*self.tt[self.frmaxplot-1])/10000
+        self.step = 20  # step for faster computing of sensitivity
+        ttlinmin = floor(10000 * self.tt[0]) / 10000
+        ttlinmax = floor(10000 * self.tt[self.frmaxplot - 1]) / 10000
         self.ttlin = np.arange(ttlinmin, ttlinmax, 0.00001)
         nttlin = len(self.ttlin)
-        tfrmin = self.tt[self.frmin-1]
-        tfrmax = self.tt[self.frmax-1]
+        tfrmin = self.tt[self.frmin - 1]
+        tfrmax = self.tt[self.frmax - 1]
 
         indsenstn = 1
         indsenstx = 1
@@ -2394,13 +2422,13 @@ class Compute(QtWidgets.QDialog, PATH):
             if abs(self.ttlin[i] - self.tt[0]) < 1e-5:
                 indsenstn = i
 
-            if abs(self.ttlin[i] - self.tt[self.sens_tx-1]) < 1e-5:
+            if abs(self.ttlin[i] - self.tt[self.sens_tx - 1]) < 1e-5:
                 indsenstx = i
 
-            if abs(self.ttlin[i] - self.tt[self.sens_bn-1]) < 1e-5:
+            if abs(self.ttlin[i] - self.tt[self.sens_bn - 1]) < 1e-5:
                 indsensbn = i
 
-            if abs(self.ttlin[i] - np.min([self.tt[self.sens_bx-1], ttlinmax])) < 1e-5:
+            if abs(self.ttlin[i] - np.min([self.tt[self.sens_bx - 1], ttlinmax])) < 1e-5:
                 indsensbx = i
 
             if abs(self.ttlin[i] - tfrmin) < 1e-5:
@@ -2414,7 +2442,6 @@ class Compute(QtWidgets.QDialog, PATH):
         self.indsenstx = indsenstx
         self.indsenstn = indsenstn
         self.indsensbn = indsensbn
-
 
         # initialization of arrays for sensitivity
         self.dglt = np.zeros((self.nset, len(range(indsenstn, indsenstx + 1, self.step))))
@@ -2444,7 +2471,7 @@ class Compute(QtWidgets.QDialog, PATH):
                 # data for fitting by parabola on left side of drop
                 x = self.ttlin[j - 1: indsensfrmax]
                 y = ttr[j - 1: indsensfrmax]
-                bleble.append(self.ttlin[j-1])
+                bleble.append(self.ttlin[j - 1])
                 # fitting by parabola
                 koef = np.polyfit(x, y, deg=2)
                 # storing quadratic coefficient of equation of fitted parabola
@@ -2513,7 +2540,8 @@ class Compute(QtWidgets.QDialog, PATH):
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
         color = 'tab:red'
-        ax2.set_ylabel(self.graph_lang['effective_height']['ylabel2'], color=color)  # we already handled the x-label with ax1
+        ax2.set_ylabel(self.graph_lang['effective_height']['ylabel2'],
+                       color=color)  # we already handled the x-label with ax1
         ax2.plot(t, data2, color=color, linewidth=0.5)
         ax2.tick_params(axis='y', labelcolor=color)
 
@@ -2666,64 +2694,66 @@ class Compute(QtWidgets.QDialog, PATH):
         f.close()
 
         # get data from databse to the file
-        sets = self.matr_connection.get('select Set1, substr(Date,0,5), substr(Date,6,2), substr(Date,9,2), substr(Date,12,2), substr(Date,15,2), substr(Date, 18, 2), count(*), round(avg(gTopCor),2), round(avg(Tide),2), round(avg(Polar),2), round(avg(Baro),2), round(avg(CorrToTop),2)  from results  where Accepted = 1 group by Set1')
+        sets = self.matr_connection.get(
+            'select Set1, substr(Date,0,5), substr(Date,6,2), substr(Date,9,2), substr(Date,12,2), substr(Date,15,2), substr(Date, 18, 2), count(*), round(avg(gTopCor),2), round(avg(Tide),2), round(avg(Polar),2), round(avg(Baro),2), round(avg(CorrToTop),2)  from results  where Accepted = 1 group by Set1')
 
         # creare list with data to the file
         part1_fill = []
-        part1_fill.append(1) # agdas version
-        part1_fill.append(self.stationData['ProjName']) # project name
-        part1_fill.append(self.stationData['name']) # station
-        part1_fill.append(self.stationData['SiteCode']) # site code
-        part1_fill.append(self.stationData['lat']) # lat
-        part1_fill.append(self.stationData['long']) # long
-        part1_fill.append(self.stationData['elev']) # elev
-        part1_fill.append(self.grad.toPlainText()) # gradient
-        part1_fill.append(self.stationData['setupHeight']) # setup height
-        part1_fill.append(self.stationData['transferHeight']) # transfer height
-        part1_fill.append(self.stationData['airPressure']) # nominal air pressure
-        part1_fill.append(self.stationData['barometricFactor']) # Barometric Admittance Factor
+        part1_fill.append(1)  # agdas version
+        part1_fill.append(self.stationData['ProjName'])  # project name
+        part1_fill.append(self.stationData['name'])  # station
+        part1_fill.append(self.stationData['SiteCode'])  # site code
+        part1_fill.append(self.stationData['lat'])  # lat
+        part1_fill.append(self.stationData['long'])  # long
+        part1_fill.append(self.stationData['elev'])  # elev
+        part1_fill.append(self.grad.toPlainText())  # gradient
+        part1_fill.append(self.stationData['setupHeight'])  # setup height
+        part1_fill.append(self.stationData['transferHeight'])  # transfer height
+        part1_fill.append(self.stationData['airPressure'])  # nominal air pressure
+        part1_fill.append(self.stationData['barometricFactor'])  # Barometric Admittance Factor
         try:
-            part1_fill.append('{:.4f}'.format(np.mean(self.x_pole_interp))) # polar x
+            part1_fill.append('{:.4f}'.format(np.mean(self.x_pole_interp)))  # polar x
         except AttributeError:
-            part1_fill.append('{}'.format(self.stationData['polarX'])) # polar x
+            part1_fill.append('{}'.format(self.stationData['polarX']))  # polar x
 
         try:
             part1_fill.append('{:.4f}'.format(np.mean(self.y_pole_interp)))  # polar y
         except AttributeError:
             part1_fill.append('{}'.format(self.stationData['polarY']))  # polar y
 
-        part1_fill.append('{:.5f}'.format(self.matr_connection.get('select avg(mjd) from results')[0][0])) # mean mjd
+        part1_fill.append('{:.5f}'.format(self.matr_connection.get('select avg(mjd) from results')[0][0]))  # mean mjd
         if self.useIERSPoleCorr.isChecked():
-            part1_fill.append(self.service.currentText()) # polar coord service
-            part1_fill.append(datetime.fromtimestamp(self.polar_file_date).date()) # date of downloading polar coordinates
+            part1_fill.append(self.service.currentText())  # polar coord service
+            part1_fill.append(
+                datetime.fromtimestamp(self.polar_file_date).date())  # date of downloading polar coordinates
         else:
             part1_fill.append('Project file')
             part1_fill.append('-')
-        part1_fill.append(self.instrumentData['rubiFreq']) # Rubidium Frequency
-        part1_fill.append(self.instrumentData['ID']) # laser wavelengths
+        part1_fill.append(self.instrumentData['rubiFreq'])  # Rubidium Frequency
+        part1_fill.append(self.instrumentData['ID'])  # laser wavelengths
         part1_fill.append(self.instrumentData['IE'])
         part1_fill.append(self.instrumentData['IF'])
         part1_fill.append(self.instrumentData['IG'])
-        part1_fill.append(self.fmodf.toPlainText()) # modulation frequency
-        part1_fill.append(self.lpar.toPlainText()) # Parasitic wavelength
-        part1_fill.append(self.lcable_ar.toPlainText()) # TTL Cable length
-        part1_fill.append(self.nset) # Number of Sets Processed
-        part1_fill.append(int(self.ndrops/self.nset)) # Number of Drops/Set
-        part1_fill.append(self.processingResults['totalFringes']) # Total Fringes Acquired
-        part1_fill.append(self.processingResults['multiplex']) # GuideCard Multiplex
-        part1_fill.append(self.processingResults['scaleFactor']) # GuideCard Scale Factor
-        part1_fill.append(self.frminT.toPlainText()) # First FRINGE
-        part1_fill.append(self.frmaxT.toPlainText()) # Final FRINGE
-        part1_fill.append(self.kalpha.toPlainText()) # STD threshold for drop acceptance
-        part1_fill.append(self.rejsigma.toPlainText()) # Coverage factor for drop gravity acceptance
-        part1_fill.append(95) # Confidence level for set gravities
-        part1_fill.append(self.gravimeter['ksmooth']) # STD for set gravity systematic effects
-        part1_fill.append(int(self.ksol.isChecked())) # Speed of light
-        part1_fill.append(int(self.ksae.isChecked())) # Self-attration
-        part1_fill.append(int(self.kdis.isChecked())) # Dispersion in TTL cable
-        part1_fill.append(int(self.kimp.isChecked())) # Impedance mismatch
-        part1_fill.append(int(self.kpar.isChecked())) # Parasitic wave
-        part1_fill.append('{:.5f}'.format(float(self.stationData['actualHeight'])/100)) # TOP OF THE DROP
+        part1_fill.append(self.fmodf.toPlainText())  # modulation frequency
+        part1_fill.append(self.lpar.toPlainText())  # Parasitic wavelength
+        part1_fill.append(self.lcable_ar.toPlainText())  # TTL Cable length
+        part1_fill.append(self.nset)  # Number of Sets Processed
+        part1_fill.append(int(self.ndrops / self.nset))  # Number of Drops/Set
+        part1_fill.append(self.processingResults['totalFringes'])  # Total Fringes Acquired
+        part1_fill.append(self.processingResults['multiplex'])  # GuideCard Multiplex
+        part1_fill.append(self.processingResults['scaleFactor'])  # GuideCard Scale Factor
+        part1_fill.append(self.frminT.toPlainText())  # First FRINGE
+        part1_fill.append(self.frmaxT.toPlainText())  # Final FRINGE
+        part1_fill.append(self.kalpha.toPlainText())  # STD threshold for drop acceptance
+        part1_fill.append(self.rejsigma.toPlainText())  # Coverage factor for drop gravity acceptance
+        part1_fill.append(95)  # Confidence level for set gravities
+        part1_fill.append(self.gravimeter['ksmooth'])  # STD for set gravity systematic effects
+        part1_fill.append(int(self.ksol.isChecked()))  # Speed of light
+        part1_fill.append(int(self.ksae.isChecked()))  # Self-attration
+        part1_fill.append(int(self.kdis.isChecked()))  # Dispersion in TTL cable
+        part1_fill.append(int(self.kimp.isChecked()))  # Impedance mismatch
+        part1_fill.append(int(self.kpar.isChecked()))  # Parasitic wave
+        part1_fill.append('{:.5f}'.format(float(self.stationData['actualHeight']) / 100))  # TOP OF THE DROP
 
         part1 = part1.format(*part1_fill)
 
@@ -2754,36 +2784,41 @@ class Compute(QtWidgets.QDialog, PATH):
         outliers = self.get_count_gradients()
         part3_fill = []
         drops = self.matr_connection.get('select max(n) from results')[0][0]
-        part3_fill.append(drops) # measured drops
-        part3_fill.append(self.matr_connection.get('select count(*) from results where Accepted = 1')[0][0]) # accepted drops
+        part3_fill.append(drops)  # measured drops
+        part3_fill.append(
+            self.matr_connection.get('select count(*) from results where Accepted = 1')[0][0])  # accepted drops
         mjd = self.matr_connection.get('select avg(mjd) from results')[0][0]
         jd = mjd_to_jd(mjd)
         date = jd_to_date(jd)
-        part3_fill.extend(list(date)) # date
-        part3_fill.append('{:.2f}'.format(self.gfinal)) # final g
-        part3_fill.append('{:.2f}'.format(self.gstd)) # std of final g
+        part3_fill.extend(list(date))  # date
+        part3_fill.append('{:.2f}'.format(self.gfinal))  # final g
+        part3_fill.append('{:.2f}'.format(self.gstd))  # std of final g
         hefm = self.matr_connection.get('select avg(EffHeight + CorToEffHeight) from '
-                                                                   'results where Accepted = 1')[0][0]
-        part3_fill.append('{:.4f}'.format(hefm)) # EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
+                                        'results where Accepted = 1')[0][0]
+        part3_fill.append('{:.4f}'.format(hefm))  # EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
         part3_fill.append('{:.4f}'.format(
-            np.std(self.matr_connection.get('select EffHeight + CorToEffHeight from results where Accepted = 1'), ddof=1))) # STD OF EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
-        part3_fill.append('{:.5f}'.format(float(self.stationData['actualHeight'])/100 - hefm/1000)) # EFFECTIVE INSTRUMENTAL HEIGHT
-        grefer = '{:.2f}'.format(self.gfinal - float(self.stationData['gradient'])*hefm)
-        part3_fill.append(grefer) # g @ EFFECTIVE INSTRUMENTAL HEIGHT
-        part3_fill.append(self.stationData['gradient']) # Vertical gravity gradient
-        part3_fill.append('{:.5f}'.format(float(self.stationData['transferHeight'])/100)) # DATUM HEIGHT
-        g00 = self.gfinal - (float(self.stationData['gradient'])/1e6)*(float(self.stationData['actualHeight'])/100 - float(self.gravityCorrections['transferHeightGal'])/100 )*1e9 # g @ DATUM HEIGHT
-        part3_fill.append('{:.2f}'.format(g00)) # g @ DATUM HEIGHT
-        part3_fill.append('{:.3f}'.format(np.mean(self.Press))) # AIR PRESSURE
+            np.std(self.matr_connection.get('select EffHeight + CorToEffHeight from results where Accepted = 1'),
+                   ddof=1)))  # STD OF EFFECTIVE INSTRUMENTAL HEIGHT from  top of the drop
+        part3_fill.append('{:.5f}'.format(
+            float(self.stationData['actualHeight']) / 100 - hefm / 1000))  # EFFECTIVE INSTRUMENTAL HEIGHT
+        grefer = '{:.2f}'.format(self.gfinal - float(self.stationData['gradient']) * hefm)
+        part3_fill.append(grefer)  # g @ EFFECTIVE INSTRUMENTAL HEIGHT
+        part3_fill.append(self.stationData['gradient'])  # Vertical gravity gradient
+        part3_fill.append('{:.5f}'.format(float(self.stationData['transferHeight']) / 100))  # DATUM HEIGHT
+        g00 = self.gfinal - (float(self.stationData['gradient']) / 1e6) * (
+                    float(self.stationData['actualHeight']) / 100 - float(
+                self.gravityCorrections['transferHeightGal']) / 100) * 1e9  # g @ DATUM HEIGHT
+        part3_fill.append('{:.2f}'.format(g00))  # g @ DATUM HEIGHT
+        part3_fill.append('{:.3f}'.format(np.mean(self.Press)))  # AIR PRESSURE
         part3_fill.append('{:.3f}'.format(np.max(self.Press) - np.min(self.Press)))
-        part3_fill.append('{:.3f}'.format(np.mean(self.tides))) # tides
+        part3_fill.append('{:.3f}'.format(np.mean(self.tides)))  # tides
         part3_fill.append('{:.3f}'.format(np.max(self.tides) - np.min(self.tides)))
         vgg = self.matr_connection.get('select Gradient from results')
-        part3_fill.append('{:.3f}'.format(np.mean(vgg))) # Estimated gravity gradient
-        part3_fill.append('{:.3f}'.format(np.std(vgg, ddof=1)/drops))
-        part3_fill.append('{:.3f}'.format(self.vggp3_)) # Estimated gravity gradient after removing outliers
-        part3_fill.append('{:.3f}'.format(self.mggp3_/outliers))
-        part3_fill.append(drops-outliers) # outliers
+        part3_fill.append('{:.3f}'.format(np.mean(vgg)))  # Estimated gravity gradient
+        part3_fill.append('{:.3f}'.format(np.std(vgg, ddof=1) / drops))
+        part3_fill.append('{:.3f}'.format(self.vggp3_))  # Estimated gravity gradient after removing outliers
+        part3_fill.append('{:.3f}'.format(self.mggp3_ / outliers))
+        part3_fill.append(drops - outliers)  # outliers
 
         part3 = part3.format(*part3_fill)
 

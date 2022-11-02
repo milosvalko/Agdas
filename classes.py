@@ -161,9 +161,9 @@ class Fall():
         for i in range(nfringe):
 
             # vector of z
-            z1[i] = ((self.Lambda / 2 * (i) * self.multiplex * self.scaleFactor))
+            z1[i] = (self.Lambda / 2 * (i) * self.multiplex * self.scaleFactor)
             # correct fringe
-            self.tt[i] = (((self.fringe[i]) * (1e7 / self.rubiFreq) + self.ksol * z1[i] / self.c))
+            self.tt[i] = ((self.fringe[i]) * (1e7 / self.rubiFreq) + self.ksol * z1[i] / self.c)
 
             # interpolated SAE
             if self.ksae:
@@ -812,6 +812,10 @@ class res_final():
         # print(line)
         writer = csv.writer(self.f, delimiter=self.delimiter)
         writer.writerow(line)
+
+    def write_line(self, line):
+
+        self.f.write(line + '\n')
 
     def close(self):
         self.f.close()
