@@ -15,7 +15,7 @@ except ModuleNotFoundError:
     print('=======================================')
     mess = '{} is not installed'.format('pipreqs')
     print(mess)
-    cmd = 'python -m pip install {}'.format('pipreqs')
+    cmd = '{} -m pip install {}'.format(sys.executable, 'pipreqs')
     print(cmd)
     os.system(cmd)
     print('=======================================')
