@@ -1,10 +1,18 @@
 import importlib, os, sys
 """
-Install requirements for Agdas
+Install requirements for Agdas.
 """
+
+upgrade = True
 
 # path of agdas project
 script_path = os.path.dirname(os.path.realpath(__file__))
+
+# upgrade pip
+print('=======================================')
+print('Upgrade pip')
+cmd = '{} -m pip install pip --upgrade'.format(sys.executable)
+print(cmd)
 
 # install pipreqs
 try:
@@ -41,3 +49,15 @@ with open('requirements.txt', 'r') as f:
             print(cmd)
             os.system(cmd)
             print('=======================================')
+
+# upgrade libraries
+if upgrade:
+    print('=======================================')
+    print('Upgrading of libraries')
+    with open('requirements.txt', 'r') as f:
+
+        for l in f.read().splitlines():
+            library = l.split('=')[0]
+            print('=======================================')
+            cmd = '{} -m pip install {} --upgrade'.format(sys.executable, library)
+            print(cmd)
