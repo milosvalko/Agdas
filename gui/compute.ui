@@ -731,11 +731,6 @@ p, li { white-space: pre-wrap; }
        <string>IERS</string>
       </property>
      </item>
-     <item>
-      <property name="text">
-       <string>Naval Observatory</string>
-      </property>
-     </item>
     </widget>
     <widget class="QTextEdit" name="lcable_ar">
      <property name="geometry">

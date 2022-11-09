@@ -109,6 +109,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # self.setMouseTracking(True)
 
+        # self.service.addItem('Naval Observatory')
+
         self.show()
         self.exec()
 
