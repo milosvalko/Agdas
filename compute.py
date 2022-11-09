@@ -89,9 +89,11 @@ class Compute(QtWidgets.QDialog, PATH):
         self.numDrop.valueChanged.connect(self.DisStat)
         self.split_set.stateChanged.connect(self.disabledSplit)
         self.sets_choose.activated.connect(self.currentSet)
+        self.kalpha.textChanged.connect(self.set_tool_tip)
 
         self.set_gravimeter()
         self.set_ui()
+        self.set_tool_tip()
 
         self.frminT.textChanged.connect(self.set_frmin_t)
         self.frmaxT.textChanged.connect(self.set_frmax_t)
@@ -112,6 +114,13 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def set_nforfft(self):
         self.nforfft = round(self.frmax / (4 * self.tt[self.frmax - 1]))
+
+    def set_tool_tip(self):
+
+        self.label_3.setToolTip('Drop is accepted if σ * set_std > abs(avr_gtopcor_by_set - drop_gtopcor)')
+        self.label_7.setToolTip('Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
+        self.complete_out.setToolTip('Check Complete outputs only for more than 3 sets and more than 10 drops in set')
+        self.label_15.setToolTip("Cut-off frequency for filtering residuals in graphs. It doesn't influence the processing")
 
     def set_graph_language(self):
         """
@@ -771,7 +780,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.matr_connection.commit()
 
         self.logWindow.append(separator)
-        self.logWindow.append('Measurement processing is done')
+        self.logWindow.append('Measurement processing has been successfully completed')
         QtCore.QCoreApplication.processEvents()
 
         # close connection with database
@@ -1033,7 +1042,7 @@ class Compute(QtWidgets.QDialog, PATH):
         logo_path = os.path.join(script_path, 'picture', 'logo.ico')
         g = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1')[0][0]
 
-        t = Notification(app_id='pyAgdas', title='Computing is done!',
+        t = Notification(app_id='pyAgdas', title='Computation has been successfully completed!',
                          msg='Average g at top of drops: {:.2f}'.format(g), icon=logo_path, duration='long')
         t.set_audio(audio.Reminder, loop=False)
         t.add_actions(label='Outputs', launch=self.projDirPath)
@@ -2319,7 +2328,7 @@ class Compute(QtWidgets.QDialog, PATH):
                              name=self.stationData['ProjName'] + '_' + 'set_spectrum_avr_spec',
                              delimiter=self.delimiter)
 
-        for i in range(int((self.nforfft - 1) / 2)):
+        for i in range(len(self.fr)):
             line_res = line_spec = '{:.4f}'.format(self.fr[i])
 
             for j in range(self.nset):
