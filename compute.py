@@ -1476,7 +1476,7 @@ class Compute(QtWidgets.QDialog, PATH):
             p.plot(self.tt[:self.frmaxplot], i[:self.frmaxplot], '-', lw=1, color='0.75')
 
         p.plot(self.tt[:self.frmaxplot], self.meanRes[0, :], '-k', lw=2)
-        p.plot(self.tinc, self.yn, '-', lw=3, color='tab:pink')
+        p.plot(self.tinc_filt, self.yn, '-', lw=3, color='tab:pink')
         p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[0], color='b')
         p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[1], color='b')
 
@@ -2057,15 +2057,17 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # =======================================================================
         resyyy = np.interp(self.tinc, self.tt[:self.frmaxplot], self.meanRes[0, :])
+        resyyy_filt = [resyyy[i] for i in range(len(resyyy)) if abs(resyyy[i]) < 2] # filter residuals with values over 2
+        self.tinc_filt = [self.tinc[i] for i in range(len(self.tinc)) if abs(resyyy[i]) < 2]
 
         coff = int(self.coff.toPlainText())
         n = 4
         self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.nforfft
 
         aa, bb = sig.butter(n, self.kcutoff, btype='low')
-        self.yn = sig.filtfilt(aa, bb, resyyy)
+        self.yn = sig.filtfilt(aa, bb, resyyy_filt)
 
-        resmmi = np.interp(self.tt[:self.frmaxplot], self.tinc, self.yn)
+        resmmi = np.interp(self.tt[:self.frmaxplot], self.tinc_filt, self.yn)
 
         # =======================================================================
 
