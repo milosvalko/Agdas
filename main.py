@@ -71,9 +71,6 @@ class Main(QtWidgets.QMainWindow, PATH):
         except FileExistsError:
             pass
 
-    # def new_Project_batch(self):
-
-
     def set_info(self):
         """
         Set some information on the main page
@@ -84,7 +81,7 @@ class Main(QtWidgets.QMainWindow, PATH):
         self.sitecode.setText(self.newProjectWin.stationData['SiteCode'])
         self.trasnferheight.setText('{} {}'.format(self.newProjectWin.stationData['transferHeight'], self.newProjectWin.units['transferHeight']))
         self.gradient.setText('{} {}'.format(self.newProjectWin.stationData['gradient'], self.newProjectWin.units['gradient']))
-        self.totaldrops.setText(self.newProjectWin.processingResults['totalFringes'])
+        self.totaldrops.setText(str(int(self.newProjectWin.processingResults['setsCollected']) * int(self.newProjectWin.processingResults['dropsInSet'])))
         self.gravity.setText('{} {}'.format(self.newProjectWin.processingResults['gravity'], self.newProjectWin.units['gravity']))
         self.setscatter.setText('{} {}'.format(self.newProjectWin.processingResults['setScatter'], self.newProjectWin.units['setScatter']))
 
