@@ -7,7 +7,7 @@ def getFG5X(ps):
         'frmin': 15 * ps,  # first fringe
         'frmax': 940 * ps,  # end fringe
         'fmodf': 8333.355,  # [Hz] modulation frequency
-        'frmaxss': 1040 * ps,
+        # 'frmaxss': 1040 * ps,
         'frminss': 1,
         'frmaxplot': 1040 * ps,
         # 'sens_tn': 1,

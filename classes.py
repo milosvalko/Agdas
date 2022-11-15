@@ -74,9 +74,9 @@ class Fall():
         self.frmin = frmin - 1
         self.frmax = frmax
 
-    def setFRssRange(self, frmaxss, frminss):
-        self.frmaxss = frmaxss
-        self.frminss = frminss - 1
+    # def setFRssRange(self, frmaxss, frminss):
+    #     self.frmaxss = frmaxss
+    #     self.frminss = frminss - 1
 
     def setKpar(self, kpar):
         self.kpar = kpar
@@ -268,8 +268,8 @@ class Fall():
 
         self.res_grad1 = np.subtract(z1, np.matmul(A_grad1, self.x_grad[0]))  # residuals for all fringes
 
-        ress = self.res_grad1[self.frminss:self.frmaxss]  # residuals for correct interval
-        self.ssres = np.sqrt(np.dot(ress, ress) / (self.frmaxss - self.frminss + 1))  # is drop accepted value
+        ress = res[self.frmin:self.frmax]  # residuals for correct interval
+        self.ssres = np.sqrt(np.dot(ress, ress) / (self.frmax - self.frmin + 1))  # is drop accepted value
 
         # LST with modulation
         A4[:, 2] = [(self.x[0][1] / 6 * self.tt[i] ** 3 + self.x[0][2] / 24 * self.tt[i] ** 4 - (
