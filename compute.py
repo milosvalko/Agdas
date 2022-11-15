@@ -652,7 +652,7 @@ class Compute(QtWidgets.QDialog, PATH):
             fall.setRubiFreq(self.instrumentData['rubiFreq'])
             fall.setFrRange(self.frmin, self.frmax)
             # fall.setFrRange(frmin,frmax)
-            fall.setFRssRange(self.frmaxplot, frminss)
+            # fall.setFRssRange(self.frmax, frminss)
             fall.setKpar(self.kpar.isChecked())
             fall.setPcable(self.gravimeter['Pcable'])
             fall.setAcable(self.gravimeter['Acable'])
@@ -798,13 +798,6 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.saveSourceData()
             g.save()
 
-            # g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-            #           show=self.open_graphs.isChecked(), x_label='Time /h', y_label='Correction /μGal',
-            #           title='Atmosferic correction')
-            # g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
-            # g.saveSourceData()
-            # g.save()
-
             g = Graph(path=self.projDirPath + '/Graphs', name='atm_press', project=self.stationData['ProjName'],
                       show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'],
                       y_label=self.graph_lang['atm_press']['ylabel'],
@@ -828,26 +821,6 @@ class Compute(QtWidgets.QDialog, PATH):
             g.plotXY(x=[time_gr], y=[Polar], mark=['b+'], columns_name=['polar_corr'])
             # g.saveSourceData()
             g.save()
-
-            r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
-            data = [i[0] for i in r]
-            title = self.graph_lang['allan1']['title']
-            ylabel = self.graph_lang['allan1']['ylabel']
-            name = 'allan1'
-            self.graphAllan1(data, title, ylabel, name)
-
-            r = self.matr_connection.get('select Gradient from results where Accepted = 1')
-            data = [i[0] for i in r]
-            title = self.graph_lang['allan3']['title']
-            ylabel = self.graph_lang['allan3']['ylabel']
-            name = 'allan3'
-            self.graphAllan1(data, title, ylabel, name)
-
-            self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
-            self.graphRes()
-            self.graphParasitic()
-            self.graphEffectiveHeights2()
-            self.allResGraph()
 
             # Binary save of residuals
             residuals_path = os.path.join(self.projDirPath, 'Files', self.stationData['ProjName'] + '_residuals')
@@ -915,6 +888,26 @@ class Compute(QtWidgets.QDialog, PATH):
             ylabel = self.graph_lang['allan1_normalized']['ylabel']
             name = 'allan1_normalized'
             self.graphAllan1(data=self.normres, title=title, ylabel=ylabel, name=name)
+
+            r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
+            data = [i[0] for i in r]
+            title = self.graph_lang['allan1']['title']
+            ylabel = self.graph_lang['allan1']['ylabel']
+            name = 'allan1'
+            self.graphAllan1(data, title, ylabel, name)
+
+            r = self.matr_connection.get('select Gradient from results where Accepted = 1')
+            data = [i[0] for i in r]
+            title = self.graph_lang['allan3']['title']
+            ylabel = self.graph_lang['allan3']['ylabel']
+            name = 'allan3'
+            self.graphAllan1(data, title, ylabel, name)
+
+            self.Graph_EffHeight_CorToEffHeight(project=self.stationData['ProjName'])
+            self.graphRes()
+            self.graphParasitic()
+            self.graphEffectiveHeights2()
+            self.allResGraph()
 
             # close estim and estim_grad files
             estim.close()
@@ -1239,6 +1232,7 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(data_centered, '.', ms=6)
         p.plot([0, len(data_centered)], [5 * median1, 5 * median1], 'r', lw=0.5)
         p.plot([0, len(data_centered)], [-5 * median1, -5 * median1], 'r', lw=0.5)
+        p.ylim([-5*median1 - median1, 5*median1 + median1])
         p.title(title)
         p.xlabel('Drop #', fontsize=15)
         p.ylabel(ylabel, fontsize=15)
@@ -1442,7 +1436,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.title(self.graph_lang['residuals_gradient']['title'], fontsize=15)
         p.ylabel(self.graph_lang['residuals_gradient']['ylabel'], fontsize=15)
         p.xlabel(self.graph_lang['residuals_gradient']['xlabel'], fontsize=15)
-
+        rmax = max(self.resgradsum4Mean[0, 20:self.frmaxplot])
+        rmin = min(self.resgradsum4Mean[0, 20:self.frmaxplot])
+        p.ylim([rmin + 0.2*rmin, rmax + 0.2*rmax])
         path = self.projDirPath + '/Graphs/'
         name = 'residuals_gradient'
         project = self.stationData['ProjName']
@@ -1591,6 +1587,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.text(x=[x[self.frmin], x[self.frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
         g.text(x=text_x, y=text_y, t=col_name, c=text_color)
         # g.saveSourceData()
+        g.ylim([0, self.nset+1])
         g.save()
 
         del X, Y, XX, YY, x
@@ -1788,6 +1785,8 @@ class Compute(QtWidgets.QDialog, PATH):
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
         # g.saveSourceData()
+        stdmin = min(std)
+        g.ylim([stdmin - 0.1*stdmin, 3*np.median(std)])
         g.save()
 
         # acc = self.matr_connection.get('select Accepted from results')
@@ -1805,6 +1804,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         res = self.matr_connection.get('select e_withGR, f_withGR from results where Accepted = 1')
 
+        # lim = self.matr_connection.get('select max(e_withGR), min(e_withGR) from ')
+
         e = [i[0] for i in res]
         f = [i[1] for i in res]
         x = range(1, len(e) + 1)
@@ -1817,6 +1818,8 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
                  legend=self.graph_lang['parasitic']['xlabel'].split(','))
         # g.saveSourceData()
+        ymedian = abs(np.median(e))
+        # g.ylim([-6*ymedian, 6*ymedian])
         g.save()
 
     def graphHistogramAccDrops(self, name):
@@ -2612,6 +2615,7 @@ class Compute(QtWidgets.QDialog, PATH):
             title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10))
         ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=15)
         ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'], fontsize=15)
+        ax1.set_ylim([-0.01, 5*abs(np.median(self.ampar))])
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)
