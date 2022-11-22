@@ -1082,6 +1082,6 @@ class Compare_gsoft_agdas():
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
                   title=graph_lang['histogram_diff']['title'],
                   show=False)
-        g.histogram(self.diff_*10, fit=True)
+        g.histogram(self.diff__*10, fit=True)
         # g.saveSourceData()
         g.save()

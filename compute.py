@@ -1225,8 +1225,6 @@ class Compute(QtWidgets.QDialog, PATH):
         median = np.median(data)
         data_centered = [i - median for i in data]  # data centered on median
         median1 = np.median(np.abs(data_centered)) / 0.6745  # median from absolute value of residuals
-        min = np.min(data_centered)
-        max = np.max(data_centered)
 
         p = plt
         p.plot(data_centered, '.', ms=6)
@@ -1597,8 +1595,9 @@ class Compute(QtWidgets.QDialog, PATH):
         Create graph of gradients
         """
 
-        res = self.matr_connection.get('select Gradient, GradientLSTm0 from results where Accepted = 1')
+        res = self.matr_connection.get('select Gradient, GradientLSTm0, n from results where Accepted = 1')
         grad = [i[0] for i in res]
+        x = [i[2] for i in res]
 
         moving_average, moving_avg_x = movingAverage(grad, n=50)
 
@@ -1610,11 +1609,11 @@ class Compute(QtWidgets.QDialog, PATH):
         yyylim = [self.vggp3 + 3 * self.mggp3, self.vggp3 + 3 * self.mggp3]  # yrange for +3sigma
 
         m0 = []  # vector of m0 values
-        x = []  # x range for plotting data
+        # x = []  # x range for plotting data
         cumulative_average = []
         for i in range(1, len(res) + 1):
             m0.append(res[i - 1][1])
-            x.append(i)
+            # x.append(i)
             cumulative_average.append(sum(grad[:i]) / len(grad[:i]))
 
         g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'],
@@ -1784,9 +1783,10 @@ class Compute(QtWidgets.QDialog, PATH):
                   y_label=self.graph_lang['resid_RMS']['ylabel'],
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
+        g.plotXY(x=[[1, n[-1]]], y=[[self.kalpha_resid_rms, self.kalpha_resid_rms]], mark=['-r'])
         # g.saveSourceData()
         stdmin = min(std)
-        g.ylim([stdmin - 0.1*stdmin, 3*np.median(std)])
+        g.ylim([stdmin - 0.1*stdmin, self.kalpha_resid_rms*1.5])
         g.save()
 
         # acc = self.matr_connection.get('select Accepted from results')
@@ -1802,13 +1802,12 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphParasitic(self):
 
-        res = self.matr_connection.get('select e_withGR, f_withGR from results where Accepted = 1')
-
-        # lim = self.matr_connection.get('select max(e_withGR), min(e_withGR) from ')
+        res = self.matr_connection.get('select e_withGR, f_withGR, n from results where Accepted = 1')
 
         e = [i[0] for i in res]
         f = [i[1] for i in res]
-        x = range(1, len(e) + 1)
+        # x = range(1, len(e) + 1)
+        x = [i[2] for i in res]
 
         g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label=self.graph_lang['parasitic']['xlabel'],
@@ -1818,8 +1817,6 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
                  legend=self.graph_lang['parasitic']['xlabel'].split(','))
         # g.saveSourceData()
-        ymedian = abs(np.median(e))
-        # g.ylim([-6*ymedian, 6*ymedian])
         g.save()
 
     def graphHistogramAccDrops(self, name):
@@ -2126,11 +2123,13 @@ class Compute(QtWidgets.QDialog, PATH):
         # Drop acceptance limit
         kalpha = float(self.kalpha.toPlainText())
 
+        self.kalpha_resid_rms = (1 + kalpha / 100) * resMed
+
         it = 0
         # grad4Acc = 0
         for j in data:
             # accepted if m0 < 1.5*median m0
-            if j[1] > (1 + kalpha / 100) * resMed:
+            if j[1] > self.kalpha_resid_rms:
                 update = matrDatabase['updateAcc'].format(j[2], j[3])
                 self.matr_connection.insert(update)
 
@@ -2167,6 +2166,7 @@ class Compute(QtWidgets.QDialog, PATH):
         for i in mean:
             std.append(sqrt(i[3] / (n - 1)))
             mean1.append(i[2])
+
 
         grad4_acc = 0
         for j in res:
