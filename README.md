@@ -9,7 +9,15 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 </p>
 
 # Requierements
-Firstly, for pyAgdas is required Python3. It is available [here](https://www.python.org/downloads/). \
+Firstly, for pyAgdas is required Python3. It is available [here](https://www.python.org/downloads/). 
+
+## Installation of Python packages
+1. Running the *run.py* script installs all dependencies and starts the application. If a new dependency is added with the update, it will be installed. This is the easiest way to run pyAGDAS.
+
+2. Run *install_requirements.py* for automatic installation of required libraries. \
+`python install_requirements_windows.py` - command 
+
+3. Or you can do it manually... \
 In the project are used some libraries require to be installed before starting using the project. Here is a list of them: \
 *matplotlib==3.1.2*\
 *numpy==1.17.4*\
@@ -18,11 +26,6 @@ In the project are used some libraries require to be installed before starting u
 *winotify==1.1.0*\
 *winapps==0.2.0*
 
-## Installation of Python packages
-Run *install_requirements.py* for automatic installation of required libraries. \
-`python install_requirements_windows.py` - command 
-
-Or you can do it manually... \
 Command installation for packages in Python has this form: \
 `pip install [package name]`\
 For Windows it has this form: \
@@ -31,7 +34,7 @@ For Windows it has this form: \
 Here is an example: `python3 -m pip install winotify`
 
 ## Launching of pyAgdas
-The project is launched by running *main.py* script. pyAgdas can be launched in an IDE or by command line by this command:
+The project is launched by running *run.py* script. pyAgdas can be launched in an IDE or by command line by this command:
 `python3 [/path/main.py]`. Or you can create *bat* file for Windows, or *sh* file for Ubuntu which contains the launching command.
 
 ### Work with pyAgdas

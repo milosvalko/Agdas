@@ -6,20 +6,27 @@ Install requirements for Agdas.
 # path of agdas project
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-ins = False
-# open requirements
-with open('requirements.txt', 'r') as f:
+class Install:
 
-    for l in f.read().splitlines():
-        library = l.split('=')[0]
+    def __init__(self):
+        ins = False
+        # open requirements
+        with open('requirements.txt', 'r') as f:
 
-        try:
-            importlib.import_module(library)
+            for l in f.read().splitlines():
+                library = l.split('=')[0]
 
-        except ModuleNotFoundError:
-            ins = True
+                try:
+                    importlib.import_module(library)
 
-if ins:
-    os.system('{} -m pip install pipreqs'.format(sys.executable))
-    os.system('{} -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(sys.executable, script_path))
-    os.system('{} -m pip install -r requirements.txt'.format(sys.executable))
+                except ModuleNotFoundError:
+                    ins = True
+
+        if ins:
+            os.system('{} -m pip install --upgrade pip'.format(sys.executable))
+            os.system('{} -m pip install pipreqs'.format(sys.executable))
+            os.system('{} -m pipreqs.pipreqs {} --encoding utf-8-sig --force'.format(sys.executable, script_path))
+            os.system('{} -m pip install -r requirements.txt'.format(sys.executable))
+
+if __name__ == "__main__":
+    Install()
