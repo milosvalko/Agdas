@@ -586,6 +586,7 @@ class Compute(QtWidgets.QDialog, PATH):
             (self.ndrop, int(self.processingResults['totalFringes'])))  # All residuals from gradient estimation fit
         self.ssresAr = []  # Standard deviations of fits with gradient
         self.m0grad4Sig = []  # Standard deviations of gradient estimation fit
+        self.m0grad = []
         compare_gsoft_agdas = Compare_gsoft_agdas(self.projDirPath, self.stationData['gradient'],
                                                   self.stationData['ProjName'])
         Polar = []
@@ -678,6 +679,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             # ===========================================================================#
             self.resgradsum4[i, :] = fall.resgrad4
+            self.m0grad.append(fall.m0gradient)
             self.m0grad4Sig.append(fall.m0grad4)
 
             # ind_.write('{},{} \n'.format(str(fall.ind_covar[0]), str(fall.ind_covar[1])))
@@ -1473,6 +1475,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p.plot(self.tt[:self.frmaxplot], self.meanRes[0, :], '-k', lw=2)
         p.plot(self.tinc_filt, self.yn, '-', lw=3, color='tab:pink')
+        # p.plot(self.resmmi, self.yn, '-', lw=3, color='tab:pink')
         p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[0], color='b')
         p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals']['text'].split(',')[1], color='b')
 
@@ -2036,6 +2039,51 @@ class Compute(QtWidgets.QDialog, PATH):
             self.print_allanFile()
             self.printMatlog()
 
+    def residuals_filter(self, res, grad: bool):
+        """
+        This method serves for filtering residuals by low pass filter implemented in scipy.signal
+        :param res: mean residuals
+        :param grad: boolean value, True if residuals are from fits for gradient
+        :return:
+        """
+        # set kalpha for filtering residuals, 1.5*median of all m0
+        if grad:
+            med = np.median(self.m0grad)
+            kalpha = (1 + float(self.kalpha.toPlainText()) / 100) * med
+        else:
+            kalpha = self.kalpha_resid_rms
+
+        # resample fringe
+        tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot - 1], self.nforfft)
+        # interpolate residuals to resampled fringes
+        resyyy = np.interp(tinc, self.tt[:self.frmaxplot], res[:self.frmaxplot])
+
+        # filter residuals with value < kalpha
+        resyyy_filt = []
+        tinc_filt = []
+        for i in range(len(resyyy)):
+            if abs(resyyy[i]) < kalpha:
+                resyyy_filt.append(resyyy[i])
+                tinc_filt.append(tinc[i])
+
+        # set filter of signal
+        n = 4
+        aa, bb = sig.butter(n, self.kcutoff, btype='low')
+        yn = sig.filtfilt(aa, bb, resyyy_filt)
+
+        # reverse interpolating
+        resmmi = np.interp(self.tt[:self.frmaxplot], tinc_filt, yn)
+
+        return yn, resmmi, tinc_filt
+
+    def set_kcutoff(self):
+        """
+        Setting of frequency for signal filtering
+        :return:
+        """
+        coff = int(self.coff.toPlainText())
+        self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.nforfft
+
     def write_res_final(self):
         prescale = int(self.processingResults['multiplex']) * int(self.processingResults['scaleFactor'])
         # it=0
@@ -2058,23 +2106,13 @@ class Compute(QtWidgets.QDialog, PATH):
                           name=self.stationData['ProjName'] + '_' + 'residuals_final1000', delimiter=self.delimiter)
 
         # =======================================================================
-        resyyy = np.interp(self.tinc, self.tt[:self.frmaxplot], self.meanRes[0, :])
-        resyyy_filt = [resyyy[i] for i in range(len(resyyy)) if abs(resyyy[i]) < 2] # filter residuals with values over 2
-        self.tinc_filt = [self.tinc[i] for i in range(len(self.tinc)) if abs(resyyy[i]) < 2]
 
-        coff = int(self.coff.toPlainText())
-        n = 4
-        self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.nforfft
+        self.set_kcutoff()
 
-        aa, bb = sig.butter(n, self.kcutoff, btype='low')
-        self.yn = sig.filtfilt(aa, bb, resyyy_filt)
-
-        resmmi = np.interp(self.tt[:self.frmaxplot], self.tinc_filt, self.yn)
+        self.yn, resmmi, self.tinc_filt = self.residuals_filter(self.meanRes[0, :], grad=False)
 
         # =======================================================================
-
-        self.resgradsm4filt = sig.filtfilt(aa, bb, self.resgradsum4Mean[0, :self.frmaxplot])
-
+        _, self.resgradsm4filt, _ = self.residuals_filter(self.resgradsum4Mean[0, :], grad=True)
         # =======================================================================
 
         # data for round value to print into file
