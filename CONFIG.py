@@ -149,7 +149,7 @@ headers = {
     'estim_grad': """   {0}    {0}Fit with gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Fit without gradient{0}{0}{0}{0}{0}{0}{0}{0}{0}Gradient estimation{0}{0}
                         Set{0}Drop{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}g0{0}a{0}b{0}c{0}d{0}a_par{0}b_par{0}z0{0}v0{0}vgg{0}vgg-std
                         {0}    {0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm{0}nm.s-1{0}nm.s-2/mm{0}nm.s-2/mm""",
-    'resgradsum': 'Fringe{0}z [m]{0}Time [s]{0}Time TOP [s]{0}Resgradsum4_mean [nm]{0}Filtered mean [nm]',
+    'res_vgg': 'Fringe{0}z [m]{0}Time [s]{0}Time TOP [s]{0}Resgradsum4_mean [nm]{0}Filtered mean [nm]',
     'vgg_per_sets0': 'Set {0}	vgg0 [uGal/cm] {0}	mvgg0 [uGal/cm] {0}	dg0 [uGal] {0}	mdg0 [uGal]',
     'effective_height_corr': """Drop{0} EffHeight{0} CorToEffHeight'
                              {0}mm{0}mm""",
@@ -170,7 +170,7 @@ round_line_ind = {
     'effHeightCorr_Graph': [[1, 5], [2, 5]],
     'estim_grad': [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5],
                    [14, 5], [15, 5], [16, 5], [17, 5], [18, 5], [19, 5], [20, 5], [21, 5], [22, 5], [23, 5]],
-    'resgradsum': [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5]],
+    'res_vgg': [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5]],
     'vgg_per_sets0': [[1, 5], [2, 5], [3, 5], [4, 5]],
     'matlogsets': [[8, 5], [10, 5], [11, 5], [12, 5], [13, 5], [15, 4], [17, 5], [18, 5]]
 }

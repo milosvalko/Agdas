@@ -8,7 +8,7 @@ Elev: {} m
 Gradient: {}  Gal/cm
 Setup Height: {} cm
 Transfer Height: {}  cm
-Nominal Air Pressure: {} mBar
+Nominal Air Pressure: {} hPa
 Barometric Admittance Factor: {} nm.s-2/hPa
 Polar Motion Coord:  {} "  {} " (mjd:  {}), (coordinates downloaded from {} on: {})
 Rubidium Frequency: {} Hz
@@ -23,7 +23,7 @@ GuideCard Multiplex: {}
 GuideCard Scale Factor: {}
 First FRINGE: {}
 Final FRINGE: {}
-Drop acceptance limit: {} %
+Drop acceptance limit: 1{} %
 Coverage factor for drop acceptance within a set: {}
 Confidence level for acceptance set g-values: {} %
 STD of systematic effects for set g-values: {} nm.s-2

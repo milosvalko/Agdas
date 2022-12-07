@@ -351,7 +351,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if self.service.currentText() == 'IERS':
 
-            finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
+            # finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
+            finals_path = os.path.join(os.getcwd(), 'finals', 'finals2000A_iers.all.csv')
             url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
 
             if time() - os.path.getmtime(finals_path) > 604800:
@@ -362,7 +363,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if self.service.currentText() == 'Naval Observatory':
 
-            finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
+            # finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
+            finals_path = os.path.join(os.getcwd(), 'finals', 'finals2000A_naval.all.csv')
             url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
 
             if time() - os.path.getmtime(finals_path) > 604800:
@@ -822,6 +824,7 @@ class Compute(QtWidgets.QDialog, PATH):
                       title=self.graph_lang['polar_corr']['title'])
             g.plotXY(x=[time_gr], y=[Polar], mark=['b+'], columns_name=['polar_corr'])
             # g.saveSourceData()
+            g.decimal(decimal_number=1)
             g.save()
 
             # Binary save of residuals
@@ -935,8 +938,7 @@ class Compute(QtWidgets.QDialog, PATH):
         sens = open(path, 'w')
 
         header = """ Start{0}   delta_g{0}    Final{0}   delta_g 
-                            fringe{0}    [nm.s-2]{0} fringe{0}    [nm.s-2]
-                            ------------------------------------ \n""".format(self.delimiter)
+                            fringe{0}    [nm.s-2]{0} fringe{0}    [nm.s-2]\n""".format(self.delimiter)
 
         sens.write(header)
 
@@ -946,7 +948,7 @@ class Compute(QtWidgets.QDialog, PATH):
             sens.write(line)
 
         for i in range(self.frmin + int(0.1 * self.nfringe) + 1, self.dgrm.shape[1]):
-            line = '{}{} {:.5f}{} {:.3f} \n'.format(self.delimiter, self.delimiter, self.sens_bn + 1 - 1,
+            line = '{}{} {:.5f}{} {:.3f} \n'.format(self.delimiter, self.delimiter, self.sens_bn + i - 1,
                                                     self.delimiter, self.dgrm[0, i])
             sens.write(line)
 
@@ -959,8 +961,7 @@ class Compute(QtWidgets.QDialog, PATH):
         """
 
         header = """ Start{0}   delta_g{0}    Final{0}   delta_g 
-                     time{0}    [nm.s-2]{0}   time{0}    [nm.s-2]
-                     ------------------------------------ \n""".format(self.delimiter)
+                     time{0}    [nm.s-2]{0}   time{0}    [nm.s-2]\n""".format(self.delimiter)
 
         # open file with path
         path = self.projDirPath + '/Files/' + self.stationData['ProjName'] + '_sens2.csv'
@@ -1099,7 +1100,7 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(
             np.std(self.matr_connection.get('select EffHeight + CorToEffHeight from results where Accepted = 1'),
                    ddof=1))
-        line.append(float(self.stationData['actualHeight']) / 100 - float(hefm) / 100)
+        line.append(float(self.stationData['actualHeight']) / 100 - float(hefm) / 1000)
         line.append((self.gfinal - float(self.stationData['gradient']) * float(hefm)) / 10)
         line.append(self.gstd / 10)
         line.append(np.median(self.dglrms) / 10)
@@ -1230,12 +1231,12 @@ class Compute(QtWidgets.QDialog, PATH):
 
         p = plt
         p.plot(data_centered, '.', ms=6)
-        p.plot([0, len(data_centered)], [5 * median1, 5 * median1], 'r', lw=0.5)
-        p.plot([0, len(data_centered)], [-5 * median1, -5 * median1], 'r', lw=0.5)
+        # p.plot([0, len(data_centered)], [5 * median1, 5 * median1], 'r', lw=0.5)
+        # p.plot([0, len(data_centered)], [-5 * median1, -5 * median1], 'r', lw=0.5)
         p.ylim([-5*median1 - median1, 5*median1 + median1])
         p.title(title)
-        p.xlabel('Drop #', fontsize=15)
-        p.ylabel(ylabel, fontsize=15)
+        p.xlabel('Drop #', fontsize=20)
+        p.ylabel(ylabel, fontsize=20)
 
         path = self.projDirPath + '/Graphs/'
         project = self.stationData['ProjName']
@@ -1334,8 +1335,8 @@ class Compute(QtWidgets.QDialog, PATH):
         ax2.loglog(frx, ratio, color=(0.64, 0, 1), lw=0.5)
         ax2.loglog([np.min(frx), fs], [1, 1], '-k', lw=0.5)
         ax2.set_xlabel(xlabel=self.graph_lang['spectrum_parts']['xlabel'], fontsize=15)
-        ax2.set_ylabel(ylabel=self.graph_lang['spectrum_parts']['ylabel'], fontsize=15)
-        ax2.legend(self.graph_lang['spectrum_parts']['legend2'])
+        ax2.set_ylabel(ylabel=self.graph_lang['spectrum_parts']['ylabel2'], fontsize=15)
+        ax2.legend([self.graph_lang['spectrum_parts']['legend2']])
 
         p.tight_layout()
 
@@ -1421,8 +1422,6 @@ class Compute(QtWidgets.QDialog, PATH):
         p.rcParams['figure.figsize'] = (25, 10)
 
         p.plot(tt0, resm0, '-k')
-        p.plot(xlim, ylim, '-b')
-        p.plot(xxlim, ylim, '-b')
 
         # p.plot(tt[:frmaxplot], resmm, '-k', lw = 2)
         p.plot(self.tt[:self.frmaxplot], self.resgradsum4Mean[0, :self.frmaxplot], '-k',
@@ -1430,8 +1429,6 @@ class Compute(QtWidgets.QDialog, PATH):
         p.plot(self.tt[:self.frmaxplot], self.resgradsm4filt[:self.frmaxplot], '-',
                lw=3,
                color=(1, 0, 1))
-        p.text(xlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[0], color='b')
-        p.text(xxlim[0] + 0.001, -yl, self.graph_lang['residuals_gradient']['text'].split(',')[1], color='b')
 
         p.title(self.graph_lang['residuals_gradient']['title'], fontsize=15)
         p.ylabel(self.graph_lang['residuals_gradient']['ylabel'], fontsize=15)
@@ -1439,6 +1436,13 @@ class Compute(QtWidgets.QDialog, PATH):
         rmax = max(self.resgradsum4Mean[0, 20:self.frmaxplot])
         rmin = min(self.resgradsum4Mean[0, 20:self.frmaxplot])
         p.ylim([rmin + 0.2*rmin, rmax + 0.2*rmax])
+
+        # first and last fringe
+        p.plot(xlim, ylim, '-b')
+        p.plot(xxlim, ylim, '-b')
+        p.text(xlim[0] + 0.001, rmin, self.graph_lang['residuals_gradient']['text'].split(',')[0], color='b')
+        p.text(xxlim[0] + 0.001, -rmin, self.graph_lang['residuals_gradient']['text'].split(',')[1], color='b')
+
         path = self.projDirPath + '/Graphs/'
         name = 'residuals_gradient'
         project = self.stationData['ProjName']
@@ -1652,13 +1656,14 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
                  legend=[l1, l2],
                  lw=[1, 1])
+        g.x_ax_int()
         # g.saveSourceData()
         g.save()
 
     def graphGravityChange(self):
         Y = []
         X = []
-        l = []
+        # l = []
         cn = []
         m = []
         lw = []
@@ -1674,14 +1679,14 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(tttt)
             Y.append(self.dgr[i, :len(tttt)])
-            l.append('{} '.format(self.graph_lang['sensitivity_bottom']['set_description']) + str(i + 1))
+            # l.append('{} '.format(self.graph_lang['sensitivity_bottom']['set_description']) + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
         X.append(tttt)
         Y.append(self.dgrm.T[:len(tttt)])
-        l.append(self.graph_lang['sensitivity_bottom']['legend'])
+        # l.append(self.graph_lang['sensitivity_bottom']['legend'])
         cn.append(self.graph_lang['sensitivity_bottom']['legend'])
         m.append('k-')
         lw.append(1)
@@ -1694,7 +1699,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[[self.frmax, self.frmax]], y=[[-10, 10]], mark=['b-'],
                  columns_name='xx', legend='',
                  lw=[0.3])
-        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
+        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, lw=lw)
         # g.saveSourceData()
         g.save()
 
@@ -1704,7 +1709,7 @@ class Compute(QtWidgets.QDialog, PATH):
     def graphGravityChange_time(self):
         Y = []
         X = []
-        l = []
+        # l = []
         cn = []
         m = []
         lw = []
@@ -1714,14 +1719,14 @@ class Compute(QtWidgets.QDialog, PATH):
             # g.plotXY(x=[tttt], y=[dgr[i,:]], mark=['C'+str((i)%10)+ '-'], columns_name=['Set ' + str(i+1)], legend =['Set ' + str(i+1)])
             X.append(self.tttt_plot)
             Y.append(self.dgrt[i, :len(self.tttt_plot)])
-            l.append('{} '.format(self.graph_lang['sensitivity_bottom_time']['set_description']) + str(i + 1))
+            # l.append('{} '.format(self.graph_lang['sensitivity_bottom_time']['set_description']) + str(i + 1))
             cn.append('Set ' + str(i + 1))
             m.append('C' + str((i) % 10) + '-')
             lw.append(0.3)
 
         X.append(self.tttt_plot)
         Y.append(self.dgrtm.T[:len(self.tttt_plot)])
-        l.append(self.graph_lang['sensitivity_bottom_time']['legend'])
+        # l.append(self.graph_lang['sensitivity_bottom_time']['legend'])
         cn.append(self.graph_lang['sensitivity_bottom_time']['legend'])
         m.append('k-')
         lw.append(1)
@@ -1737,7 +1742,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # g.plotXY(x=[[self.ttr[self.frmax], self.ttr[self.frmax]]], y=[[-10, 10]], mark=['b-'],
         #          columns_name='xx', legend='',
         #          lw=[0.3])
-        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, legend=l, lw=lw)
+        g.plotXY(x=X, y=Y, mark=m, columns_name=cn, lw=lw)
         g.ylim([-20, 20])
         # g.saveSourceData()
         g.save()
@@ -1763,6 +1768,7 @@ class Compute(QtWidgets.QDialog, PATH):
                     [self.gfinal - g0 + self.gstd, self.gfinal - g0 + self.gstd]], mark=['b-', 'g-', 'g-'],
                  columns_name=['mean', 'mean-1σ', 'mean+1σ'], legend=self.graph_lang['set_g']['legend'].split(','))
         # g.saveSourceData()
+        g.x_ax_int()
         g.save()
 
         # Standart deviation for set g-values
@@ -1787,9 +1793,9 @@ class Compute(QtWidgets.QDialog, PATH):
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
         g.plotXY(x=[[1, n[-1]]], y=[[self.kalpha_resid_rms, self.kalpha_resid_rms]], mark=['-r'])
+        g.text([n[-1]-10], [self.kalpha_resid_rms + 0.01], [self.graph_lang['resid_RMS']['text']], ['r'])
         # g.saveSourceData()
-        stdmin = min(std)
-        g.ylim([stdmin - 0.1*stdmin, self.kalpha_resid_rms*1.5])
+        g.ylim([0, self.kalpha_resid_rms*1.5])
         g.save()
 
         # acc = self.matr_connection.get('select Accepted from results')
@@ -1818,7 +1824,7 @@ class Compute(QtWidgets.QDialog, PATH):
                   title=self.graph_lang['parasitic']['title'].format(
                       float(self.lpar.toPlainText())))
         g.plotXY(x=[x, x], y=[e, f], mark=['r-', 'g-'], columns_name=['Sine component', 'Cosine component'],
-                 legend=self.graph_lang['parasitic']['xlabel'].split(','))
+                 legend=self.graph_lang['parasitic']['legend'].split(','))
         # g.saveSourceData()
         g.save()
 
@@ -2093,14 +2099,14 @@ class Compute(QtWidgets.QDialog, PATH):
         self.g0m = np.median(self.g0) / 10e9
         v0mg0mkor = (-self.v0m / self.g0m) / 10
 
-        self.tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot], self.nforfft)
+        # self.tinc = np.linspace(self.tt[0], self.tt[self.frmaxplot], self.nforfft)
 
         a = res_final(path=self.projDirPath, header=headers['residuals_final'].format(self.delimiter),
                       name=self.stationData['ProjName'] + '_' + 'residuals_final', delimiter=self.delimiter)
         by_sets = res_final(path=self.projDirPath, header=headers['residuals_sets'].format(self.delimiter),
                             name=self.stationData['ProjName'] + '_' + 'residuals_sets', delimiter=self.delimiter)
-        resgradsum = res_final(path=self.projDirPath, header=headers['resgradsum'].format(self.delimiter),
-                               name=self.stationData['ProjName'] + '_' + 'resgradsum', delimiter=self.delimiter)
+        resgradsum = res_final(path=self.projDirPath, header=headers['res_vgg'].format(self.delimiter),
+                               name=self.stationData['ProjName'] + '_' + 'res_vgg', delimiter=self.delimiter)
 
         a1000 = res_final(path=self.projDirPath, header=headers['residuals_final1000'].format(self.delimiter),
                           name=self.stationData['ProjName'] + '_' + 'residuals_final1000', delimiter=self.delimiter)
@@ -2130,7 +2136,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             line = [it + 1, z, self.tt[it], self.tt[it] - v0mg0mkor, self.resgradsum4Mean[0, it],
                     self.resgradsm4filt[it]]
-            resgradsum.printResult(roundList(line, round_line_ind['resgradsum']))
+            resgradsum.printResult(roundList(line, round_line_ind['res_vgg']))
 
             if (it + 1) % 10 == 5:
                 line = [it + 1, z, self.tt[it], self.tt[it] - v0mg0mkor,
@@ -2586,8 +2592,9 @@ class Compute(QtWidgets.QDialog, PATH):
         fig, ax1 = plt.subplots()
 
         color = 'tab:blue'
-        ax1.set_xlabel(self.graph_lang['effective_height']['xlabel'])
-        ax1.set_ylabel(self.graph_lang['effective_height']['ylabel'], color=color)
+        ax1.set_title(self.graph_lang['effective_height']['title'], fontsize=30)
+        ax1.set_xlabel(self.graph_lang['effective_height']['xlabel'], fontsize=30)
+        ax1.set_ylabel(self.graph_lang['effective_height']['ylabel'], color=color, fontsize=30)
         ax1.plot(t, data1, color=color, linewidth=0.5)
         ax1.tick_params(axis='y', labelcolor=color)
 
@@ -2595,7 +2602,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         color = 'tab:red'
         ax2.set_ylabel(self.graph_lang['effective_height']['ylabel2'],
-                       color=color)  # we already handled the x-label with ax1
+                       color=color, fontsize=30)  # we already handled the x-label with ax1
         ax2.plot(t, data2, color=color, linewidth=0.5)
         ax2.tick_params(axis='y', labelcolor=color)
 
@@ -2651,14 +2658,14 @@ class Compute(QtWidgets.QDialog, PATH):
         ax1.plot(x, self.ampar, 'r', lw=0.5)
         ax1.set(
             title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10))
-        ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=15)
-        ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'], fontsize=15)
+        ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=20)
+        ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'], fontsize=20)
         ax1.set_ylim([-0.01, 5*abs(np.median(self.ampar))])
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)
-        ax2.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=15)
-        ax2.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel2'], fontsize=15)
+        ax2.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=20)
+        ax2.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel2'], fontsize=20)
 
         # save graph
         path = self.projDirPath + '/Graphs/'
@@ -2671,7 +2678,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         xlim = [self.frmin]
         ylim = [-20, 20]
-        legend = []
+        # legend = []
 
         p = plt
 
@@ -2679,16 +2686,16 @@ class Compute(QtWidgets.QDialog, PATH):
 
         for i in range(self.dgl.shape[0]):
             p.plot(x, self.dgl[i, :], lw=0.7)
-            legend.append('{} {}'.format(self.graph_lang['sensitivity_top']['set_description'], i + 1))
+            # legend.append('{} {}'.format(self.graph_lang['sensitivity_top']['set_description'], i + 1))
 
-        legend.append(self.graph_lang['sensitivity_top']['legend'])
+        # legend.append(self.graph_lang['sensitivity_top']['legend'])
         p.plot(x, self.dglm[0, :], 'k', lw=2)
         p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
         p.title(self.graph_lang['sensitivity_top']['title'], fontsize=15)
         p.xlabel(self.graph_lang['sensitivity_top']['xlabel'], fontsize=15)
         p.ylabel(self.graph_lang['sensitivity_top']['ylabel'], fontsize=15)
         p.ylim(ylim)
-        p.legend(legend)
+        # p.legend(legend)
 
         # save graph
         path = self.projDirPath + '/Graphs/'
@@ -2701,18 +2708,18 @@ class Compute(QtWidgets.QDialog, PATH):
 
         xlim = [self.frmin]
         # ylim = [-20, 20]
-        legend = []
+        # legend = []
 
         p = plt
 
         # x = self.ttlin[self]
         x = [self.ttlin[i] for i in range(self.indsenstn, self.indsenstx, self.step)]
 
-        for i in range(self.dglt.shape[0]):
-            p.plot(x, self.dglt[i, :], lw=0.7)
-            legend.append('{} {}'.format(self.graph_lang['sensitivity_top_time']['set_description'], i + 1))
+        # for i in range(self.dglt.shape[0]):
+        #     p.plot(x, self.dglt[i, :], lw=0.7)
+        #     legend.append('{} {}'.format(self.graph_lang['sensitivity_top_time']['set_description'], i + 1))
 
-        legend.append(self.graph_lang['sensitivity_top_time']['legend'])
+        # legend.append(self.graph_lang['sensitivity_top_time']['legend'])
         p.plot(x, self.dgltm[0, :len(x)], 'k', lw=2)
         # p.plot([xlim[0], xlim[0]], [ylim[0], ylim[1]], 'b', lw=0.9)
         p.plot([x[0], x[-1]], [0, 0], 'b-', lw=0.6)
@@ -2721,7 +2728,7 @@ class Compute(QtWidgets.QDialog, PATH):
         p.xlabel(self.graph_lang['sensitivity_top_time']['xlabel'])
         p.ylabel(self.graph_lang['sensitivity_top_time']['ylabel'])
         p.ylim([-20, 20])
-        p.legend(legend)
+        # p.legend(legend)
 
         # save graph
         path = self.projDirPath + '/Graphs/'

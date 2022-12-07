@@ -8,6 +8,7 @@ from CONFIG import matrDatabase, SAE
 from warning import Warning
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 from scipy.stats import norm
 import subprocess
 import scipy.interpolate as interp
@@ -880,6 +881,16 @@ class Graph():
         self.y_label = y_label
         self.title = title
 
+    def decimal(self, decimal_number: int):
+
+        ax = self.gr.gca()
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.{}f'.format(decimal_number)))
+
+    def x_ax_int(self):
+
+        ax = self.gr.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
     def plotXY(self, x, y, mark, columns_name=[], legend=[], lw=0):
         # Plot XY data
         self.x = x
@@ -978,13 +989,17 @@ class Graph():
         # bins=np.floor(1+3.32*np.log(len(hist_data)))
         bins = np.floor(1 + 5 * np.log(len(hist_data)))
 
-        _, bins, _ = self.gr.hist(hist_data, int(bins), density=1, alpha=1, edgecolor='black')
+        _, bins, _ = self.gr.hist(hist_data, int(bins), density=False, alpha=1, edgecolor='black')
 
         # fitting graph by Gaussian curve
         if fit:
-            mu, sigma = scipy.stats.norm.fit(hist_data)
-            best_fit_line = scipy.stats.norm.pdf(bins, mu, sigma)
-            self.gr.plot(bins, best_fit_line, '-r')
+            mean = np.mean(hist_data)
+            variance = np.var(hist_data)
+            sigma = np.sqrt(variance)
+            dx = bins[1] - bins[0]
+            scale = len(hist_data) * dx
+            best_fit_line = scipy.stats.norm.pdf(bins, mean, sigma)
+            self.gr.plot(bins, best_fit_line*scale, '-r')
 
     def error_bar(self, x_err, y_err, yerr, color_err, ms=10, capsize=5):
         # Create error bar
