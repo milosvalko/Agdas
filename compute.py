@@ -352,7 +352,7 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.service.currentText() == 'IERS':
 
             # finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
-            finals_path = os.path.join(os.getcwd(), 'finals', 'finals2000A_iers.all.csv')
+            finals_path = os.path.join(script_path, 'finals', 'finals2000A_iers.all.csv')
             url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
 
             if time() - os.path.getmtime(finals_path) > 604800:
@@ -364,7 +364,7 @@ class Compute(QtWidgets.QDialog, PATH):
         if self.service.currentText() == 'Naval Observatory':
 
             # finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
-            finals_path = os.path.join(os.getcwd(), 'finals', 'finals2000A_naval.all.csv')
+            finals_path = os.path.join(script_path, 'finals', 'finals2000A_naval.all.csv')
             url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
 
             if time() - os.path.getmtime(finals_path) > 604800:
