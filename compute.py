@@ -4,7 +4,7 @@ from PyQt5 import uic, QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QLabel
 from time import sleep, time
 from warning import Warning
-from classes import Fall, projectFile, rawFile, dropFile, estim, matr_db, res_final, Graph, Compare_gsoft_agdas
+from classes import Fall, projectFile, rawFile, dropFile, matr_db, res_final, Graph, Compare_gsoft_agdas
 from CONFIG import getFG5X, getFG5, matrDatabase, statistic, separator, headers, logo_picture, round_line_ind, \
     warning_window, tau, languages
 import sqlite3 as sql
@@ -35,9 +35,37 @@ PATH, _ = uic.loadUiType(script_path + '\gui\compute.ui')
 # matplotlib.rc('font', **font)
 
 class Compute(QtWidgets.QDialog, PATH):
+    """
+    This class serves for the main run of Agdas. Drops measuring is processed, statistics are computed and outputs are generated - graphs and files.
+    """
 
-    def __init__(self, path, stationData, instrumentData, processingResults, gravityCorrections, header2, rawlines,
-                 header1, projDirPath, setFile):
+    def __init__(self, path: str, stationData: dict, instrumentData: dict, processingResults: dict, gravityCorrections: dict, header2: str, rawlines: list,
+                 header1: str, projDirPath: str, setFile: str):
+        """
+
+        Parameters
+        ----------
+        path: str
+            path to source data
+        stationData: dict
+            data from project file
+        instrumentData: dict
+            data from project file
+        processingResults: dict
+            data from project file
+        gravityCorrections: dict
+            data from project file
+        header2: str
+            names of columns in Raw file
+        rawlines: list
+            measuring from Raw file
+        header1: str
+            first line from Raw file, with number of sets, drops...
+        projDirPath: str
+            output folder
+        setFile: str
+            path to set file
+        """
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(logo_picture))
@@ -114,10 +142,27 @@ class Compute(QtWidgets.QDialog, PATH):
         self.show()
         self.exec()
 
+    def set_rejsgima(self):
+        self.rejsig = float(self.rejsigma.toPlainText())
+
+    # def set_setup_height_ui(self):
+    #
+    #     self.set_height.setText(self.stationData['setupHeight'])
+
+    # def set_fubi_freq_ui(self):
+    #
+    #     self.rub_freq.setText(self.instrumentData['rubiFreq'])
+
     def set_nforfft(self):
+        """
+        Compute n for fft and it as self.nforfft.
+        """
         self.nforfft = round(self.frmax / (4 * self.tt[self.frmax - 1]))
 
     def set_tool_tip(self):
+        """
+        Set tooltips for widgets.
+        """
 
         self.label_3.setToolTip('Drop is accepted if σ * set_std > abs(avr_gtopcor_by_set - drop_gtopcor)')
         self.label_7.setToolTip('Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
@@ -126,9 +171,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def set_graph_language(self):
         """
-        Read ini files from "graphs_languages" and save it to graph_lang as dictionary
-        :param lang: requiered language for graphs
-        :return:
+        Read ini files from "graphs_languages" and save it to graph_lang as dictionary.
         """
 
         # # find shortcut of language, "languages" is imported from functions.py
@@ -141,23 +184,16 @@ class Compute(QtWidgets.QDialog, PATH):
         self.graph_lang = configparser.ConfigParser()
         self.graph_lang.read(filenames=lang_path, encoding='utf-8')
 
-    # def fill_output_language(self):
-    #     self.output_language.addItems(list(languages.values()))
-    #
-    #     ii = 0
-    #     for i in languages:
-    #         if languages[i] == 'English':
-    #             self.output_language.setCurrentIndex(ii)
-    #             break
-    #         ii += 1
 
     def set_lcable_ui(self):
+        """
+        Set L cable lenght from GUI - lcable_ar
+        """
         self.lcable = float(self.lcable_ar.toPlainText())
 
     def automatic_detection_gravimeter(self):
         """
-        set gravimeter automatically by count of processed fringes
-        @return:
+        Set gravimeter automatically by number of processed fringes.
         """
         if int(self.processingResults['multiplex']) * int(self.processingResults['scaleFactor']) * int(
                 self.processingResults['totalFringes']) > 1e6:
@@ -168,13 +204,12 @@ class Compute(QtWidgets.QDialog, PATH):
     def set_sensitivity_intervals(self):
         """
         This method sets intervals for computing of sensitivity. This is change against solution with prescale
-        factor. This solution is based only on frmin, frmax and total count of fringes.
+        factor. This solution is based only on frmin, frmax and total number of fringes.
         """
         # 10 percent from "Total Fringes Acquired"
         INTsens = int(self.total_fringes / 10)
 
         self.sens_tn = 1  # Sensitivity top - minimum
-        self.sens_tx = self.frmin + INTsens  # Sensitivity top - maximum
         self.sens_tx = self.frmin + INTsens  # Sensitivity top - maximum
 
         self.sens_bn = self.frmax - INTsens  # Sensitivity bottom - minimum
@@ -192,46 +227,86 @@ class Compute(QtWidgets.QDialog, PATH):
         self.sensa_bx = self.frmax + int(self.total_fringes * 0.05)  # Sensitivity bottom - maximum (for rms computing)
 
     def set_frmaxplot(self):
+        """
+        Set frmaxplot - max range for graphs.
+        """
         self.frmaxplot = self.gravimeter['frmaxplot']
 
     def set_total_fringes(self):
+        """
+        Set number of fringes.
+        """
         self.total_fringes = int(self.processingResults['totalFringes'])
 
     def set_frmin_frmax(self):
+        """
+        Set frmin - first fringe and frmax - last fringe. Loaded from GUI - frminT, frmaxT.
+        """
 
         self.frmin = int(self.frminT.toPlainText())
 
         self.frmax = int(self.frmaxT.toPlainText())
 
     def set_multiplex_ui(self):
+        """
+        Set Multiplex from Project file.
+        """
         self.multiplex.setText(self.processingResults['multiplex'])
 
     def set_scalefactor_ui(self):
+        """
+        Set Scale factor from Project file.
+        """
         self.scaleFactor.setText(self.processingResults['scaleFactor'])
 
     def set_prescale_ui(self):
+        """
+        Set Prescale to GUI.
+        """
         self.preScale.setText(
             str(int(self.processingResults['scaleFactor']) * int(self.processingResults['multiplex'])))
 
     def set_frminT_ui(self):
+        """
+        Set frmin to GUI.
+        """
         self.frminT.setText(str(self.gravimeter['frmin']))
 
     def set_frmaxT_ui(self):
+        """
+        Set frmax to GUI.
+        """
         self.frmaxT.setText(str(self.gravimeter['frmax']))
 
     def set_gradient_ui(self):
+        """
+        Set gradient to GUI.
+        """
         self.grad.setText(self.stationData['gradient'])
 
     def set_modulation_frequency_ui(self):
+        """
+        Set modulation frequency to GUI.
+        """
         self.fmodf.setText(str(self.gravimeter['fmodf']))
 
     def set_lpar_ui(self):
+        """
+        Set length of L cable to GUI.
+        """
         self.lpar.setText(str(self.gravimeter['Lpar']))
 
     def set_pole_corr_ui(self):
+        """
+        Set polar correction to GUI.
+        """
         self.poleCorr_file.setText(self.gravityCorrections['polarMotion'])
 
     def set_ui(self):
+        """
+        Setup values to GUI.
+        """
+
         self.set_multiplex_ui()
         self.set_scalefactor_ui()
         self.set_prescale_ui()
@@ -243,8 +318,13 @@ class Compute(QtWidgets.QDialog, PATH):
         self.set_pole_corr_ui()
         self.set_frmin_t()
         self.set_frmax_t()
+        # self.set_fubi_freq_ui()
 
     def set_frmin_t(self):
+        """
+        Set time of first fringe to GUI.
+        """
+
         try:
             frmin = int(self.frminT.toPlainText())
         except ValueError:
@@ -257,6 +337,10 @@ class Compute(QtWidgets.QDialog, PATH):
             self.frminT_t.setText('out')
 
     def set_frmax_t(self):
+        """
+        Set time of first fringe to GUI.
+        """
+
         try:
             frmax = int(self.frmaxT.toPlainText())
         except ValueError:
@@ -270,7 +354,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def set_gravimeter(self):
         """
-        set gravimeter and rewrite ui
+        set gravimeter and rewrite ui.
         """
 
         grav = self.gravimeter_box.currentText()
@@ -285,35 +369,33 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def setPrescale(self, ps):
         """
-        Setter of prescale
-        :param ps:
+        Set prescale.
         """
         self.ps = ps
 
     def setDelimiter(self):
         """
-        Setter of delimiter for printing text files
-        :param delimiter: character, for example ;
+        Set delimiter for printing text files.
         """
         self.delimiter = self.delimiter_combox.currentText()
 
     def currentSet(self):
         """
-        Show count of drops in sets, when split on sets is giving by the user
+        Show number of drops in sets, when split on sets is giving by the user.
         """
         s = self.numDrop.value() / int(self.sets_choose.currentText())
         self.sets_view.setText(str(int(s)))
 
     def disabledSplit(self):
         """
-        Change QComboBox Enabled/Disabled by click on the checkbox
+        Change QComboBox Enabled/Disabled by click on the checkbox.
         """
         a = self.sets_choose.isEnabled()
         self.sets_choose.setDisabled(a)
 
     def DisStat(self):
         """
-        This method set possible choice of sets to QComboBox
+        This method set possible choice of sets to QComboBox.
         """
         if self.numDrop.value() > 0:
             self.outputs.setDisabled(False)
@@ -331,7 +413,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def numDrops(self):
         """
-        Set all drops for computing
+        Set all drops for computing.
         """
         check = self.allDrop.isChecked()
         self.numDrop.setRange(1, self.ndrops)
@@ -346,7 +428,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def downloadPole(self):
         """
-        Download pole coordinates from IERS/naval and compute corrections for each drop
+        Download pole coordinates from IERS/Naval observatory and compute polar correction for each drop.
         """
 
         if self.service.currentText() == 'IERS':
@@ -469,7 +551,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def defineSets(self):
         """
-        Generate user define split to sets
+        Generate user defined split to sets.
         """
 
         drops = self.numDrop.value()
@@ -490,7 +572,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def drop(self):
         """
-        Open and read drop file
+        Open and read drop file.
         """
         for dropfile in glob.glob(self.path + '\*.drop.txt'):
             d = dropFile(dropfile)
@@ -499,8 +581,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def Run(self):
         """
-        In this method is managed the whole calculating
+        In this method is managed the whole calculating.
         """
+
         # set color of text - i am stil running
         self.calc_time.setStyleSheet('color: black; font-size: 10pt')
         # set color of RUN button on green
@@ -525,6 +608,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # Set sensitivity intervals
         self.set_sensitivity_intervals()
+
+        self.set_rejsgima()
 
         # clear the logging window?
         if self.clwin.isChecked():
@@ -930,8 +1015,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def sensitivity_file1(self):
         """
-        print sens1.csv file
-        :return:
+        Print sens1.csv file.
         """
 
         path = self.projDirPath + '/Files/' + self.stationData['ProjName'] + '_sens1.csv'
@@ -956,8 +1040,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def sensitivity_file2(self):
         """
-        print sens2.csv file
-        :return:
+        Print sens2.csv file.
         """
 
         header = """ Start{0}   delta_g{0}    Final{0}   delta_g 
@@ -1000,7 +1083,6 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Distance calculation for fringe with time t.
         Computing medians of v0 and g0 by sets.
-        :return:
         """
         self.logWindow.append(separator)
         self.logWindow.append('Distance calculation for fringe with time t')
@@ -1034,8 +1116,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def notification(self):
         """
-        Show notification about end of calculating
-        :return:
+        Show notification about end of calculating.
         """
         logo_path = os.path.join(script_path, 'picture', 'logo.ico')
         g = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1')[0][0]
@@ -1047,6 +1128,9 @@ class Compute(QtWidgets.QDialog, PATH):
         t.show()
 
     def matlog_file(self):
+        """
+        Print "matlog" file.
+        """
         line = []
         line.append(self.stationData['ProjName'])
         line.append(self.instrumentData['meterType'])
@@ -1115,6 +1199,9 @@ class Compute(QtWidgets.QDialog, PATH):
         a.close()
 
     def get_count_gradients(self):
+        """
+        Get number of filtered gradient.
+        """
 
         gradients = self.matr_connection.get('select Gradient from results where Accepted = 1')
         vggp2 = np.mean(gradients)
@@ -1124,7 +1211,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         c = 0
         for i in gradients:
-            if abs(vggp2 - i[0]) < 3 * mggp2:
+            if abs(vggp2 - i[0]) < self.rejsig * mggp2:
                 c += 1
                 vggp3_list.append(i[0])
 
@@ -1134,8 +1221,14 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def get_avg_press(self):
         """
+        Get weight average of pressure.
 
-        @return: m: weight average of pressure
+        Returns
+        -------
+        m: float
+            weight average of pressure
+        press: list
+            values of pressure from Drop file
         """
         m = 0
         press = []
@@ -1149,8 +1242,11 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def get_duration(self):
         """
-
-        @return: d: count of hours between first and final drop
+        Get number of hours between first and final drop
+        Returns
+        -------
+        d: float
+            number of hours between first and final drop
         """
 
         d = self.matr_connection.get('select Date from results where n = 1 or n = {}'.format(self.ndrop))
@@ -1171,14 +1267,22 @@ class Compute(QtWidgets.QDialog, PATH):
 
         return d
 
-    def allanGraph(self, a, tau, path, type):
+    def allanGraph(self, a: list, tau: list, path: str, type: str):
         """
-        Create loglog graph of allan standard deviations
+        Create loglog graph of allan standard deviations.
 
-        @param a: result of allan function
-        @param tau: list with counts of intervals
-        @param path: path for saving graphs
+        Parameters
+        ----------
+        a : list
+            result of allan function
+        tau : list
+            list with number of intervals
+        path : str
+            output folder
+        type : str
+            normalized data/VGG
         """
+
         p = plt
         p.loglog(tau[:len(a)], [i[0] for i in a], '.r', ms=20)
         p.loglog(tau[:len(a)], [a[0][0] / np.sqrt(tau[i]) for i in range(len(a))], '-r')
@@ -1216,14 +1320,18 @@ class Compute(QtWidgets.QDialog, PATH):
         p.savefig(path)
         plt.close()
 
-    def graphAllan1(self, data, title, ylabel, name):
+    def graphAllan1(self, data: list, title: str, ylabel: str, name: str):
         """
-        Create graph with drop data
+        Create graph with drop data.
 
-        @param data: list of plotting data
-        @param title: title of the graph
-        @param ylabel:
-        @param name: name of the graph
+        data : list
+            list of plotting data
+        title : str
+            title of the graph
+        ylabel : str
+            y label
+        name: str
+            name of the graph
         """
         median = np.median(data)
         data_centered = [i - median for i in data]  # data centered on median
@@ -1245,7 +1353,8 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphSpectrumRatio(self):
         """
-        Compute 2 subplot in one graph
+        Graph - spectrum_ratio.
+        Plot 2 subplot in one graph
         1) FFT of average and average of FFT
         2) their ratio
         """
@@ -1287,7 +1396,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphSpectrumParts(self):
         """
-
+        Spectrum comparison for 2 parts of drops. Graph - spectrum_parts. Graph1 - Amplitude, graph2 - Ratio.
         """
         # frmin = self.gravimeter['frmin']
         # frmax = self.gravimeter['frmax']
@@ -1347,6 +1456,14 @@ class Compute(QtWidgets.QDialog, PATH):
         plt.close()
 
     def graph_spectrum(self, type: str):
+        """
+        Create graphs - spectrum and spectrum_avr.
+
+        Parameters
+        ----------
+        type : str
+            spectrum/spectrum_avr
+        """
 
         if type == 'spectrum':
             x_by_sets = self.yfsa
@@ -1400,6 +1517,9 @@ class Compute(QtWidgets.QDialog, PATH):
         p.close()
 
     def graphResidualsGradient(self):
+        """
+        Graph of residuals from gradient fit. Graph - residuals_gradient.
+        """
 
         # self.resgradsum4Mean = np.loadtxt('resgradsum4x.csv', delimiter = ';')
         yl = 0.75
@@ -1452,6 +1572,9 @@ class Compute(QtWidgets.QDialog, PATH):
         mpb.use('Qt5Agg')
 
     def graphResiduals(self):
+        """
+        Graph of residuals. Graph - residuals.
+        """
 
         yl = 0.75  # ylimit
         resm0 = [0, 0]
@@ -1498,6 +1621,10 @@ class Compute(QtWidgets.QDialog, PATH):
         mpb.use('Qt5Agg')
 
     def allResGraph(self):
+        """
+        Graph of all residuals. Graph - resid_all.
+        """
+
         import matplotlib as mpb
         mpb.use('ps')
 
@@ -1534,8 +1661,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphResidualsBySets(self):
         """
-        Printing shifted residuals by sets to graph
+        Printing shifted residuals by sets to graph. Graph - residuals_shifted.
         """
+
         # frmin = self.gravimeter['frmin']  # start fringe
         # frmax = self.gravimeter['frmax']  # final fringe
         x = self.tt[:self.frmaxplot]  # data for x axis
@@ -1599,7 +1727,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphVGG(self):
         """
-        Create graph of gradients
+        Create graph of gradients. Graph - vgg.
         """
 
         res = self.matr_connection.get('select Gradient, GradientLSTm0, n from results where Accepted = 1')
@@ -1638,8 +1766,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def graphSensitivityStd(self):
         """
-        Variability of set g-values on the choice of first and final fringe
+        Variability of set g-values on the choice of first and final fringe. Graph - sensitivity_std.
         """
+
         # xrange
         ts = np.linspace(1, self.nset, self.nset)
 
@@ -1661,6 +1790,9 @@ class Compute(QtWidgets.QDialog, PATH):
         g.save()
 
     def graphGravityChange(self):
+        """
+        Graph of sensitivity - sensitivity_bottom.
+        """
         Y = []
         X = []
         # l = []
@@ -1707,6 +1839,10 @@ class Compute(QtWidgets.QDialog, PATH):
         del Y
 
     def graphGravityChange_time(self):
+        """
+        Graph of sensitivity - sensitivity_bottom_time.
+        """
+
         Y = []
         X = []
         # l = []
@@ -1751,6 +1887,9 @@ class Compute(QtWidgets.QDialog, PATH):
         del Y
 
     def graphSetG(self):
+        """
+        Graph of sets results - set_g.
+        """
 
         g0 = 1000 * (floor(self.gfinal / 1000))
         x = [0, self.nset + 1]
@@ -1782,6 +1921,9 @@ class Compute(QtWidgets.QDialog, PATH):
         g.save()
 
     def graphRes(self):
+        """
+        Graph of standart deviations for each drop - resid_RMS.
+        """
 
         rms = self.matr_connection.get('select n, ssres from results')
         std = [r[1] for r in rms]
@@ -1810,6 +1952,9 @@ class Compute(QtWidgets.QDialog, PATH):
         # g.save()
 
     def graphParasitic(self):
+        """
+        Graph of parasitic wavelength parameters - parasitic.
+        """
 
         res = self.matr_connection.get('select e_withGR, f_withGR, n from results where Accepted = 1')
 
@@ -1828,7 +1973,15 @@ class Compute(QtWidgets.QDialog, PATH):
         # g.saveSourceData()
         g.save()
 
-    def graphHistogramAccDrops(self, name):
+    def graphHistogramAccDrops(self, name: str):
+        """
+        Histogram of accepted drops. Graphs - median_filter/fully_filtered.
+
+        Parameters
+        ----------
+        name : str
+            median_filter/fully_filtered
+        """
 
         r = self.matr_connection.get('select gTopCor from results where Accepted = 1')
         r = [i[0] for i in r]
@@ -1842,6 +1995,10 @@ class Compute(QtWidgets.QDialog, PATH):
         g.save()
 
     def graphHistogramAccDropsNorm(self):
+        """
+        Histogram of accepted normalized drops. Graphs - median_filter/fully_filtered.
+        """
+
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram_norm', project=self.stationData['ProjName'],
                   x_label=self.graph_lang['histogram_norm']['xlabel'],
                   y_label=self.graph_lang['histogram_norm']['ylabel'],
@@ -1851,6 +2008,9 @@ class Compute(QtWidgets.QDialog, PATH):
         g.save()
 
     def graphEffectiveHeights2(self):
+        """
+        Graph of effective heights - effective_height2.
+        """
 
         y = self.matr_connection.get('select EffHeight + CorToEffHeight from results')
         y = [i[0] for i in y]
@@ -1862,10 +2022,31 @@ class Compute(QtWidgets.QDialog, PATH):
         g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height2'])
         g.save()
 
-    def estimLine(self, X, std, set, drop, m0, date_time):
+    def estimLine(self, X: list, std: list, set: str, drop: str, m0: list, date_time: str):
         """
-        Print result of drop to estim file
+        Generate line of estim file.
+
+        Parameters
+        ----------
+        X : list
+            results of the fit
+        std : list
+            standard deviations of results from the fit
+        set : str
+            number of set
+        drop : str
+            number of drop
+        m0 : list
+            m0 from fit
+        date_time : str
+            date of the drop
+
+        Returns
+        -------
+        dropResult : list
+            line for estim file
         """
+
         dropResult = [set, drop, date_time, m0[0]]
         for i in range(len(X)):
             dropResult.append(X[i])
@@ -1882,6 +2063,9 @@ class Compute(QtWidgets.QDialog, PATH):
         return dropResult
 
     def writeDropsFile(self):
+        """
+        Write drops file.
+        """
 
         r = self.matr_connection.get(
             'SELECT Set1, Drop1, Date, mjd, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight, CorToEffHeight, Accepted from results')
@@ -1911,6 +2095,10 @@ class Compute(QtWidgets.QDialog, PATH):
         a.close()
 
     def printMatlog(self):
+        """
+        Write matlogsets file.
+        """
+
         r = self.matr_connection.get(matrDatabase['matlog'])
 
         a = open(self.setFile, 'r')
@@ -1946,8 +2134,8 @@ class Compute(QtWidgets.QDialog, PATH):
         This method compute allan standart deviation of gTopCor, normres and grad.
         And also creates allan file and deviation and gradient graphs.
         tau is importing from CONFIG
-        :return:
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute allan standard deviation')
         QtCore.QCoreApplication.processEvents()
@@ -1982,6 +2170,10 @@ class Compute(QtWidgets.QDialog, PATH):
                             type='VGG')
 
     def compute_normres(self):
+        """
+        Compute statistics for drops (standard deviations, mean errors, ...). Also call method print_allanFile, printMatlog.
+        """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute statistic by sets')
         QtCore.QCoreApplication.processEvents()
@@ -2045,13 +2237,24 @@ class Compute(QtWidgets.QDialog, PATH):
             self.print_allanFile()
             self.printMatlog()
 
-    def residuals_filter(self, res, grad: bool):
+    def residuals_filter(self, res: list, grad: bool):
         """
-        This method serves for filtering residuals by low pass filter implemented in scipy.signal
-        :param res: mean residuals
-        :param grad: boolean value, True if residuals are from fits for gradient
-        :return:
+        This method serves for filtering residuals by low pass filter implemented in scipy.signal.
+
+        Parameters
+        ----------
+        res : list
+            mean resiudals
+        grad : bool
+            boolean value, True if residuals are from fits for gradient
+
+        Returns
+        -------
+        yn
+        resmmi
+        tinc_filt
         """
+
         # set kalpha for filtering residuals, 1.5*median of all m0
         if grad:
             med = np.median(self.m0grad)
@@ -2084,13 +2287,17 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def set_kcutoff(self):
         """
-        Setting of frequency for signal filtering
-        :return:
+        Setting of frequency for signal filtering.
         """
+
         coff = int(self.coff.toPlainText())
         self.kcutoff = 2 * coff * (self.tt[self.frmaxplot - 1] - self.tt[0]) / self.nforfft
 
     def write_res_final(self):
+        """
+        Write residuals_final, residuals_sets, res_vgg and residuals_final1000 files.
+        """
+
         prescale = int(self.processingResults['multiplex']) * int(self.processingResults['scaleFactor'])
         # it=0
 
@@ -2151,9 +2358,9 @@ class Compute(QtWidgets.QDialog, PATH):
     def reject_by_median_m0(self):
         """
         This method filters drops by their m0.
-        Each drop with m0 > 1.5*median all medians is rejected
-        :return:
+        Each drop with m0 > 1.5*median of all m0 is rejected.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Reject drops by their m0')
         QtCore.QCoreApplication.processEvents()
@@ -2181,9 +2388,10 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def rejectBySigma(self):
         """
-        Reject drops by sigma
-        Reject drops by median
+        Reject drops by sigma.
+        Reject drops by median of m0.
         """
+
         # Print to logWindow
         self.logWindow.append(separator)
         self.logWindow.append('Reject drops with rejsigma>3*std')
@@ -2197,9 +2405,6 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # Count of drops in sets
         n = int(self.processingResults['dropsInSet'])
-
-        # Get rejsigma from GUI
-        rejsigma = float(self.rejsigma.toPlainText())
 
         # Variable for mean residuals
         self.resgradsum4Mean = np.zeros((1, int(self.processingResults['totalFringes'])))
@@ -2220,7 +2425,7 @@ class Compute(QtWidgets.QDialog, PATH):
             acc = True
 
             # accepted if v < sigma*std
-            if abs(j[2] - set_mean) > rejsigma * set_std:
+            if abs(j[2] - set_mean) > self.rejsig * set_std:
                 update = matrDatabase['updateAcc'].format(j[0], j[1])
                 self.matr_connection.insert(update)
 
@@ -2239,6 +2444,7 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Compute mean residuals by sets.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute mean residuals by sets')
         QtCore.QCoreApplication.processEvents()
@@ -2258,24 +2464,26 @@ class Compute(QtWidgets.QDialog, PATH):
         for i in c:
             self.allAcc += i[0]
 
-        it = 0
-        for i in d:
+        for it, i in enumerate(d):
             if i[0] == 1:
                 # mean the residuals
                 self.meanResSets[i[1] - 1, :] += self.allRes[it, :] / c[i[1] - 1][0]
                 self.meanRes[0, :] += self.allRes[it, :self.frmaxplot]
 
-            it += 1
-
         self.meanRes = self.meanRes / self.allAcc
 
-    def fft(self, tin, t_frmin_frmax, residuals):
+    def fft(self, tin: list, t_frmin_frmax: list, residuals: list):
         """
-        This method compute fft
-        :param tin:
-        :param t_frmin_frmax:
-        :param residuals:
-        :return:
+        This method compute fft.
+
+        Parameters
+        ----------
+        tin : list
+            new interval
+        t_frmin_frmax : list
+            times of fringes
+        residuals : list
+
         """
 
         # transformation of residuals = f(t_frmin_frmax) => tin
@@ -2289,6 +2497,7 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Compute fourier transformation for residuals: all res., mean res. by set and mean res.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Fourier transformation')
         QtCore.QCoreApplication.processEvents()
@@ -2365,6 +2574,9 @@ class Compute(QtWidgets.QDialog, PATH):
             a.close()
 
     def print_avr_residuals_spectrum(self):
+        """
+        Write set_spectrum_avr_res file.
+        """
 
         header = 'Frequency'
 
@@ -2396,8 +2608,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def sensitivity(self):
         """
-        Computing of sensitivity
+        Compute sensitivity.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute sensitivity')
         QtCore.QCoreApplication.processEvents()
@@ -2457,8 +2670,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def sensitivity_time(self):
         """
-        Computing of sensitivity
+        Compute sensitivity in time.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute sensitivity - time')
         QtCore.QCoreApplication.processEvents()
@@ -2562,7 +2776,16 @@ class Compute(QtWidgets.QDialog, PATH):
         # np.savetxt('dgltm.csv', self.dgltm, delimiter=';')
         # np.savetxt('dgrtm.csv', self.dgrtm, delimiter=';')
 
-    def Graph_EffHeight_CorToEffHeight(self, project):
+    def Graph_EffHeight_CorToEffHeight(self, project: str):
+        """
+        Write effective_height_corr file.
+
+        Parameters
+        ----------
+        project : str
+            name of campaign
+
+        """
 
         # Get data from database
         res1 = self.matr_connection.get('select EffHeight, CorToEffHeight from results')
@@ -2612,9 +2835,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def parasitic_wave(self):
         """
-        Compute amplitude and phase of the parasitic wave
-        @return:
+        Compute amplitude and phase of the parasitic wave.
         """
+
         self.logWindow.append(separator)
         self.logWindow.append('Compute amplitude and phase of the parasitic wave')
         QtCore.QCoreApplication.processEvents()
@@ -2648,7 +2871,6 @@ class Compute(QtWidgets.QDialog, PATH):
         create subplot graph from results from "parasitic_wave" method
         1) Amplitude
         2) Phase
-        @return:
         """
 
         x = range(1, len(self.ampar) + 1)  # xrange for graphs
@@ -2675,6 +2897,9 @@ class Compute(QtWidgets.QDialog, PATH):
         plt.close()
 
     def graph_sensitivity_top(self):
+        """
+        Graph of sensitivity on the top of drop.
+        """
 
         xlim = [self.frmin]
         ylim = [-20, 20]
@@ -2705,6 +2930,9 @@ class Compute(QtWidgets.QDialog, PATH):
         plt.close()
 
     def graph_sensitivity_top_time(self):
+        """
+        Graph of sensitivity in time on the top of drop.
+        """
 
         xlim = [self.frmin]
         # ylim = [-20, 20]
@@ -2744,8 +2972,8 @@ class Compute(QtWidgets.QDialog, PATH):
         The first part contains content for part from start to table with mean by sets including head of the table.
         The third part contains content from end of the table to end of file.
         The second part is generated in this method from database.
-        :return:
         """
+
         # path of the file
         part1_path = os.path.join(script_path, 'results_dat', 'results_dat_part1.txt')
         part3_path = os.path.join(script_path, 'results_dat', 'results_dat_part3.txt')
@@ -2772,7 +3000,7 @@ class Compute(QtWidgets.QDialog, PATH):
         part1_fill.append(self.stationData['setupHeight'])  # setup height
         part1_fill.append(self.stationData['transferHeight'])  # transfer height
         part1_fill.append(self.stationData['airPressure'])  # nominal air pressure
-        part1_fill.append(self.stationData['barometricFactor'])  # Barometric Admittance Factor
+        part1_fill.append('{:.2f}'.format(float(self.stationData['barometricFactor'])*10))  # Barometric Admittance Factor
         try:
             part1_fill.append('{:.4f}'.format(np.mean(self.x_pole_interp)))  # polar x
         except AttributeError:

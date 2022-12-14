@@ -1,7 +1,25 @@
 import numpy as np
 import os
 
-def getFG5X(ps):
+"""
+Configuration file with headers, sql queries...
+"""
+
+def getFG5X(ps: int):
+    """
+    Set parameters for FG5X
+
+    Parameters
+    ----------
+    ps : int
+        prescale factor
+
+    Returns
+    -------
+    FG5X : dict
+        dictionary with FG5X parameters
+    """
+
     FG5X = {
         'Lpar': 0.122,  # [m] parasitic wavelength
         'frmin': 15 * ps,  # first fringe
@@ -31,6 +49,20 @@ def getFG5X(ps):
 
 
 def getFG5(ps):
+    """
+        Set parameters for FG5
+
+        Parameters
+        ----------
+        ps : int
+            prescale factor
+
+        Returns
+        -------
+        FG5 : dict
+            dictionary with FG5 parameters
+        """
+
     FG5 = {
         'Lpar': 0.044,  # [m] parasitic wavelength
         'frmin': 30 * ps,  # first fringe

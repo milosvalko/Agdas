@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import random
 import os, glob
-from functions import printDict
 import csv
 import sqlite3 as sql
 from CONFIG import matrDatabase, SAE
@@ -21,6 +20,9 @@ import scipy.stats
 script_path = os.path.dirname(os.path.realpath(__file__))
 
 class Fall():
+    """
+    Class for fitting of the drop
+    """
 
     def __init__(self):
         self.c = 2.99792458e+17
@@ -29,90 +31,200 @@ class Fall():
         self.kimp = False
         self.ksae = False
 
-    def set_ksol_k(self, ksol_k):
+    def set_ksol_k(self, ksol_k: bool):
         self.ksol_k = ksol_k
 
-    def set_ksol(self, ksol):
+    def set_ksol(self, ksol: float):
         self.ksol = ksol
 
-    def setFringe(self, times):
+    def setFringe(self, times: list):
         """
         Set measured fringes
-        @param times: list of fringes, fringes are representation by string
-        @return:
+
+        Parameters
+        ----------
+        times : list
+            list of fringes, fringes are representation by string
         """
 
         self.fringe = np.float_((times))
-        # self.fringe=[float(i) for i in times]
 
-    def setLambda(self, Lambda):
+    def setLambda(self, Lambda: str):
         """
         Set wave length
-        @param Lambda: wave length, add as string
-        @return:
+
+        Parameters
+        ----------
+        Lambda : str
+            Wave length of laser
         """
         self.Lambda = float(Lambda)
 
-    def setScaleFactor(self, scaleFactor):
+    def setScaleFactor(self, scaleFactor: str):
+        """
+        Set GuideCard Scale Factor from Project file
+
+        Parameters
+        ----------
+        scaleFactor : str
+        """
         self.scaleFactor = float(scaleFactor)
 
-    def setMultiplex(self, multiplex):
+    def setMultiplex(self, multiplex: str):
+        """
+        Set GuideCard Multiplex from Project file
+
+        Parameters
+        ----------
+        multiplex : str
+        """
         self.multiplex = float(multiplex)
 
-    def setGradient(self, grad):
+    def setGradient(self, grad: str):
+        """
+        Set Gradient from Project file
+
+        Parameters
+        ----------
+        grad : str
+        """
         self.gradient = -100 * float(grad) * 1e-8
 
-    def setModulFreq(self, fmod):
-        self.fmod = float(fmod)
+    def setModulFreq(self, fmod: float):
+        """
+        Set Modulation frequency from GUI - fmodf
 
-    def setLpar(self, Lpar):
+        Parameters
+        ----------
+        fmod : float
+        """
+        self.fmod = fmod
+
+    def setLpar(self, Lpar: float):
+        """
+        Set Parasitic wave length from GUI - lpar
+
+        Parameters
+        ----------
+        Lpar : float
+        """
         self.Lpar = Lpar
 
-    def setRubiFreq(self, freq):
+    def setRubiFreq(self, freq: str):
+        """
+        Set Rubidium Frequency from Project file - Instrument data
+
+        Parameters
+        ----------
+        freq : str
+        """
         self.rubiFreq = float(freq)
 
-    def setFrRange(self, frmin, frmax):
+    def setFrRange(self, frmin: int, frmax: int):
+        """
+        Set first and last fringe
+
+        Parameters
+        ----------
+        frmin : int
+            index of first fringe
+        frmax : int
+            index of last fringe
+        """
         self.frmin = frmin - 1
         self.frmax = frmax
 
-    # def setFRssRange(self, frmaxss, frminss):
-    #     self.frmaxss = frmaxss
-    #     self.frminss = frminss - 1
+    def setKpar(self, kpar: bool):
+        """
+        The method set if parasitic wavelength correction should be included
 
-    def setKpar(self, kpar):
+        Parameters
+        ----------
+        kpar : bool
+        """
         self.kpar = kpar
 
     def checkKDIS(self):
+        """
+        Enable cable dispersion correction
+        """
         self.kdis = True
 
     def checkKIMP(self):
+        """
+        Enable impedance mismatch correction
+        """
         self.kimp = True
 
     def checkKSAE(self):
         """
-        This method set if sae correction should be compute
-        @return:
+        Enable self-attraction correction
         """
         self.ksae = True
 
-    def setLcable(self, Lcable):
+    def setLcable(self, Lcable: float):
+        """
+        Set length of L cabel - GUI - lcable_ar
+
+        Parameters
+        ----------
+        Lcable : float
+
+        """
         self.Lcable = Lcable
 
-    def setAcable(self, Acable):
+    def setAcable(self, Acable: float):
+        """
+        Set A cable from GONFIG
+
+        Parameters
+        ----------
+        Acable : float
+
+        """
         self.Acable = Acable
 
     def setPcable(self, Pcable):
+        """
+        Set P cable from GONFIG
+
+        Parameters
+        ----------
+        Pcable : float
+
+        """
         self.Pcable = Pcable
 
     @staticmethod
-    def computeLST(A, z, frmin, frmax):
+    def computeLST(A: np.ndarray, z: np.ndarray, frmin: int, frmax: int):
         """
 
-        @param A: matrix of derivations
-        @param z: vector of measuring
-        @param frmin: first fringe
-        @param frmax: last fringe
-        @return:
+        Parameters
+        ----------
+        A : np.ndarray
+            matrix of derivations
+        z : np.ndarray
+            vector of measuring
+        frmin : int
+            first fringe
+        frmax : int
+            last fringe
+
+        Returns
+        -------
+        x : tuple
+            return value from numpy.linalg.lstsq()
+        covar : np.ndarray
+            covariance matrix
+        m02 : float
+            m02=res*res'/(frmax-frmin-k)
+        std : float
+            standard deviation of fit
+        stdX : standard deviation of fitted unknow values
+        res : np.ndarray
+            residuals for fringes, res=z-A*X
+        m0 : float
+            m0 computed from fringes in [frmin, frmax] range
         """
 
         x = np.linalg.lstsq(A, z, rcond=None)  # solution of LST
@@ -133,7 +245,6 @@ class Fall():
         # """
         """
         This method compute all of fits by least square method and set all of important variable as variable of class Fall
-        @return:
         """
 
         # count of fringe use for computing
@@ -301,7 +412,6 @@ class Fall():
     def effectiveHeight(self):
         """
         Effective height of measuring
-        @rtype:
         """
         self.h = -(self.g0_Gr - self.g0) / self.gradient
 
@@ -331,13 +441,28 @@ class Fall():
         self.gTopCor = self.gTop + 10 * float(tide) + 10 * float(load) + 10 * float(baro) + 10 * polar
 
 class projectFile():
+    """
+    Read Project file and create dictionary --stationData
+        --instrumentData
+        --processingResults
+        --gravityCorrections
+        --self.names_summary
+        --self.units
+    """
 
     def __init__(self, projectfile):
+        """
+
+        Parameters
+        ----------
+        projectfile : str
+            path to Project file
+        """
         self.projectfile = projectfile
 
     def read(self):
         """
-        Read project file word by word and create 'self.file' list
+        Read project file word by word and create 'self.file' list.
         """
         self.file = []
         self.names = []
@@ -354,12 +479,19 @@ class projectFile():
             self.names.extend(ind)
             i += 1
 
-    def insert_to_names(self, dict, i):
+    def insert_to_names(self, dict: dict, i: str):
         """
         This method collects name of lines from project file for summary
-        @param dict: dictionary of values
-        @param i: index of line in raw file
-        @return:
+
+        Parameters
+        ----------
+        dict : dict
+            dictionary of values
+        i : index of line in raw file
+
+        Returns
+        -------
+
         """
         ind = self.file_lines[self.names[i]].index(':')
         name = self.file_lines[self.names[i]][:ind + 1]
@@ -368,23 +500,33 @@ class projectFile():
     def insert_to_units(self, dict, i):
         """
         This method collects units of values for summary
-        @param dict: dictionary of values
-        @param i: index of line in project file
-        @return:
+
+        Parameters
+        ----------
+        dict : dict
+            dictionary of values
+        i : index of line in raw file
+
+        Returns
+        -------
+
         """
         self.units[list(dict.keys())[-1]] = self.file[i+2]
 
     def createDictionary(self):
         """
-        This method create dictionaries with data from raw file
-        @return:
-        --stationData
-        --instrumentData
-        --processingResults
-        --gravityCorrections
-        --self.names_summary
-        --self.units
+        This method create dictionaries with data from Raw file
+
+        Returns
+        -------
+        stationData : dict
+        instrumentData : dict
+        processingResults : dict
+        gravityCorrections : dict
+        self.names_summary : dict
+        self.units : dict
         """
+
         stationData = {}
         instrumentData = {}
         processingResults = {}
@@ -674,18 +816,24 @@ class projectFile():
 
 
 class rawFile():
+    """
+    Read Raw file
+    """
 
-    def __init__(self, rawfile):
+    def __init__(self, rawfile: str):
         """
 
-        @param rawfile: path of rawfile
+        Parameters
+        ----------
+        rawfile : str
+            path of rawfile
         """
         self.rawfile = rawfile
         self.read()
 
     def read(self):
         """
-        Read raw file from direction
+        Read raw file from direction.
         """
         raw = open(self.rawfile, 'r')
         self.raw_lines = raw.read().splitlines()
@@ -694,29 +842,49 @@ class rawFile():
     def rawHeader2(self):
         """
         Return second line of header from raw file
+
+        Returns
+        -------
+        header2 : list
         """
         return self.raw_lines[1].split()
 
     def rawHeader1(self):
         """
         Return first line of header from raw file
+
+        Returns
+        -------
+        header1 : list
         """
         return self.raw_lines[0].split()
 
     def rawLines(self):
         """
         Return lines of raw file
+        Returns
+        -------
+        lines : list
+            All lines except headers
         """
+
         return self.raw_lines[2:]
 
 
 class dropFile():
+    """
+    Read Drop file
+    """
 
     def __init__(self, dropfile):
         """
 
-        @param dropfile: path of drop file
+        Parameters
+        ----------
+        dropfile : str
+            path of Drop file
         """
+
         self.dropfile = dropfile
         self.read()
 
@@ -731,19 +899,40 @@ class dropFile():
     def dropHeader4(self):
         """
         Return fourth header from drop file
+        Returns
+        -------
+        header4 : list
+            4. header
         """
         return self.drop_lines[3].split()
 
     def dropLines(self):
         """
         Return lines of drop file
+        Returns
+        -------
+        lines : list
+            All lines except headers
         """
+
         return self.drop_lines[4:]
 
 
 class estim():
+    """
+    Write estim file
+    """
 
     def __init__(self, path, name):
+        """
+
+        Parameters
+        ----------
+        path : str
+            file path
+        name : str
+
+        """
         header = 'Set {0} Drop {0} m0 {0} z0 {0} z0-std {0} v0 {0} v0-std {0} g0 {0} g0-std {0} a {0} a-std {0} b {0} b-std {0} c {0} c-std {0} d {0} d-std {0} e {0} e-std {0} f {0} f-std '.format(
             ';')
         units = '   {0}    {0} {0} mm {0} mm {0} mm.s-1 {0} mm.s-1 {0} nm.s-2 {0} nm.s-2 {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm {0} nm   '.format(
@@ -784,17 +973,26 @@ class estim():
 
 
 class res_final():
+    """
+    Class for writing outputs
+    """
 
-    def __init__(self, path, header, name, files='/Files/', delimiter=','):
+    def __init__(self, path: str, header: list, name: str, files='/Files/', delimiter=','):
+        """
+
+        Parameters
+        ----------
+        path : str
+            Path of output
+        header : list
+            Headers splitted by delimiter
+        name : str
+            Project name
+        files
+        delimiter
+        """
 
         self.delimiter = delimiter
-        # try:
-        #     os.remove(path+files+name+'.csv')
-        # except FileNotFoundError:
-        #     pass
-        # except PermissionError:
-        #     Warning(error='Close ' + name + '.csv' + '!',icon='critical', title='Warning')
-        #     os.remove(path+files+name+'.csv')
 
         try:
             self.f = open(path + files + name + '.csv', 'w', newline='')
@@ -806,28 +1004,51 @@ class res_final():
             self.f.write(header + '\n')
         # self.f.write(units+'\n')
 
-    def printResult(self, line):
-        # line='{};{};{};{};{};{}'.format(str(i), str(z), str(t), str(tt), str(value), str(fil_value))
-        # line=[i, z, t, tt, value, fil_value]
+    def printResult(self, line: list):
+        """
+        Write row (as list) of output file
 
-        # print(line)
+        Parameters
+        ----------
+        line : list
+            Row of output file
+
+        """
+
         writer = csv.writer(self.f, delimiter=self.delimiter)
         writer.writerow(line)
 
-    def write_line(self, line):
-
+    def write_line(self, line: str):
+        """
+        Write row (as string) of output file
+        Parameters
+        ----------
+        line : str
+            line of output file formated by delimiter
+        """
         self.f.write(line + '\n')
 
     def close(self):
+        """
+        Close connection with the file
+        """
         self.f.close()
 
 
 class matr_db():
+    """
+    Class for work with output database
+    """
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         """
         Create connection with matr database
+        Parameters
+        ----------
+        path : str
+            path of output database
         """
+
         self.matr_db = sql.connect(path)
         self.matr_db.enable_load_extension(True)
         self.matr_db.load_extension(os.path.join(script_path, 'math.dll'))
@@ -838,15 +1059,29 @@ class matr_db():
             pass
         self.insert('DELETE FROM results')
 
-    def insert(self, query):
+    def insert(self, query: str):
         """
-        Execute insert query
+        Execute of query
+        Parameters
+        ----------
+        query : str
+            sql query
+
         """
         self.cursor.execute(query)
 
-    def get(self, query):
+    def get(self, query: str):
         """
-        Return data from database
+        Return database request
+        Parameters
+        ----------
+        query : str
+            query
+
+        Returns
+        -------
+        res : list
+            list of tuples with request
         """
         self.cursor.execute(query)
         res = self.cursor.fetchall()
@@ -866,8 +1101,33 @@ class matr_db():
 
 
 class Graph():
+    """
+    Class for graph plotting
+    """
 
-    def __init__(self, path, name, project, x_label, y_label, title, show, winsize=(11, 4)):
+    def __init__(self, path: str, name: str, project: str, x_label: str, y_label: str, title: str, show: bool, winsize=(11, 4)):
+        """
+
+        Parameters
+        ----------
+
+        path : str
+            path of graph
+        name : str
+            name of graph
+        project : str
+            project name
+        x_label : str
+            label of x ax
+        y_label : str
+            label of y ax
+        title : str
+            title of graph
+        show : bool
+            open graph after plot
+        winsize : tuple
+            size of graph
+        """
         # Create graph
         self.gr = plt
         self.gr.rcParams['figure.dpi'] = 500
@@ -882,16 +1142,44 @@ class Graph():
         self.title = title
 
     def decimal(self, decimal_number: int):
+        """
+        Set decimal number for y ax
 
+        Parameters
+        ----------
+        decimal_number : int
+            decimal number
+
+        """
         ax = self.gr.gca()
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.{}f'.format(decimal_number)))
 
     def x_ax_int(self):
+        """
+        Set integers at x ax
+        """
 
         ax = self.gr.gca()
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    def plotXY(self, x, y, mark, columns_name=[], legend=[], lw=0):
+    def plotXY(self, x: list, y: list, mark: list, columns_name=[], legend=[], lw=0):
+        """
+
+        Parameters
+        ----------
+        x : list
+            list of lists, x = [x1, ..., x2]
+        y : list
+            list of lists, y = [y1, ..., y2]
+        mark : list
+            list of markers
+        columns_name
+        legend : list
+            list of legends
+        lw : float
+            line width
+
+        """
         # Plot XY data
         self.x = x
         self.y = y
@@ -907,81 +1195,18 @@ class Graph():
         if len(legend) > 0:
             self.gr.legend(legend, loc='upper right')
 
-    def saveSourceData(self):
-        # Save source data to csv file
-        err = False
-        try:
-            self.x.append(self.x_err)
-            self.y.append(self.y_err)
-            self.columns_name.append('err')
-            err = True
-        except:
-            pass
+    def histogram(self, hist_data: list, fit: bool):
+        """
+        Plot histogram from data in list
 
-        hist = False
-        try:
-            self.x.append(self.hist_data)
-            # self.columns_name.append('hist')
-            hist = True
-        except:
-            pass
+        Parameters
+        ----------
+        hist_data : list
+            input data
+        fit : bool
+            True - fit by Gaussian curve
 
-        # Write graph source data to file
-        try:
-            d = open(self.path + '/' + self.project + '_' + self.name + '.csv', 'w', encoding='utf-8')
-        except PermissionError:
-            Warning(error='Close ' + self.project + '_' + self.name + '.csv' + '!', icon='critical', title='Warning')
-            d = open(self.path + '/' + self.project + '_' + self.name + '.csv', 'w', encoding='utf-8')
-
-        h = ''
-        try:
-            for i in self.columns_name:
-                h += i + '_x'
-                h += ';'
-                h += i + '_y'
-                h += ';'
-            if err:
-                h += 'err' + ';'
-            if hist:
-                h += 'hist'
-            d.write(h + '\n')
-
-            n = max([len(i) for i in self.x])
-
-            for i in range(n):
-                l = []
-                for j in range(len(self.y)):
-
-                    try:
-                        l.append(self.x[j][i])
-                    except IndexError:
-                        self.x[j].append('')
-                        l.append(self.x[j][i])
-
-                    try:
-                        l.append(self.y[j][i])
-                    except IndexError:
-                        self.y[j].append('')
-                        l.append(self.y[j][i])
-
-                ll = ''
-                for k in l:
-                    ll += str(k)
-                    ll += ';'
-
-                if err:
-                    ll += str(self.yerr[i]) + ';'
-                if hist:
-                    ll += str(self.hist_data[i])
-                ll += '\n'
-
-                d.write(ll)
-        except AttributeError:
-            pass
-
-        d.close()
-
-    def histogram(self, hist_data, fit):
+        """
         # Create histogram to plot
         self.hist_data = hist_data
 
@@ -1001,7 +1226,26 @@ class Graph():
             best_fit_line = scipy.stats.norm.pdf(bins, mean, sigma)
             self.gr.plot(bins, best_fit_line*scale, '-r')
 
-    def error_bar(self, x_err, y_err, yerr, color_err, ms=10, capsize=5):
+    def error_bar(self, x_err: list, y_err: list, yerr: list, color_err: str, ms=10, capsize=5):
+        """
+        Plot error bar graph
+
+        Parameters
+        ----------
+        x_err : list
+            x coordinates
+        y_err : list
+            y coordinates
+        yerr : list
+            length of error bar
+        color_err : str
+            color of points
+        ms : float
+            marker size
+        capsize : float
+            size of
+
+        """
         # Create error bar
         self.x_err = x_err
         self.y_err = y_err
@@ -1010,15 +1254,42 @@ class Graph():
         self.gr.errorbar(x_err, y_err, yerr, marker='o', color=color_err, ms=ms, linestyle='', capsize=capsize,
                          zorder=0)
 
-    def text(self, x, y, t, c):
+    def text(self, x: list, y: list, t: list, c: list):
+        """
+        Plot text to graph
+
+        Parameters
+        ----------
+        x : list
+            list of lists x coordinates, x = [x1, ..., x2]
+        y : list
+            list of lists y coordinates, y = [y1, ..., y2]
+        t : list
+            list of lists texts, t = [t1, ..., t2]
+        c : list
+            list of lists colors, c = [c1, ..., c2]
+
+        """
         # Text to plot
         for i in range(len(x)):
             self.gr.text(x[i], y[i], t[i], color=c[i])
 
-    def ylim(self, lim):
+    def ylim(self, lim: list):
+        """
+        Set y limits
+
+        Parameters
+        ----------
+        lim : list
+            y limits = [lim1,  lim2]
+
+        """
         self.gr.ylim(lim)
 
     def save(self):
+        """
+        Save graph to path
+        """
         # Save plot to direction as png
         self.gr.xlabel(self.x_label)
         self.gr.ylabel(self.y_label)
@@ -1033,12 +1304,23 @@ class Graph():
 
 class Compare_gsoft_agdas():
     """
-    This class compares values of gravity from G software and Agdas
+    This class compares values of gravity from G software and Agdas.
     The class generates compare_gsoft_agdas.csv file in Files folder with mean, standard deviation,
     max difference and differences between Agdas an g software
     """
 
-    def __init__(self, path, vgg, project):
+    def __init__(self, path: str, vgg: str, project: str):
+        """
+
+        Parameters
+        ----------
+        path : str
+            path of output folder
+        vgg : str
+            Gradient from Project file
+        project :
+            Project name
+        """
         self.gsoft = [] #
         self.agdas = []
         self.set = []
@@ -1048,7 +1330,18 @@ class Compare_gsoft_agdas():
         self.path_hist = os.path.join(path, 'Graphs')
         self.project = project
 
-    def add_gsoft(self, drop, hef):
+    def add_gsoft(self, drop: dict, hef: float):
+        """
+        Reduce corrections of gsoft results and add to gsoft list
+
+        Parameters
+        ----------
+        drop : dict
+            line of drop file in dictionary structure
+        hef : float
+            g in effective height
+
+        """
         self.set.append(drop['Set'])
         self.drp.append(drop['Drp'])
 
@@ -1061,10 +1354,29 @@ class Compare_gsoft_agdas():
 
         self.gsoft.append(ffa_gsoft_hef)
 
-    def add_agdas(self, EfH):
+    def add_agdas(self, EfH: float):
+        """
+        Add g to agdas
+        Parameters
+        ----------
+        EfH : float
+            g in effective height
+
+        """
         self.agdas.append(EfH / 10)
 
-    def print_file(self, acc, delimiter):
+    def print_file(self, acc: list, delimiter: str):
+        """
+        Write file with differences between Agdas and g-soft
+
+        Parameters
+        ----------
+        acc : list
+            list of tuples, bool, true - accepted
+        delimiter : str
+            delimiter for writing output file
+
+        """
 
         # compute absolute value of differences for accepted drops
         self.diff_abs = [abs(self.gsoft[i] - self.agdas[i]) for i in range(len(self.gsoft)) if acc[i][0] == 1]
@@ -1092,7 +1404,16 @@ class Compare_gsoft_agdas():
 
         file.close()
 
-    def print_histogram(self, graph_lang):
+    def print_histogram(self, graph_lang: list):
+        """
+        Plot histogram of differences
+
+        Parameters
+        ----------
+        graph_lang : list
+            differences
+
+        """
         g = Graph(path=self.path_hist, name=self.project + '_histogram_compare_gsoft_pyagdas', project='',
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
                   title=graph_lang['histogram_diff']['title'],

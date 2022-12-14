@@ -7,7 +7,6 @@ from warning import Warning
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QSplashScreen
 from PyQt5.QtGui import QIcon, QPixmap
-from data import Data
 from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
@@ -42,9 +41,9 @@ class Main(QtWidgets.QMainWindow, PATH):
         # self.Process_data_batch.triggered.connect(self.new_Project_batch)
         self.computing.triggered.connect(self.Computing)
         self.viewdata.triggered.connect(self.viewData)
-        self.viewGraphs.triggered.connect(self.viewgraphs)
+        # self.viewGraphs.triggered.connect(self.viewgraphs)
         self.closeProject.triggered.connect(self.closeproject)
-        self.openProject.triggered.connect(self.open_project)
+        # self.openProject.triggered.connect(self.open_project)
 
         self.newproject.clicked.connect(self.new_Project)
 
@@ -55,6 +54,9 @@ class Main(QtWidgets.QMainWindow, PATH):
         # self.Import_data.triggered.connect(self.importdata)
 
     def last_version(self):
+        """
+        Show if new commits are available.
+        """
         last = get_date_last_version()
         file = read_last_version()
 
@@ -63,8 +65,7 @@ class Main(QtWidgets.QMainWindow, PATH):
 
     def finals_folder(self):
         """
-        This method just creates 'finals' folder
-        @return:
+        This method just creates 'finals' folder.
         """
         try:
             os.mkdir('finals')
@@ -73,8 +74,7 @@ class Main(QtWidgets.QMainWindow, PATH):
 
     def set_info(self):
         """
-        Set some information on the main page
-        :return:
+        Set some information about campaign on the main page.
         """
 
         self.campaign.setText(self.newProjectWin.stationData['ProjName'])
@@ -88,8 +88,7 @@ class Main(QtWidgets.QMainWindow, PATH):
     @staticmethod
     def splashScreen():
         """
-        Create splash screen with apple during starting of Agdas
-        :return:
+        Create splash screen with apple during starting of Agdas.
         """
         splash_pix = QPixmap(logo_picture)
         splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
@@ -100,18 +99,17 @@ class Main(QtWidgets.QMainWindow, PATH):
         sleep(1)
         splash.hide()
 
-    def open_project(self):
-        """
-
-        :return:
-        """
-        path = QtWidgets.QFileDialog.getExistingDirectory()
-        self.newProjectWin = NewProject().accept()
+    # def open_project(self):
+    #     """
+    #
+    #     """
+    #     path = QtWidgets.QFileDialog.getExistingDirectory()
+    #     self.newProjectWin = NewProject().accept()
 
     def new_Project(self):
         """
-        This method serves for creating of new project
-        :return:
+        This method serves for creating of new project.
+        Open New project dialog.
         """
         # Open newproject dialog
         self.newProjectWin = NewProject()
@@ -132,8 +130,8 @@ class Main(QtWidgets.QMainWindow, PATH):
 
     def Computing(self):
         """
-        OThis method serves for creating of Compute
-        :return:
+        This method serves for creating of Compute.
+        Open Compute dialog and set input data through constructor.
         """
         try:
             # Open Compute dialog
@@ -152,7 +150,6 @@ class Main(QtWidgets.QMainWindow, PATH):
     def viewData(self):
         """
         This method is for viewing of processed data by DB Browser for SQLite.
-        :return:
         """
 
         try:
@@ -180,16 +177,15 @@ class Main(QtWidgets.QMainWindow, PATH):
         except AttributeError:
             Warning(error='Opened project is necessary!', icon='critical', title='Warning')
 
-    def viewgraphs(self):
-        try:
-            Graphs(self.newProjectWin.pathDir + '/Graphs')
-        except AttributeError:
-            Warning(error=warning_window['import_data'], icon='critical', title='Warning')
+    # def viewgraphs(self):
+    #     try:
+    #         Graphs(self.newProjectWin.pathDir + '/Graphs')
+    #     except AttributeError:
+    #         Warning(error=warning_window['import_data'], icon='critical', title='Warning')
 
     def closeproject(self):
         """
-        This method delete self.newProjectWin variable and change main page
-        :return:
+        This method delete self.newProjectWin variable and change main page.
         """
         try:
             del self.newProjectWin

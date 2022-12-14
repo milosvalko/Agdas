@@ -5,13 +5,23 @@ from math import floor, trunc
 import math, requests, os
 
 
-def allan(data, tau):
+def allan(data: list, tau: list):
     """
-    Allan standard deviation
-    @param data: list with data [x1,...xn]
-    @param tau: list with counts of intervals
-    @return: res: list [[allan, std, count], ...]
+    Allan standard deviation.
+
+    Parameters
+    ----------
+    data : list
+        list with data [x1,...xn]
+    tau : list
+        list with numbers of intervals
+
+    Returns
+    -------
+    res : list
+        [[allan, std, count], ...]
     """
+
     res = []
     for f in tau:
         k = 0
@@ -38,7 +48,7 @@ def allan(data, tau):
     return res
 
 
-def printDict(dict):
+def printDict(dict: dict):
     """
     Just print dictionary in json format in form:
     {
@@ -47,19 +57,32 @@ def printDict(dict):
     .
     key_n : value_n
     }
-    @param dict: python dictionary
+
+    Parameters
+    ----------
+    dict : dict
+
     """
     print(json.dumps(dict, indent=5))
 
 
-def roundList(l, index):
+def roundList(l: list, index: list):
     """
-    Round list for printing into text files
+    Round list for printing into text files.
 
-    @param l: line for rounding
-    @param index: information for rounding, [[position1, number_of_decimal_places1],[position2, number_of_decimal_places2], ...]
-    @return: l: rounded list
+    Parameters
+    ----------
+    l : list
+        line for rounding
+    index : list
+        information for rounding, [[position1, number_of_decimal_places1],[position2, number_of_decimal_places2], ...]
+
+    Returns
+    -------
+    l : list
+        rounded list
     """
+
     for j in index:
         a = '{:.' + str(j[1]) + 'f}'
         if l[j[0]] == '-':
@@ -234,11 +257,17 @@ def jd_to_date(jd):
 
 def rssq(x):
     """
-    Root sum of squares
+    Root sum of squares.
 
-    @param x: numpy matrix m*n
-    @return: res: root sum of squares by m lines
+    Parameters
+    ----------
+    x : np.array
+
+    Returns
+    -------
+    res : list
     """
+
     res = []
 
     for i in range(x.shape[0]):
@@ -253,15 +282,25 @@ def rssq(x):
     return res
 
 
-def movingAverage(x, n=50):
+def movingAverage(x: list, n=50):
     """
-    Return moving average with floating window
+    Return moving average with floating window.
 
-    @param x: list with data
-    @param n: range for moving average (kernel), with n = 50 will be average from 101 values
-    @return: res: moving averages
-    @return: plot_range: range for plotting
+    Parameters
+    ----------
+    x : list
+        list with data
+    n : int
+        range for moving average (kernel), with n = 50 will be average from 101 values
+
+    Returns
+    -------
+    res : list
+        moving averages
+    plot_range : list
+        range for plotting
     """
+
     res = []
     plot_range = []
     for i in range(n, len(x) - n):
@@ -274,10 +313,13 @@ def movingAverage(x, n=50):
 
 def get_date_last_version():
     """
-    Check date of last commit
-    :return: date of last commit
-    0 in case that connection failed
+    Check date of last commit.
+
+    Returns
+    -------
+    date of last commit, 0 in case that connection failed
     """
+
     repo = 'jakubsimek97/Agdas'
     try:
         r = requests.get('https://api.github.com/repos/{0}/commits?per_page=1'.format(repo))
@@ -286,7 +328,16 @@ def get_date_last_version():
         return 0
 
 
-def write_last_version(version_date):
+def write_last_version(version_date: str):
+    """
+    Write last version of repository to last_version.txt
+
+    Parameters
+    ----------
+    version_date : str
+        last version date
+    """
+
     script_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(script_path, 'last_version.txt')
     f = open(path, 'w')
@@ -294,6 +345,14 @@ def write_last_version(version_date):
     f.close()
 
 def read_last_version():
+    """
+    Return date of last version from last_version.txt.
+
+    Returns
+    -------
+    r : str
+        date of last version
+    """
     script_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(script_path, 'last_version.txt')
     f = open(path, 'r')

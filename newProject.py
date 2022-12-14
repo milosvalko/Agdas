@@ -35,28 +35,32 @@ class NewProject(QtWidgets.QDialog, PATH):
 
     def load_test_data(self):
         """
-        load tested data
-        measuring from GO Pecny 02/11/21 by FG5X
-        :return:
+        Load tested data.
+        Measuring from GO Pecny 02/11/21 by FG5X.
         """
         path = os.path.join(script_path, 'test_data')
         self.name.setText(path)
 
     def load_files(self):
         """
-        Get files direction
+        Get files direction.
         """
         self.path = QtWidgets.QFileDialog.getExistingDirectory()
         self.name.setText(self.path)
 
     def saveDir(self):
         """
-        Get direction where will results
+        Get direction where will results.
         """
         self.pathDir = QtWidgets.QFileDialog.getExistingDirectory()
         self.projDirPath.setText(self.pathDir)
 
     def accept(self):
+        """
+        Method will be executed by clicking on OK.
+        In this method Raw file and Project file are read.
+        After reading of files Sumarize dialog is opened.
+        """
 
         if len(self.name.toPlainText()) > 0 and len(self.projDirPath.toPlainText()) > 0:
             try:
