@@ -2388,8 +2388,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def rejectBySigma(self):
         """
-        Reject drops by sigma.
-        Reject drops by median of m0.
+        Reject drops by rejsigma.
         """
 
         # Print to logWindow
@@ -2397,46 +2396,39 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Reject drops with rejsigma>3*std')
         QtCore.QCoreApplication.processEvents()
 
-        # Get mean and v*v by sets from database
-        mean = self.matr_connection.get(statistic['mean:vxv'])
+        for set in range(1, self.nset+1):
 
-        # Get gTopCor from databse
-        res = self.matr_connection.get('select Set1, Drop1, gTopCor, Accepted, n from results where Accepted = 1')
+            # iterative filtering by rejsigma, drop with the biggest difference from the average is rejected and the process is repeated until no drop is rejected
+            max_drop = []
+            while isinstance(max_drop, list):
+                set_std = self.matr_connection.get('select stdev(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
+                set_mean = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
 
-        # Count of drops in sets
-        n = int(self.processingResults['dropsInSet'])
+                max_diff = -1e10
+                max_drop = 0
+                for i, v in enumerate(
+                        self.matr_connection.get('select gTopCor, Set1, Drop1 from results where Set1 = {} and Accepted = 1'.format(set))):
+
+                    diff = abs(v[0] - set_mean)
+                    if diff > self.rejsig * set_std:
+                        if diff > max_diff:
+                            max_diff = diff
+                            max_drop = [v[1], v[2]]
+
+                if isinstance(max_drop, list):
+                    update = matrDatabase['updateAcc'].format(*max_drop)
+                    self.matr_connection.insert(update)
+                    self.matr_connection.commit()
 
         # Variable for mean residuals
         self.resgradsum4Mean = np.zeros((1, int(self.processingResults['totalFringes'])))
 
-        # Calculate standard deviation and average by sets, possible improve with math extension of sql
-        std = []
-        mean1 = []
-        for i in mean:
-            std.append(sqrt(i[3] / (n - 1)))
-            mean1.append(i[2])
+        acc = self.matr_connection.get('select n from results where Accepted = 1')
 
+        for i in acc:
+            self.resgradsum4Mean[0, :] += self.resgradsum4[i[0]-1, :]
 
-        grad4_acc = 0
-        for j in res:
-            set_std = std[j[0] - 1]
-            set_mean = mean1[j[0] - 1]
-
-            acc = True
-
-            # accepted if v < sigma*std
-            if abs(j[2] - set_mean) > self.rejsig * set_std:
-                update = matrDatabase['updateAcc'].format(j[0], j[1])
-                self.matr_connection.insert(update)
-
-                acc = False
-
-            # Filter data if drop is accepted
-            if acc:
-                self.resgradsum4Mean[0, :] += self.resgradsum4[j[4] - 1, :]
-                grad4_acc += 1
-
-        self.resgradsum4Mean = self.resgradsum4Mean / grad4_acc
+        self.resgradsum4Mean = self.resgradsum4Mean / len(acc)
 
         self.matr_connection.commit()
 

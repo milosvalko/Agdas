@@ -1006,7 +1006,7 @@ class res_final():
 
     def printResult(self, line: list):
         """
-        Write row (as list) of output file
+        Write row (as list) of output file.
 
         Parameters
         ----------
@@ -1020,7 +1020,8 @@ class res_final():
 
     def write_line(self, line: str):
         """
-        Write row (as string) of output file
+        Write row (as string) of output file.
+
         Parameters
         ----------
         line : str
@@ -1042,7 +1043,8 @@ class matr_db():
 
     def __init__(self, path: str):
         """
-        Create connection with matr database
+        Create connection with matr database.
+
         Parameters
         ----------
         path : str
@@ -1061,7 +1063,8 @@ class matr_db():
 
     def insert(self, query: str):
         """
-        Execute of query
+        Execute query.
+
         Parameters
         ----------
         query : str
@@ -1072,7 +1075,8 @@ class matr_db():
 
     def get(self, query: str):
         """
-        Return database request
+        Return database request.
+
         Parameters
         ----------
         query : str
