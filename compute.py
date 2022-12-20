@@ -22,6 +22,8 @@ import os
 import configparser
 from winotify import Notification, audio
 import re
+from docx import Document
+from docx.shared import Mm, Pt
 
 # from astropy.stats import sigma_clip, mad_std
 
@@ -30,16 +32,13 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 PATH, _ = uic.loadUiType(script_path + '\gui\compute.ui')
 
 
-# import matplotlib
-# font = {'size' : 18}
-# matplotlib.rc('font', **font)
-
 class Compute(QtWidgets.QDialog, PATH):
     """
     This class serves for the main run of Agdas. Drops measuring is processed, statistics are computed and outputs are generated - graphs and files.
     """
 
-    def __init__(self, path: str, stationData: dict, instrumentData: dict, processingResults: dict, gravityCorrections: dict, header2: str, rawlines: list,
+    def __init__(self, path: str, stationData: dict, instrumentData: dict, processingResults: dict,
+                 gravityCorrections: dict, header2: str, rawlines: list,
                  header1: str, projDirPath: str, setFile: str):
         """
 
@@ -149,9 +148,9 @@ class Compute(QtWidgets.QDialog, PATH):
     #
     #     self.set_height.setText(self.stationData['setupHeight'])
 
-    # def set_fubi_freq_ui(self):
-    #
-    #     self.rub_freq.setText(self.instrumentData['rubiFreq'])
+    def set_fubi_freq_ui(self):
+
+        self.rub_freq.setText(self.instrumentData['rubiFreq'])
 
     def set_nforfft(self):
         """
@@ -165,9 +164,11 @@ class Compute(QtWidgets.QDialog, PATH):
         """
 
         self.label_3.setToolTip('Drop is accepted if σ * set_std > abs(avr_gtopcor_by_set - drop_gtopcor)')
-        self.label_7.setToolTip('Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
+        self.label_7.setToolTip(
+            'Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
         self.complete_out.setToolTip('Check Complete outputs only for more than 3 sets and more than 10 drops in set')
-        self.label_15.setToolTip("Cut-off frequency for filtering residuals in graphs. It doesn't influence the processing")
+        self.label_15.setToolTip(
+            "Cut-off frequency for filtering residuals in graphs. It doesn't influence the processing")
 
     def set_graph_language(self):
         """
@@ -183,7 +184,6 @@ class Compute(QtWidgets.QDialog, PATH):
 
         self.graph_lang = configparser.ConfigParser()
         self.graph_lang.read(filenames=lang_path, encoding='utf-8')
-
 
     def set_lcable_ui(self):
         """
@@ -318,7 +318,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.set_pole_corr_ui()
         self.set_frmin_t()
         self.set_frmax_t()
-        # self.set_fubi_freq_ui()
+        self.set_fubi_freq_ui()
 
     def set_frmin_t(self):
         """
@@ -545,7 +545,7 @@ class Compute(QtWidgets.QDialog, PATH):
             self.y_pole_interp.append(np.polyval(y_para, drop_time))
 
             self.dg.append(-19.139 * np.sin(2 * fi) * (
-                        self.x_pole_interp[-1] * np.cos(lam) - self.y_pole_interp[-1] * np.sin(lam)))
+                    self.x_pole_interp[-1] * np.cos(lam) - self.y_pole_interp[-1] * np.sin(lam)))
 
         # self.poleCorrIERS.setText('<{:.2f}; {:.2f}>'.format(min(self.dg), max(self.dg)))
 
@@ -610,6 +610,8 @@ class Compute(QtWidgets.QDialog, PATH):
         self.set_sensitivity_intervals()
 
         self.set_rejsgima()
+
+        self.rubi_freq = float(self.rub_freq.toPlainText())
 
         # clear the logging window?
         if self.clwin.isChecked():
@@ -737,7 +739,7 @@ class Compute(QtWidgets.QDialog, PATH):
             fall.setModulFreq(float(self.fmodf.toPlainText()))
             # fall.setLpar(self.FG5X['Lpar'])
             fall.setLpar(float(self.lpar.toPlainText()) * 1e9)
-            fall.setRubiFreq(self.instrumentData['rubiFreq'])
+            fall.setRubiFreq(self.rubi_freq)
             fall.setFrRange(self.frmin, self.frmax)
             # fall.setFrRange(frmin,frmax)
             # fall.setFRssRange(self.frmax, frminss)
@@ -999,6 +1001,8 @@ class Compute(QtWidgets.QDialog, PATH):
             self.graphEffectiveHeights2()
             self.allResGraph()
 
+            self.generate_report()
+
             # close estim and estim_grad files
             estim.close()
             estim_grad.close()
@@ -1145,7 +1149,7 @@ class Compute(QtWidgets.QDialog, PATH):
         line.append(self.stationData['gradient'])
         line.append(self.instrumentData['ID'])
         line.append(self.instrumentData['modulFreq'])
-        line.append('0.' + self.instrumentData['rubiFreq'].split('.')[1])
+        line.append('0.' + str(self.rubi_freq).split('.')[1])
         line.append(self.gravimeter['Lpar'] / 1e9)
         line.append(int(self.ksol.isChecked()))
         line.append(int(self.ksae.isChecked()))
@@ -1282,6 +1286,8 @@ class Compute(QtWidgets.QDialog, PATH):
         type : str
             normalized data/VGG
         """
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
 
         p = plt
         p.loglog(tau[:len(a)], [i[0] for i in a], '.r', ms=20)
@@ -1337,11 +1343,14 @@ class Compute(QtWidgets.QDialog, PATH):
         data_centered = [i - median for i in data]  # data centered on median
         median1 = np.median(np.abs(data_centered)) / 0.6745  # median from absolute value of residuals
 
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
+
         p = plt
         p.plot(data_centered, '.', ms=6)
         # p.plot([0, len(data_centered)], [5 * median1, 5 * median1], 'r', lw=0.5)
         # p.plot([0, len(data_centered)], [-5 * median1, -5 * median1], 'r', lw=0.5)
-        p.ylim([-5*median1 - median1, 5*median1 + median1])
+        p.ylim([-5 * median1 - median1, 5 * median1 + median1])
         p.title(title)
         p.xlabel('Drop #', fontsize=20)
         p.ylabel(ylabel, fontsize=20)
@@ -1369,6 +1378,9 @@ class Compute(QtWidgets.QDialog, PATH):
         n = 1
         # ratio of arrays
         ratio = [self.yfdMean[0, i] / self.yffa[i] for i in range(self.yffa.shape[0])]
+
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
 
         # plotting of graph
         p, (ax1, ax2) = plt.subplots(2, 1)
@@ -1434,6 +1446,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
         ratio = [yres1x[i] / yres2x[i] for i in range(yres1x.shape[0])]
 
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
+
         p, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10))
         ax1.loglog(frx, yres1x, '-r', frx, yres2x, '-b', lw=0.5)
         ax1.set(title=self.graph_lang['spectrum_parts']['title'])
@@ -1483,6 +1498,9 @@ class Compute(QtWidgets.QDialog, PATH):
         frk = 2 * fs / (self.nforfft - 3)
 
         fr = np.arange(0, fs + 1, frk)
+
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
 
         p = plt
         p.grid('k', which='minor', lw=0.3)
@@ -1555,7 +1573,7 @@ class Compute(QtWidgets.QDialog, PATH):
         p.xlabel(self.graph_lang['residuals_gradient']['xlabel'], fontsize=15)
         rmax = max(self.resgradsum4Mean[0, 20:self.frmaxplot])
         rmin = min(self.resgradsum4Mean[0, 20:self.frmaxplot])
-        p.ylim([rmin + 0.2*rmin, rmax + 0.2*rmax])
+        p.ylim([rmin + 0.2 * rmin, rmax + 0.2 * rmax])
 
         # first and last fringe
         p.plot(xlim, ylim, '-b')
@@ -1592,7 +1610,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # r = self.matr_connection.get('select Accepted from results')
 
         p = mpb.pyplot
-        p.rcParams['figure.figsize'] = (25, 10)
+        p.rcParams['figure.figsize'] = (8, 7)
 
         p.plot(tt0, resm0, '-k')
         p.plot(xlim, ylim, '-b')
@@ -1720,7 +1738,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.text(x=[x[self.frmin], x[self.frmax]], y=[0.3, 0.3], t=['Start fringe', 'Final fringe'], c=['b', 'b'])
         g.text(x=text_x, y=text_y, t=col_name, c=text_color)
         # g.saveSourceData()
-        g.ylim([0, self.nset+1])
+        g.ylim([0, self.nset + 1])
         g.save()
 
         del X, Y, XX, YY, x
@@ -1754,7 +1772,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'],
                   show=self.open_graphs.isChecked(), x_label=self.graph_lang['vgg']['xlabel'],
                   y_label=self.graph_lang['vgg']['ylabel'],
-                  title=self.graph_lang['vgg']['title'], winsize=(13, 8))
+                  title=self.graph_lang['vgg']['title'], winsize=(8, 7))
         g.error_bar(x, grad, m0, 'r', ms=5, capsize=5)
         g.plotXY(x=[x, moving_avg_x, xlim, xlim, xlim], y=[cumulative_average, moving_average, ylim, yylim, yyylim],
                  mark=['k-', '-b', '-p', '-y', '-y'],
@@ -1886,6 +1904,50 @@ class Compute(QtWidgets.QDialog, PATH):
         del X
         del Y
 
+    def generate_report(self):
+        """
+        Generate report from results.dat and pictures from pictures list.
+        Report is generated to docx file.
+        """
+
+        pictures = ['\*allan1.png', '\*histogram_fully_filtered.png', '\*allan_deviation.png', '\*effective_height.png',
+                    '\*set_g.png', '\*set_std.png', '\*residuals.png', '\*resid_RMS.png', '\*sensitivity_top.png',
+                    '\*sensitivity_bottom.png', '\*spectrum_avr.png', '\*spectrum.png', '\*vgg.png']
+
+        path = os.path.join(self.projDirPath, 'Graphs')
+        path1 = os.path.join(self.projDirPath, 'Files')
+        path1 = glob.glob(path1 + '\*results.dat')
+
+        results = open(path1[0], 'r')
+        results1 = results.read()
+        results.close()
+
+        document = Document()
+        section = document.sections[-1]
+        section.page_height = Mm(210)
+        section.page_width = Mm(297)
+
+        run = document.add_paragraph().add_run(results1)
+        font = run.font
+        font.name = 'Courier New'
+        font.size = Pt(9)
+
+        for i in range(len(pictures)):
+            pic_path = glob.glob(path + pictures[i])
+
+            section = document.sections[-1]
+            section.page_height = Mm(210)
+            section.page_width = Mm(297)
+
+            document.add_picture(pic_path[0])
+
+        try:
+            document.save(os.path.join(self.projDirPath, 'Files', 'report.docx'))
+        except PermissionError:
+            Warning(error='Close the report!', icon='critical', title='Warning')
+
+        document.save(os.path.join(self.projDirPath, 'Files', 'report.docx'))
+
     def graphSetG(self):
         """
         Graph of sets results - set_g.
@@ -1935,9 +1997,9 @@ class Compute(QtWidgets.QDialog, PATH):
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
         g.plotXY(x=[[1, n[-1]]], y=[[self.kalpha_resid_rms, self.kalpha_resid_rms]], mark=['-r'])
-        g.text([n[-1]-10], [self.kalpha_resid_rms + 0.01], [self.graph_lang['resid_RMS']['text']], ['r'])
+        g.text([n[-1] - 10], [self.kalpha_resid_rms + 0.01], [self.graph_lang['resid_RMS']['text']], ['r'])
         # g.saveSourceData()
-        g.ylim([0, self.kalpha_resid_rms*1.5])
+        g.ylim([0, self.kalpha_resid_rms * 1.5])
         g.save()
 
         # acc = self.matr_connection.get('select Accepted from results')
@@ -2131,7 +2193,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
     def print_allanFile(self):
         """
-        This method compute allan standart deviation of gTopCor, normres and grad.
+        This method compute allan standard deviation of gTopCor, normres and grad.
         And also creates allan file and deviation and gradient graphs.
         tau is importing from CONFIG
         """
@@ -2396,18 +2458,21 @@ class Compute(QtWidgets.QDialog, PATH):
         self.logWindow.append('Reject drops with rejsigma>3*std')
         QtCore.QCoreApplication.processEvents()
 
-        for set in range(1, self.nset+1):
+        for set in range(1, self.nset + 1):
 
             # iterative filtering by rejsigma, drop with the biggest difference from the average is rejected and the process is repeated until no drop is rejected
             max_drop = []
             while isinstance(max_drop, list):
-                set_std = self.matr_connection.get('select stdev(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
-                set_mean = self.matr_connection.get('select avg(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
+                set_std = self.matr_connection.get(
+                    'select stdev(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
+                set_mean = self.matr_connection.get(
+                    'select avg(gTopCor) from results where Accepted = 1 and Set1 = {}'.format(set))[0][0]
 
                 max_diff = -1e10
                 max_drop = 0
                 for i, v in enumerate(
-                        self.matr_connection.get('select gTopCor, Set1, Drop1 from results where Set1 = {} and Accepted = 1'.format(set))):
+                        self.matr_connection.get(
+                            'select gTopCor, Set1, Drop1 from results where Set1 = {} and Accepted = 1'.format(set))):
 
                     diff = abs(v[0] - set_mean)
                     if diff > self.rejsig * set_std:
@@ -2426,7 +2491,7 @@ class Compute(QtWidgets.QDialog, PATH):
         acc = self.matr_connection.get('select n from results where Accepted = 1')
 
         for i in acc:
-            self.resgradsum4Mean[0, :] += self.resgradsum4[i[0]-1, :]
+            self.resgradsum4Mean[0, :] += self.resgradsum4[i[0] - 1, :]
 
         self.resgradsum4Mean = self.resgradsum4Mean / len(acc)
 
@@ -2800,6 +2865,9 @@ class Compute(QtWidgets.QDialog, PATH):
 
         file.close()
 
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
+
         # Print graph
         t = x
         data1 = res
@@ -2807,9 +2875,9 @@ class Compute(QtWidgets.QDialog, PATH):
         fig, ax1 = plt.subplots()
 
         color = 'tab:blue'
-        ax1.set_title(self.graph_lang['effective_height']['title'], fontsize=30)
-        ax1.set_xlabel(self.graph_lang['effective_height']['xlabel'], fontsize=30)
-        ax1.set_ylabel(self.graph_lang['effective_height']['ylabel'], color=color, fontsize=30)
+        ax1.set_title(self.graph_lang['effective_height']['title'])
+        ax1.set_xlabel(self.graph_lang['effective_height']['xlabel'])
+        ax1.set_ylabel(self.graph_lang['effective_height']['ylabel'], color=color)
         ax1.plot(t, data1, color=color, linewidth=0.5)
         ax1.tick_params(axis='y', labelcolor=color)
 
@@ -2817,7 +2885,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         color = 'tab:red'
         ax2.set_ylabel(self.graph_lang['effective_height']['ylabel2'],
-                       color=color, fontsize=30)  # we already handled the x-label with ax1
+                       color=color)  # we already handled the x-label with ax1
         ax2.plot(t, data2, color=color, linewidth=0.5)
         ax2.tick_params(axis='y', labelcolor=color)
 
@@ -2867,19 +2935,22 @@ class Compute(QtWidgets.QDialog, PATH):
 
         x = range(1, len(self.ampar) + 1)  # xrange for graphs
 
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
+
         p, (ax1, ax2) = plt.subplots(2, 1)
 
         ax1.plot(x, self.ampar, 'r', lw=0.5)
         ax1.set(
             title=self.graph_lang['parasitic2']['title'].format(self.gravimeter['Lpar'] / 1e10))
-        ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=20)
-        ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'], fontsize=20)
-        ax1.set_ylim([-0.01, 5*abs(np.median(self.ampar))])
+        ax1.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'])
+        ax1.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel1'])
+        ax1.set_ylim([-0.01, 5 * abs(np.median(self.ampar))])
 
         ax2.plot(x, self.fazepar, 'r', lw=0.5)
         ax2.plot(x, self.fazefilt, 'b', lw=0.5)
-        ax2.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'], fontsize=20)
-        ax2.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel2'], fontsize=20)
+        ax2.set_xlabel(xlabel=self.graph_lang['parasitic2']['xlabel'])
+        ax2.set_ylabel(ylabel=self.graph_lang['parasitic2']['ylabel2'])
 
         # save graph
         path = self.projDirPath + '/Graphs/'
@@ -2896,6 +2967,9 @@ class Compute(QtWidgets.QDialog, PATH):
         xlim = [self.frmin]
         ylim = [-20, 20]
         # legend = []
+
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
 
         p = plt
 
@@ -2929,6 +3003,9 @@ class Compute(QtWidgets.QDialog, PATH):
         xlim = [self.frmin]
         # ylim = [-20, 20]
         # legend = []
+
+        plt.rcParams['figure.dpi'] = 500
+        plt.rcParams['figure.figsize'] = (8, 7)
 
         p = plt
 
@@ -2992,7 +3069,8 @@ class Compute(QtWidgets.QDialog, PATH):
         part1_fill.append(self.stationData['setupHeight'])  # setup height
         part1_fill.append(self.stationData['transferHeight'])  # transfer height
         part1_fill.append(self.stationData['airPressure'])  # nominal air pressure
-        part1_fill.append('{:.2f}'.format(float(self.stationData['barometricFactor'])*10))  # Barometric Admittance Factor
+        part1_fill.append(
+            '{:.2f}'.format(float(self.stationData['barometricFactor']) * 10))  # Barometric Admittance Factor
         try:
             part1_fill.append('{:.4f}'.format(np.mean(self.x_pole_interp)))  # polar x
         except AttributeError:
@@ -3011,7 +3089,7 @@ class Compute(QtWidgets.QDialog, PATH):
         else:
             part1_fill.append('Project file')
             part1_fill.append('-')
-        part1_fill.append(self.instrumentData['rubiFreq'])  # Rubidium Frequency
+        part1_fill.append(str(self.rubi_freq))  # Rubidium Frequency
         part1_fill.append(self.instrumentData['ID'])  # laser wavelengths
         part1_fill.append(self.instrumentData['IE'])
         part1_fill.append(self.instrumentData['IF'])
@@ -3088,8 +3166,8 @@ class Compute(QtWidgets.QDialog, PATH):
         part3_fill.append(self.stationData['gradient'])  # Vertical gravity gradient
         part3_fill.append('{:.5f}'.format(float(self.stationData['transferHeight']) / 100))  # DATUM HEIGHT
         g00 = self.gfinal - (float(self.stationData['gradient']) / 1e6) * (
-                    float(self.stationData['actualHeight']) / 100 - float(
-                self.gravityCorrections['transferHeightGal']) / 100) * 1e9  # g @ DATUM HEIGHT
+                float(self.stationData['actualHeight']) / 100 - float(
+            self.gravityCorrections['transferHeightGal']) / 100) * 1e9  # g @ DATUM HEIGHT
         part3_fill.append('{:.2f}'.format(g00))  # g @ DATUM HEIGHT
         part3_fill.append('{:.3f}'.format(np.mean(self.Press)))  # AIR PRESSURE
         part3_fill.append('{:.3f}'.format(np.max(self.Press) - np.min(self.Press)))

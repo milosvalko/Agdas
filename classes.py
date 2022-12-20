@@ -13,9 +13,6 @@ import subprocess
 import scipy.interpolate as interp
 import scipy.stats
 
-# import matplotlib
-# font = {'size' : 18}
-# matplotlib.rc('font', **font)
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -1109,7 +1106,7 @@ class Graph():
     Class for graph plotting
     """
 
-    def __init__(self, path: str, name: str, project: str, x_label: str, y_label: str, title: str, show: bool, winsize=(11, 4)):
+    def __init__(self, path: str, name: str, project: str, x_label: str, y_label: str, title: str, show: bool, winsize=(8, 7)):
         """
 
         Parameters
