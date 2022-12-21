@@ -98,10 +98,12 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if multiplex * scalefactor == 1000:
             self.setPrescale(1)
-        if multiplex * scalefactor == 800:
+        elif multiplex * scalefactor == 800:
             self.setPrescale(1)
-        if multiplex * scalefactor == 100:
+        elif multiplex * scalefactor == 100:
             self.setPrescale(10)
+        else:
+            self.setPrescale(1)
 
         self.automatic_detection_gravimeter()
 
@@ -117,6 +119,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.split_set.stateChanged.connect(self.disabledSplit)
         self.sets_choose.activated.connect(self.currentSet)
         self.kalpha.textChanged.connect(self.set_tool_tip)
+        self.load_pole_file.clicked.connect(self.set_pole_path)
 
         self.set_gravimeter()
         self.set_ui()
@@ -141,6 +144,10 @@ class Compute(QtWidgets.QDialog, PATH):
         self.show()
         self.exec()
 
+    def set_pole_path(self):
+
+        self.pole_file_path = QtWidgets.QFileDialog.getOpenFileName()
+
     def set_rejsgima(self):
         self.rejsig = float(self.rejsigma.toPlainText())
 
@@ -163,12 +170,14 @@ class Compute(QtWidgets.QDialog, PATH):
         Set tooltips for widgets.
         """
 
-        self.label_3.setToolTip('Drop is accepted if σ * set_std > abs(avr_gtopcor_by_set - drop_gtopcor)')
+        self.label_3.setToolTip('Coverage factor for drop acceptance in set. Drop is accepted if σ({}) * set_std > abs(avr_gtopcor_by_set - drop_gtopcor)'.format(self.rejsigma.toPlainText()))
         self.label_7.setToolTip(
-            'Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
+            'Limit for rms of residuals. Drop is accepted if m0_drop < 1{} % median_m0_all_drops'.format(self.kalpha.toPlainText()))
         self.complete_out.setToolTip('Check Complete outputs only for more than 3 sets and more than 10 drops in set')
         self.label_15.setToolTip(
-            "Cut-off frequency for filtering residuals in graphs. It doesn't influence the processing")
+            "Cut-off frequency for low-pass filtering of residuals in graphs. It doesn't influence the processing.")
+        self.label_22.setToolTip('Standard deviation for set gravity systematic effects used for weighting g-sets.')
+        self.label_23.setToolTip('Confidence level for set gravity values based on Student distribution.')
 
     def set_graph_language(self):
         """
@@ -230,7 +239,8 @@ class Compute(QtWidgets.QDialog, PATH):
         """
         Set frmaxplot - max range for graphs.
         """
-        self.frmaxplot = self.gravimeter['frmaxplot']
+        # self.frmaxplot = self.gravimeter['frmaxplot']
+        self.frmaxplot = self.frmax + 10
 
     def set_total_fringes(self):
         """
@@ -319,6 +329,7 @@ class Compute(QtWidgets.QDialog, PATH):
         self.set_frmin_t()
         self.set_frmax_t()
         self.set_fubi_freq_ui()
+        self.set_height.setText(self.stationData['setupHeight'])
 
     def set_frmin_t(self):
         """
@@ -426,34 +437,93 @@ class Compute(QtWidgets.QDialog, PATH):
             self.numDrop.setDisabled(False)
             self.numDrop.setValue(1)
 
+    def find_in_naval(self, finals_path, count_days, date):
+
+        file = open(finals_path, 'r')
+        self.polar_file_date = os.path.getmtime(finals_path)
+        file_l = file.read()
+        file.close()
+        file = file_l.splitlines()
+
+        i = 0
+        for l in reversed(file):
+            d = ['20' + l[:3].split()[0], l[2:4].split()[0].zfill(2), l[4:6].split()[0].zfill(2)]
+            if d == date:
+                break
+
+            i += 1
+
+        i = len(file) - i + 1
+
+        # get one day before and one day after measuring
+        d = file[i - 3:i + count_days]
+        x_pole = [float(x[19:27]) for x in d]
+        y_pole = [float(x[38:46]) for x in d]
+        x = [0]
+        for i in range(len(x_pole) - 1):
+            x.append(x[-1] + 24)
+
+        return x, x_pole, y_pole, d
+
+    def find_in_iers(self, finals_path, count_days, date):
+        # open and load file from IERS
+        file = open(finals_path, 'r')
+        self.polar_file_date = os.path.getmtime(finals_path)
+        reader = csv.reader(file, delimiter=';')
+        rows = list(reader)
+        file.close()
+
+        # find index of starting day
+        i = 0
+        for row in reversed(rows):
+            if row[1:4] == date:
+                # today = row
+                break
+            i += 1
+
+        i = len(rows) - i + 1
+
+        # get one day before and one day after measuring
+        d = rows[i - 3:i + count_days]
+        x_pole = [float(x[5]) for x in d]
+        y_pole = [float(x[7]) for x in d]
+        x = [0]
+        for i in range(len(x_pole) - 1):
+            x.append(x[-1] + 24)
+
+        return x, x_pole, y_pole, d
+
     def downloadPole(self):
         """
         Download pole coordinates from IERS/Naval observatory and compute polar correction for each drop.
         """
+        if self.useIERSPoleCorr.isChecked():
+            if self.service.currentText() == 'IERS':
 
-        if self.service.currentText() == 'IERS':
+                # finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
+                finals_path = os.path.join(script_path, 'finals', 'finals2000A_iers.all.csv')
+                url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
 
-            # finals_path = os.getcwd() + '/finals/finals2000A_iers.all.csv'
-            finals_path = os.path.join(script_path, 'finals', 'finals2000A_iers.all.csv')
-            url = 'https://datacenter.iers.org/data/csv/finals2000A.all.csv'
+                if time() - os.path.getmtime(finals_path) > 604800:
+                    try:
+                        urllib.request.urlretrieve(url, finals_path)
+                    except urllib.error.URLError:
+                        Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
-            if time() - os.path.getmtime(finals_path) > 604800:
-                try:
-                    urllib.request.urlretrieve(url, finals_path)
-                except urllib.error.URLError:
-                    Warning(error=warning_window['internet'], icon='critical', title='Warning')
+            if self.service.currentText() == 'Naval Observatory':
 
-        if self.service.currentText() == 'Naval Observatory':
+                # finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
+                finals_path = os.path.join(script_path, 'finals', 'finals2000A_naval.all.csv')
+                url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
 
-            # finals_path = os.getcwd() + '/finals/finals2000A_naval.all.csv'
-            finals_path = os.path.join(script_path, 'finals', 'finals2000A_naval.all.csv')
-            url = 'https://maia.usno.navy.mil/ser7/finals.daily.extended'
+                if time() - os.path.getmtime(finals_path) > 604800:
+                    try:
+                        urllib.request.urlretrieve(url, finals_path)
+                    except urllib.error.URLError:
+                        Warning(error=warning_window['internet'], icon='critical', title='Warning')
 
-            if time() - os.path.getmtime(finals_path) > 604800:
-                try:
-                    urllib.request.urlretrieve(url, finals_path)
-                except urllib.error.URLError:
-                    Warning(error=warning_window['internet'], icon='critical', title='Warning')
+        if self.pole_file.isChecked():
+            finals_path = self.pole_file_path[0]
 
         # coordinations of point
         fi = float(self.stationData['lat']) * pi / 180
@@ -472,56 +542,19 @@ class Compute(QtWidgets.QDialog, PATH):
 
         count_days = int(last_drop[1]) - int(first_drop[1])
 
-        if self.service.currentText() == 'IERS':
-            # open and load file from IERS
-            file = open(finals_path, 'r')
-            self.polar_file_date = os.path.getmtime(finals_path)
-            reader = csv.reader(file, delimiter=';')
-            rows = list(reader)
-            file.close()
+        if self.useIERSPoleCorr.isChecked():
+            if self.service.currentText() == 'IERS':
+                x, x_pole, y_pole, d = self.find_in_iers(finals_path, count_days, date)
 
-            # find index of starting day
-            i = 0
-            for row in reversed(rows):
-                if row[1:4] == date:
-                    # today = row
-                    break
-                i += 1
+            if self.service.currentText() == 'Naval Observatory':
+                x, x_pole, y_pole, d = self.find_in_naval(finals_path, count_days, date)
 
-            i = len(rows) - i + 1
+        if self.pole_file.isChecked():
+            if self.service_file.currentText() == 'IERS':
+                x, x_pole, y_pole, d = self.find_in_iers(finals_path, count_days, date)
 
-            # get one day before and one day after measuring
-            d = rows[i - 3:i + count_days]
-            x_pole = [float(x[5]) for x in d]
-            y_pole = [float(x[7]) for x in d]
-            x = [0]
-            for i in range(len(x_pole) - 1):
-                x.append(x[-1] + 24)
-
-        if self.service.currentText() == 'Naval Observatory':
-            file = open(finals_path, 'r')
-            self.polar_file_date = os.path.getmtime(finals_path)
-            file_l = file.read()
-            file.close()
-            file = file_l.splitlines()
-
-            i = 0
-            for l in reversed(file):
-                d = ['20' + l[:3].split()[0], l[2:4].split()[0].zfill(2), l[4:6].split()[0].zfill(2)]
-                if d == date:
-                    break
-
-                i += 1
-
-            i = len(file) - i + 1
-
-            # get one day before and one day after measuring
-            d = file[i - 3:i + count_days]
-            x_pole = [float(x[19:27]) for x in d]
-            y_pole = [float(x[38:46]) for x in d]
-            x = [0]
-            for i in range(len(x_pole) - 1):
-                x.append(x[-1] + 24)
+            if self.service_file.currentText() == 'Naval Observatory':
+                x, x_pole, y_pole, d = self.find_in_naval(finals_path, count_days, date)
 
         # fit pole coordinates
         x_para = np.polyfit(x, x_pole, deg)
@@ -598,13 +631,18 @@ class Compute(QtWidgets.QDialog, PATH):
         # set l cable from ui
         self.set_lcable_ui()
 
-        self.set_frmaxplot()
 
         # set count of all fringes
         self.set_total_fringes()
 
         # Set self.frmin and self.frmax
         self.set_frmin_frmax()
+
+        if self.frmaxT_t.toPlainText() == 'out':
+            Warning(error='Frmax out of range!', icon='critical', title='Warning')
+            return
+
+        self.set_frmaxplot()
 
         # Set sensitivity intervals
         self.set_sensitivity_intervals()
@@ -627,9 +665,13 @@ class Compute(QtWidgets.QDialog, PATH):
                 return
 
         # download polar coordinates and compute polar corrections if correction from web is required
-        if self.useIERSPoleCorr.isChecked():
-            self.downloadPole()
-
+        if self.useIERSPoleCorr.isChecked() or self.pole_file.isChecked():
+            try:
+                self.downloadPole()
+            except AttributeError:
+                Warning(error='Select polar coordinates file!', icon='critical', title='Warning')
+                return
+            
         # count of the fringes
         self.nfringe = int(self.header1[-1])
 
@@ -717,7 +759,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
             # polar correction calculated for each drop from IERS file
             try:
-                if self.useIERSPoleCorr.isChecked():
+                if self.useIERSPoleCorr.isChecked() or self.pole_file.isChecked():
                     Polar.append(self.dg[i])
             except AttributeError:
                 Warning(error=warning_window['pole_corr_service'], icon='critical', title='Warning')
@@ -881,32 +923,28 @@ class Compute(QtWidgets.QDialog, PATH):
 
         if self.outputs.isChecked():
             # create outputs which doesn't require statistic processing
-            g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_corr']['xlabel'],
+            g = Graph(path=self.projDirPath + '/Graphs', name='atm_corr', project=self.stationData['ProjName'], x_label=self.graph_lang['atm_corr']['xlabel'],
                       y_label=self.graph_lang['atm_corr']['ylabel'],
                       title=self.graph_lang['atm_corr']['title'])
             g.plotXY(x=[time_gr], y=[atm], mark=['b+'], columns_name=['atm_corr'])
             # g.saveSourceData()
             g.save()
 
-            g = Graph(path=self.projDirPath + '/Graphs', name='atm_press', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['atm_press']['xlabel'],
+            g = Graph(path=self.projDirPath + '/Graphs', name='atm_press', project=self.stationData['ProjName'], x_label=self.graph_lang['atm_press']['xlabel'],
                       y_label=self.graph_lang['atm_press']['ylabel'],
                       title=self.graph_lang['atm_press']['title'])
             g.plotXY(x=[time_gr], y=[baro], mark=['b+'], columns_name=['atm_press'])
             # g.saveSourceData()
             g.save()
 
-            g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['tides']['xlabel'],
+            g = Graph(path=self.projDirPath + '/Graphs', name='tides', project=self.stationData['ProjName'], x_label=self.graph_lang['tides']['xlabel'],
                       y_label=self.graph_lang['tides']['ylabel'],
                       title=self.graph_lang['tides']['title'])
             g.plotXY(x=[time_gr], y=[self.tides], mark=['b+'], columns_name=['tides'])
             # g.saveSourceData()
             g.save()
 
-            g = Graph(path=self.projDirPath + '/Graphs', name='polar_corr', project=self.stationData['ProjName'],
-                      show=self.open_graphs.isChecked(), x_label=self.graph_lang['polar_corr']['xlabel'],
+            g = Graph(path=self.projDirPath + '/Graphs', name='polar_corr', project=self.stationData['ProjName'], x_label=self.graph_lang['polar_corr']['xlabel'],
                       y_label=self.graph_lang['polar_corr']['ylabel'],
                       title=self.graph_lang['polar_corr']['title'])
             g.plotXY(x=[time_gr], y=[Polar], mark=['b+'], columns_name=['polar_corr'])
@@ -1729,8 +1767,7 @@ class Compute(QtWidgets.QDialog, PATH):
         markk.append('-b')
         lww.append(0.3)
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='residuals_shifted', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['residuals_shifted']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='residuals_shifted', project=self.stationData['ProjName'], x_label=self.graph_lang['residuals_shifted']['xlabel'],
                   y_label=self.graph_lang['residuals_shifted']['ylabel'],
                   title=self.graph_lang['residuals_shifted']['title'], winsize=(15, 10))
         g.plotXY(x=X, y=Y, mark=mark, columns_name=col_name, lw=lw)
@@ -1769,8 +1806,7 @@ class Compute(QtWidgets.QDialog, PATH):
             # x.append(i)
             cumulative_average.append(sum(grad[:i]) / len(grad[:i]))
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['vgg']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='vgg', project=self.stationData['ProjName'], x_label=self.graph_lang['vgg']['xlabel'],
                   y_label=self.graph_lang['vgg']['ylabel'],
                   title=self.graph_lang['vgg']['title'], winsize=(8, 7))
         g.error_bar(x, grad, m0, 'r', ms=5, capsize=5)
@@ -1796,8 +1832,7 @@ class Compute(QtWidgets.QDialog, PATH):
         l2 = self.graph_lang['sensitivity_std']['legend'].split(',')[1].format(self.sensa_bn, self.sensa_bx,
                                                                                np.mean(self.dgrrms))
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_std']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_std', project=self.stationData['ProjName'], x_label=self.graph_lang['sensitivity_std']['xlabel'],
                   y_label=self.graph_lang['sensitivity_std']['ylabel'],
                   title=self.graph_lang['sensitivity_std']['title'])
         g.plotXY(x=[ts, ts], y=[self.dglrms, self.dgrrms], mark=['k+-', 'r+-'], columns_name=['left', 'right'],
@@ -1841,8 +1876,7 @@ class Compute(QtWidgets.QDialog, PATH):
         m.append('k-')
         lw.append(1)
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom', project=self.stationData['ProjName'], x_label=self.graph_lang['sensitivity_bottom']['xlabel'],
                   y_label='',
                   title=self.graph_lang['sensitivity_bottom']['title'])
         g.plotXY(x=[tttt], y=[[0 for i in range(len(tttt))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
@@ -1886,8 +1920,7 @@ class Compute(QtWidgets.QDialog, PATH):
         lw.append(1)
 
         g = Graph(path=self.projDirPath + '/Graphs', name='sensitivity_bottom_time',
-                  project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'],
+                  project=self.stationData['ProjName'], x_label=self.graph_lang['sensitivity_bottom_time']['xlabel'],
                   y_label='',
                   title=self.graph_lang['sensitivity_bottom']['title'])
         # g.plotXY(x=[self.ttttlin], y=[[0 for i in range(len(self.ttr[i, :]))]], mark=['b-'], columns_name='xx', legend='', lw=[0.3])
@@ -1960,8 +1993,7 @@ class Compute(QtWidgets.QDialog, PATH):
         mean_by_set = [i[2] - g0 for i in res]
 
         # Set gravity at top of the drop
-        g = Graph(path=self.projDirPath + '/Graphs', name='set_g', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_g']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='set_g', project=self.stationData['ProjName'], x_label=self.graph_lang['set_g']['xlabel'],
                   y_label=self.graph_lang['set_g']['ylabel'].format(g0), title=self.graph_lang['set_g']['title'])
         g.error_bar(range(1, x[1]), mean_by_set, self.stodchmod, 'r')
         g.plotXY(x=[x, x, x],
@@ -1973,8 +2005,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g.save()
 
         # Standart deviation for set g-values
-        g = Graph(path=self.projDirPath + '/Graphs', name='set_std', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['set_std']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='set_std', project=self.stationData['ProjName'], x_label=self.graph_lang['set_std']['xlabel'],
                   y_label=self.graph_lang['set_std']['ylabel'],
                   title=self.graph_lang['set_std']['title'])
         # g.plotXY(x=[x, x, x], y=[[gfinal-g0, gfinal-g0], [gfinal-g0-gstd, gfinal-g0-gstd], [gfinal-g0+gstd, gfinal-g0+gstd]], mark=['b-', 'g-', 'g-'], columns_name=['Sine component', 'Cosine component'], legend =['Set g-values', 'Avegare g-value', '1 range'])
@@ -1991,8 +2022,7 @@ class Compute(QtWidgets.QDialog, PATH):
         std = [r[1] for r in rms]
         n = range(1, len(std) + 1)
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='resid_RMS', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['resid_RMS']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='resid_RMS', project=self.stationData['ProjName'], x_label=self.graph_lang['resid_RMS']['xlabel'],
                   y_label=self.graph_lang['resid_RMS']['ylabel'],
                   title=self.graph_lang['resid_RMS']['title'])
         g.plotXY(x=[n], y=[std], mark=['-g'], columns_name=['rms'], legend=[])
@@ -2025,8 +2055,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # x = range(1, len(e) + 1)
         x = [i[2] for i in res]
 
-        g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'],
-                  show=self.open_graphs.isChecked(), x_label=self.graph_lang['parasitic']['xlabel'],
+        g = Graph(path=self.projDirPath + '/Graphs', name='parasitic', project=self.stationData['ProjName'], x_label=self.graph_lang['parasitic']['xlabel'],
                   y_label=self.graph_lang['parasitic']['ylabel'],
                   title=self.graph_lang['parasitic']['title'].format(
                       float(self.lpar.toPlainText())))
@@ -2050,8 +2079,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram' + name, project=self.stationData['ProjName'],
                   x_label=self.graph_lang['histogram']['xlabel'], y_label=self.graph_lang['histogram']['ylabel'],
-                  title=self.graph_lang['histogram']['title'],
-                  show=self.open_graphs.isChecked())
+                  title=self.graph_lang['histogram']['title'])
         g.histogram(r, fit=True)
         # g.saveSourceData()
         g.save()
@@ -2064,7 +2092,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g = Graph(path=self.projDirPath + '/Graphs', name='histogram_norm', project=self.stationData['ProjName'],
                   x_label=self.graph_lang['histogram_norm']['xlabel'],
                   y_label=self.graph_lang['histogram_norm']['ylabel'],
-                  title=self.graph_lang['histogram_norm']['title'], show=self.open_graphs.isChecked())
+                  title=self.graph_lang['histogram_norm']['title'])
         g.histogram(self.normres, fit=True)
         # g.saveSourceData()
         g.save()
@@ -2080,7 +2108,7 @@ class Compute(QtWidgets.QDialog, PATH):
         g = Graph(path=self.projDirPath + '/Graphs', name='effective_height2', project=self.stationData['ProjName'],
                   x_label=self.graph_lang['effective_height2']['xlabel'],
                   y_label=self.graph_lang['effective_height2']['ylabel'],
-                  title=self.graph_lang['effective_height2']['title'], show=self.open_graphs.isChecked())
+                  title=self.graph_lang['effective_height2']['title'])
         g.plotXY(x=[x], y=[y], mark=['-b'], columns_name=['effective_height2'])
         g.save()
 
@@ -2248,7 +2276,7 @@ class Compute(QtWidgets.QDialog, PATH):
         # nset = (r)
         # self.nset = nset
 
-        ksmooth = self.gravimeter['ksmooth']
+        ksmooth = float(self.ksmooth.toPlainText())
         self.stodch = []  # mean error of sets
         self.stdodchpadu = []  # mean error of drops
         count = 0

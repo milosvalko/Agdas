@@ -1,5 +1,4 @@
-﻿import threading
-import winapps
+﻿import winapps
 from PyQt5 import uic, QtWidgets
 from newProject import NewProject
 from compute import Compute
@@ -7,7 +6,6 @@ from warning import Warning
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QSplashScreen
 from PyQt5.QtGui import QIcon, QPixmap
-from viewgraphs import Graphs
 from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked
 from time import sleep
 from functions import printDict, read_last_version, get_date_last_version
@@ -38,12 +36,8 @@ class Main(QtWidgets.QMainWindow, PATH):
 
         # connect buttons with method
         self.newProject.triggered.connect(self.new_Project)
-        # self.Process_data_batch.triggered.connect(self.new_Project_batch)
         self.computing.triggered.connect(self.Computing)
-        self.viewdata.triggered.connect(self.viewData)
-        # self.viewGraphs.triggered.connect(self.viewgraphs)
         self.closeProject.triggered.connect(self.closeproject)
-        # self.openProject.triggered.connect(self.open_project)
 
         self.newproject.clicked.connect(self.new_Project)
 
@@ -176,12 +170,6 @@ class Main(QtWidgets.QMainWindow, PATH):
         # If project is not opened
         except AttributeError:
             Warning(error='Opened project is necessary!', icon='critical', title='Warning')
-
-    # def viewgraphs(self):
-    #     try:
-    #         Graphs(self.newProjectWin.pathDir + '/Graphs')
-    #     except AttributeError:
-    #         Warning(error=warning_window['import_data'], icon='critical', title='Warning')
 
     def closeproject(self):
         """

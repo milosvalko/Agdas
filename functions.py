@@ -1,5 +1,4 @@
 import json
-import matplotlib.pyplot as plt
 import numpy as np
 from math import floor, trunc
 import math, requests, os
@@ -266,8 +265,8 @@ def rssq(x):
     Returns
     -------
     res : list
-    """
 
+    """
     res = []
 
     for i in range(x.shape[0]):
@@ -299,6 +298,7 @@ def movingAverage(x: list, n=50):
         moving averages
     plot_range : list
         range for plotting
+
     """
 
     res = []
@@ -318,6 +318,7 @@ def get_date_last_version():
     Returns
     -------
     date of last commit, 0 in case that connection failed
+
     """
 
     repo = 'jakubsimek97/Agdas'
@@ -336,6 +337,7 @@ def write_last_version(version_date: str):
     ----------
     version_date : str
         last version date
+
     """
 
     script_path = os.path.dirname(os.path.realpath(__file__))
@@ -352,6 +354,7 @@ def read_last_version():
     -------
     r : str
         date of last version
+
     """
     script_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(script_path, 'last_version.txt')

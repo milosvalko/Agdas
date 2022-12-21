@@ -6,7 +6,6 @@ import sqlite3 as sql
 from CONFIG import matrDatabase, SAE
 from warning import Warning
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
 from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 from scipy.stats import norm
 import subprocess
@@ -1106,7 +1105,7 @@ class Graph():
     Class for graph plotting
     """
 
-    def __init__(self, path: str, name: str, project: str, x_label: str, y_label: str, title: str, show: bool, winsize=(8, 7)):
+    def __init__(self, path: str, name: str, project: str, x_label: str, y_label: str, title: str, winsize=(8, 7)):
         """
 
         Parameters
@@ -1137,7 +1136,6 @@ class Graph():
         self.path = path
         self.name = name
         self.project = project
-        self.show = show
         self.x_label = x_label
         self.y_label = y_label
         self.title = title
@@ -1296,10 +1294,6 @@ class Graph():
         self.gr.ylabel(self.y_label)
         self.gr.title(self.title)
         self.gr.savefig(self.path + '/' + self.project + '_' + self.name)
-        if self.show:
-            # self.gr.show()
-            ret_code = subprocess.call(['start', self.path + '/' + self.project + '_' + self.name + '.png'], shell=True)
-
         self.gr.close()
 
 
@@ -1341,7 +1335,6 @@ class Compare_gsoft_agdas():
             line of drop file in dictionary structure
         hef : float
             g in effective height
-
         """
         self.set.append(drop['Set'])
         self.drp.append(drop['Drp'])
@@ -1357,12 +1350,12 @@ class Compare_gsoft_agdas():
 
     def add_agdas(self, EfH: float):
         """
-        Add g to agdas
+        Add g to agdas.
+
         Parameters
         ----------
         EfH : float
             g in effective height
-
         """
         self.agdas.append(EfH / 10)
 
@@ -1376,7 +1369,6 @@ class Compare_gsoft_agdas():
             list of tuples, bool, true - accepted
         delimiter : str
             delimiter for writing output file
-
         """
 
         # compute absolute value of differences for accepted drops
@@ -1413,12 +1405,10 @@ class Compare_gsoft_agdas():
         ----------
         graph_lang : list
             differences
-
         """
         g = Graph(path=self.path_hist, name=self.project + '_histogram_compare_gsoft_pyagdas', project='',
                   x_label=graph_lang['histogram_diff']['xlabel'], y_label=graph_lang['histogram_diff']['ylabel'],
-                  title=graph_lang['histogram_diff']['title'],
-                  show=False)
+                  title=graph_lang['histogram_diff']['title'])
         g.histogram(self.diff__*10, fit=True)
         # g.saveSourceData()
         g.save()
