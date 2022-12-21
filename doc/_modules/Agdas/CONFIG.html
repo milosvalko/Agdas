@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agdas.CONFIG &mdash; Agdas 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Agdas
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Agdas</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">Agdas.CONFIG</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for Agdas.CONFIG</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Configuration file with headers, sql queries...</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="getFG5X"><a class="viewcode-back" href="../../Agdas.html#Agdas.CONFIG.getFG5X">[docs]</a><span class="k">def</span> <span class="nf">getFG5X</span><span class="p">(</span><span class="n">ps</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set parameters for FG5X</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ps : int</span>
+<span class="sd">        prescale factor</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    FG5X : dict</span>
+<span class="sd">        dictionary with FG5X parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">FG5X</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Lpar&#39;</span><span class="p">:</span> <span class="mf">0.122</span><span class="p">,</span>  <span class="c1"># [m] parasitic wavelength</span>
+        <span class="s1">&#39;frmin&#39;</span><span class="p">:</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>  <span class="c1"># first fringe</span>
+        <span class="s1">&#39;frmax&#39;</span><span class="p">:</span> <span class="mi">940</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>  <span class="c1"># end fringe</span>
+        <span class="s1">&#39;fmodf&#39;</span><span class="p">:</span> <span class="mf">8333.355</span><span class="p">,</span>  <span class="c1"># [Hz] modulation frequency</span>
+        <span class="c1"># &#39;frmaxss&#39;: 1040 * ps,</span>
+        <span class="s1">&#39;frminss&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;frmaxplot&#39;</span><span class="p">:</span> <span class="mi">1040</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>
+        <span class="c1"># &#39;sens_tn&#39;: 1,</span>
+        <span class="c1"># &#39;sens_tx&#39;: 150 * ps,</span>
+        <span class="c1"># &#39;sensa_tn&#39;: 3 * ps,</span>
+        <span class="c1"># &#39;sensa_tx&#39;: 80 * ps,</span>
+        <span class="c1"># &#39;sensa_bn&#39;: 900 * ps,</span>
+        <span class="c1"># &#39;sensa_bx&#39;: 1000 * ps,</span>
+        <span class="c1"># &#39;nforfft&#39;: 4501,</span>
+        <span class="s1">&#39;ksmooth&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;sens_bx&#39;</span><span class="p">:</span> <span class="mi">1040</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>
+        <span class="s1">&#39;Lmin&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;Lmax&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+        <span class="s1">&#39;Lcable&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;Acable&#39;</span><span class="p">:</span> <span class="mf">0.004</span><span class="p">,</span>
+        <span class="s1">&#39;Pcable&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;valenv&#39;</span><span class="p">:</span> <span class="mf">0.005</span>
+    <span class="p">}</span>
+    <span class="c1"># FG5X[&#39;sens_bn&#39;] = FG5X[&#39;frmaxss&#39;] - FG5X[&#39;sens_tx&#39;]</span>
+    <span class="k">return</span> <span class="n">FG5X</span></div>
+
+
+<div class="viewcode-block" id="getFG5"><a class="viewcode-back" href="../../Agdas.html#Agdas.CONFIG.getFG5">[docs]</a><span class="k">def</span> <span class="nf">getFG5</span><span class="p">(</span><span class="n">ps</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters for FG5</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ps : int</span>
+<span class="sd">            prescale factor</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        FG5 : dict</span>
+<span class="sd">            dictionary with FG5 parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="n">FG5</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Lpar&#39;</span><span class="p">:</span> <span class="mf">0.044</span><span class="p">,</span>  <span class="c1"># [m] parasitic wavelength</span>
+        <span class="s1">&#39;frmin&#39;</span><span class="p">:</span> <span class="mi">30</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>  <span class="c1"># first fringe</span>
+        <span class="s1">&#39;frmax&#39;</span><span class="p">:</span> <span class="mi">629</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>  <span class="c1"># end fringe</span>
+        <span class="s1">&#39;fmodf&#39;</span><span class="p">:</span> <span class="mf">8333.251</span><span class="p">,</span>  <span class="c1"># [Hz] modulation frequency</span>
+        <span class="s1">&#39;frmaxplot&#39;</span><span class="p">:</span> <span class="mi">650</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>
+        <span class="c1"># &#39;sens_tn&#39;: 1,</span>
+        <span class="c1"># &#39;sens_tx&#39;: 100 * ps,</span>
+        <span class="c1"># &#39;sensa_tn&#39;: 15 * ps,</span>
+        <span class="c1"># &#39;sensa_tx&#39;: 60 * ps,</span>
+        <span class="c1"># &#39;sensa_bn&#39;: 550 * ps,</span>
+        <span class="c1"># &#39;sensa_bx&#39;: 640 * ps,</span>
+        <span class="c1"># &#39;nforfft&#39;: 3293,</span>
+        <span class="s1">&#39;ksmooth&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;sens_bx&#39;</span><span class="p">:</span> <span class="mi">650</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>
+        <span class="s1">&#39;Lmin&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;Lmax&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+        <span class="s1">&#39;Lcable&#39;</span><span class="p">:</span> <span class="mf">3.7</span><span class="p">,</span>
+        <span class="s1">&#39;Acable&#39;</span><span class="p">:</span> <span class="mf">0.004</span><span class="p">,</span>
+        <span class="s1">&#39;Pcable&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;frminss&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;frmaxss&#39;</span><span class="p">:</span> <span class="mi">650</span> <span class="o">*</span> <span class="n">ps</span><span class="p">,</span>
+        <span class="s1">&#39;valenv&#39;</span><span class="p">:</span> <span class="mf">0.002</span>
+    <span class="p">}</span>
+    <span class="c1"># FG5[&#39;sens_bn&#39;] = FG5[&#39;frmaxplot&#39;] - 150 * ps</span>
+    <span class="c1"># FG5[&#39;frmaxss&#39;] = FG5[&#39;frmax&#39;] + 10</span>
+    <span class="c1"># FG5[&#39;frminss&#39;] = FG5[&#39;frmin&#39;] - 10</span>
+    <span class="k">return</span> <span class="n">FG5</span></div>
+
+
+<span class="n">matrDatabase</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;schema&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;CREATE TABLE results (</span>
+<span class="s1">             n INTEGER,</span>
+<span class="s1">             m0 REAL,</span>
+<span class="s1">             Set1 INTEGER,</span>
+<span class="s1">             Drop1 INTEGER,</span>
+<span class="s1">             Date TEXT,</span>
+<span class="s1">             mjd REAL,</span>
+<span class="s1">             z0_withGR REAL,</span>
+<span class="s1">             v0_withGR REAL,</span>
+<span class="s1">             a_withGR REAL,</span>
+<span class="s1">             b_withGR REAL,</span>
+<span class="s1">             c_withGR REAL,</span>
+<span class="s1">             d_withGR REAL,</span>
+<span class="s1">             e_withGR REAL,</span>
+<span class="s1">             f_withGR REAL,</span>
+<span class="s1">             g0_Gr REAL,</span>
+<span class="s1">             CorrToTop REAL,</span>
+<span class="s1">             Tide REAL,</span>
+<span class="s1">             Load REAL,</span>
+<span class="s1">             Baro REAL,</span>
+<span class="s1">             Polar REAL,</span>
+<span class="s1">             gTopCor REAL,</span>
+<span class="s1">             g0 REAL,</span>
+<span class="s1">             EffHeight REAL,</span>
+<span class="s1">             CorToEffHeight REAL,</span>
+<span class="s1">             Gradient REAL,</span>
+<span class="s1">             GradientLSTm0 REAL,</span>
+<span class="s1">             std REAL,</span>
+<span class="s1">             vgg REAL,</span>
+<span class="s1">             ssres REAL,</span>
+<span class="s1">             Accepted INTEGER)&#39;&#39;&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;insert&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;INSERT INTO results ( n, m0, Set1, Drop1, Date, mjd, z0_withGR, v0_withGR, a_withGR, b_withGR,</span>
+<span class="s1">    c_withGR, d_withGR, e_withGR, f_withGR, g0_Gr, CorrToTop, Tide, Load, Baro, Polar, gTopCor, g0, EffHeight,</span>
+<span class="s1">    CorToEffHeight, Gradient, GradientLSTm0, std, vgg, ssres, Accepted) values(</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,&quot;</span><span class="si">{}</span><span class="s1">&quot;,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span>
+<span class="s1">    </span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">)&#39;&#39;&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;updateAcc&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;UPDATE results</span>
+<span class="s1">                SET Accepted = 0</span>
+<span class="s1">                WHERE Set1 = </span><span class="si">{}</span><span class="s1"> and Drop1 = </span><span class="si">{}</span><span class="s1">&#39;&#39;&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;matlog&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;select Set1, substr(Date,0,5), substr(Date, 6,2), substr(Date, 9,2), round(avg(substr(Date, 12,2))), round(avg(substr(Date, 15,2))), round(avg(substr(Date, 18,2))), avg(gTopCor), count(*), avg(mjd)</span>
+<span class="s1">            from results</span>
+<span class="s1">            where Accepted = 1</span>
+<span class="s1">            group by Set1&#39;&#39;&#39;</span>
+
+<span class="p">}</span>
+
+<span class="n">statistic</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;mean:vxv&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;&#39;with tab as (select avg(gTopCor) as mean, Set1, Drop1 from results where Accepted = 1 group by Set1),</span>
+<span class="s1">tab1 as (select r.Set1, r.Drop1, tab.mean as mean, r.gTopCor as g from results as r join tab on (tab.Set1 = r.Set1 ) WHERE r.Accepted =1)</span>
+<span class="s1">select Set1, Drop1, tab1.mean, sum((mean-g)*(mean-g)) as vxv, count(*) from tab1  group by tab1.Set1&#39;&#39;&#39;</span>
+<span class="p">}</span>
+
+<span class="n">logo</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">     /| |‾ ‾ ‾ ‾  |‾ ‾ ‾ \       /| |‾ ‾ ‾ ‾|</span>
+<span class="s1">    / | |         |       \     / | |</span>
+<span class="s1">   /  | |    _ _  |        |   /  | |</span>
+<span class="s1">  /---| |       | |        |  /---|  ‾ ‾ ‾ ‾|</span>
+<span class="s1"> /    | |       | |       /  /    |         |</span>
+<span class="s1">/     | |_ _ _ _| |_ _ _ /  /     | |_ _ _ _|</span>
+<span class="s1">&#39;&#39;&#39;</span>
+
+<span class="n">wel</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="s1">Welcome to the graphical user interface of Agdas</span>
+<span class="s1">Agdas homepage:</span>
+<span class="s1">RIGTC homepage:             www.vugtk.cz</span>
+<span class="s1">G. O. Pecny homepage:       www.pecny.cz</span>
+<span class="s1">&#39;&#39;&#39;</span>
+
+<span class="n">separator</span> <span class="o">=</span> <span class="s1">&#39;===============================&#39;</span>
+<span class="n">logo_picture</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\picture\logo.png&#39;</span>
+<span class="n">picture_unchecked</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\picture\unchecked.png&#39;</span>
+
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;estim&#39;</span><span class="p">:</span> <span class="s1">&#39;Set </span><span class="si">{0}</span><span class="s1"> Drop </span><span class="si">{0}</span><span class="s1"> Date/Time </span><span class="si">{0}</span><span class="s1"> m0 </span><span class="si">{0}</span><span class="s1"> z0 </span><span class="si">{0}</span><span class="s1"> z0-std </span><span class="si">{0}</span><span class="s1"> v0 </span><span class="si">{0}</span><span class="s1"> v0-std </span><span class="si">{0}</span><span class="s1"> g0 </span><span class="si">{0}</span><span class="s1"> g0-std </span><span class="si">{0}</span><span class="s1"> a </span><span class="si">{0}</span><span class="s1"> a-std </span><span class="si">{0}</span><span class="s1"> b </span><span class="si">{0}</span><span class="s1"> b-std </span><span class="si">{0}</span><span class="s1"> c </span><span class="si">{0}</span><span class="s1"> c-std </span><span class="si">{0}</span><span class="s1"> d </span><span class="si">{0}</span><span class="s1"> d-std </span><span class="si">{0}</span><span class="s1"> e </span><span class="si">{0}</span><span class="s1"> e-std </span><span class="si">{0}</span><span class="s1"> f </span><span class="si">{0}</span><span class="s1"> f-std </span><span class="se">\n</span><span class="s1">   </span><span class="si">{0}</span><span class="s1">  </span><span class="si">{0}</span><span class="s1">  </span><span class="si">{0}</span><span class="s1"> </span><span class="si">{0}</span><span class="s1"> mm </span><span class="si">{0}</span><span class="s1"> mm </span><span class="si">{0}</span><span class="s1"> mm.s-1 </span><span class="si">{0}</span><span class="s1"> mm.s-1 </span><span class="si">{0}</span><span class="s1"> nm.s-2 </span><span class="si">{0}</span><span class="s1"> nm.s-2 </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm </span><span class="si">{0}</span><span class="s1"> nm   &#39;</span><span class="p">,</span>
+    <span class="s1">&#39;drops&#39;</span><span class="p">:</span> <span class="s2">&quot;&quot;&quot; Set</span><span class="si">{0}</span><span class="s2"> Drop</span><span class="si">{0}</span><span class="s2"> Date</span><span class="si">{0}{0}{0}{0}{0}{0}</span><span class="s2"> MJD</span><span class="si">{0}</span><span class="s2"> g&quot;(t=0s)</span><span class="si">{0}</span><span class="s2"> STD</span><span class="si">{0}</span><span class="s2"> TOD</span><span class="si">{0}</span><span class="s2"> Tide</span><span class="si">{0}</span><span class="s2"> Load</span><span class="si">{0}</span><span class="s2"> Baro</span><span class="si">{0}</span><span class="s2"> Polar</span><span class="si">{0}</span><span class="s2"> g(TOD)</span><span class="si">{0}</span><span class="s2"> g(Ef.H)</span><span class="si">{0}</span><span class="s2"> Ef.H1</span><span class="si">{0}</span><span class="s2"> c.EfH</span><span class="si">{0}</span><span class="s2"> Acc</span><span class="si">{0}</span><span class="s2">Par-Amp</span><span class="si">{0}</span><span class="s2">Par-Phase</span>
+<span class="s2">                </span><span class="si">{0}</span><span class="s2">    </span><span class="si">{0}{0}{0}</span><span class="s2">  </span><span class="si">{0}{0}{0}</span><span class="s2">  </span><span class="si">{0}{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2"> </span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">rad&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;matlogsets&#39;</span><span class="p">:</span> <span class="s1">&#39;Campaign</span><span class="si">{0}</span><span class="s1"> Set</span><span class="si">{0}</span><span class="s1"> Year</span><span class="si">{0}</span><span class="s1"> Month</span><span class="si">{0}</span><span class="s1"> Day</span><span class="si">{0}</span><span class="s1"> Hour</span><span class="si">{0}</span><span class="s1"> Minute</span><span class="si">{0}</span><span class="s1"> Second</span><span class="si">{0}</span><span class="s1"> MJD</span><span class="si">{0}</span><span class="s1"> VGG_inp</span><span class="si">{0}</span><span class="s1"> g</span><span class="si">{0}</span><span class="s1"> g_std</span><span class="si">{0}</span><span class="s1"> STD-Start</span><span class="si">{0}</span><span class="s1">STD-Final</span><span class="si">{0}</span><span class="s1">Accepted</span><span class="si">{0}</span><span class="s1"> Top height</span><span class="si">{0}</span><span class="s1"> Pressure</span><span class="si">{0}</span><span class="s1"> VGG</span><span class="si">{0}</span><span class="s1"> T-stat&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;allan&#39;</span><span class="p">:</span> <span class="s1">&#39;n</span><span class="si">{0}</span><span class="s1">ALLAN1</span><span class="si">{0}</span><span class="s1">STD1</span><span class="si">{0}</span><span class="s1">ALLAN2</span><span class="si">{0}</span><span class="s1">STD2</span><span class="si">{0}</span><span class="s1">ALLAN3</span><span class="si">{0}</span><span class="s1">STD3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;residuals_final&#39;</span><span class="p">:</span> <span class="s1">&#39;Fringe</span><span class="si">{0}</span><span class="s1"> z [m]</span><span class="si">{0}</span><span class="s1">Time [s]</span><span class="si">{0}</span><span class="s1">Time Top [s]</span><span class="si">{0}</span><span class="s1">Resid [nm]</span><span class="si">{0}</span><span class="s1">Filtered value [nm]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;residuals_final1000&#39;</span><span class="p">:</span> <span class="s1">&#39;Fringe</span><span class="si">{0}</span><span class="s1"> z [m]</span><span class="si">{0}</span><span class="s1"> Time [s]</span><span class="si">{0}</span><span class="s1"> Time Top [s]</span><span class="si">{0}</span><span class="s1"> Resid [nm]</span><span class="si">{0}</span><span class="s1"> Filtered resid [nm]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;residuals_sets&#39;</span><span class="p">:</span> <span class="s1">&#39;Fringe</span><span class="si">{0}</span><span class="s1"> Time [s]</span><span class="si">{0}</span><span class="s1">Time Top [s]</span><span class="si">{0}</span><span class="s1">Resid [nm]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;spectrum&#39;</span><span class="p">:</span> <span class="s1">&#39;Frequency [Hz]</span><span class="si">{0}</span><span class="s1">Avr res [nm]</span><span class="si">{0}</span><span class="s1">Avr spec [nm]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;estim_grad&#39;</span><span class="p">:</span> <span class="s2">&quot;&quot;&quot;   </span><span class="si">{0}</span><span class="s2">    </span><span class="si">{0}</span><span class="s2">Fit with gradient</span><span class="si">{0}{0}{0}{0}{0}{0}{0}{0}{0}</span><span class="s2">Fit without gradient</span><span class="si">{0}{0}{0}{0}{0}{0}{0}{0}{0}</span><span class="s2">Gradient estimation</span><span class="si">{0}{0}</span><span class="s2"></span>
+<span class="s2">                        Set</span><span class="si">{0}</span><span class="s2">Drop</span><span class="si">{0}</span><span class="s2">z0</span><span class="si">{0}</span><span class="s2">v0</span><span class="si">{0}</span><span class="s2">g0</span><span class="si">{0}</span><span class="s2">a</span><span class="si">{0}</span><span class="s2">b</span><span class="si">{0}</span><span class="s2">c</span><span class="si">{0}</span><span class="s2">d</span><span class="si">{0}</span><span class="s2">a_par</span><span class="si">{0}</span><span class="s2">b_par</span><span class="si">{0}</span><span class="s2">z0</span><span class="si">{0}</span><span class="s2">v0</span><span class="si">{0}</span><span class="s2">g0</span><span class="si">{0}</span><span class="s2">a</span><span class="si">{0}</span><span class="s2">b</span><span class="si">{0}</span><span class="s2">c</span><span class="si">{0}</span><span class="s2">d</span><span class="si">{0}</span><span class="s2">a_par</span><span class="si">{0}</span><span class="s2">b_par</span><span class="si">{0}</span><span class="s2">z0</span><span class="si">{0}</span><span class="s2">v0</span><span class="si">{0}</span><span class="s2">vgg</span><span class="si">{0}</span><span class="s2">vgg-std</span>
+<span class="s2">                        </span><span class="si">{0}</span><span class="s2">    </span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm.s-1</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm.s-1</span><span class="si">{0}</span><span class="s2">nm.s-2</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">nm.s-1</span><span class="si">{0}</span><span class="s2">nm.s-2/mm</span><span class="si">{0}</span><span class="s2">nm.s-2/mm&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;res_vgg&#39;</span><span class="p">:</span> <span class="s1">&#39;Fringe</span><span class="si">{0}</span><span class="s1">z [m]</span><span class="si">{0}</span><span class="s1">Time [s]</span><span class="si">{0}</span><span class="s1">Time TOP [s]</span><span class="si">{0}</span><span class="s1">Resgradsum4_mean [nm]</span><span class="si">{0}</span><span class="s1">Filtered mean [nm]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vgg_per_sets0&#39;</span><span class="p">:</span> <span class="s1">&#39;Set </span><span class="si">{0}</span><span class="s1">	vgg0 [uGal/cm] </span><span class="si">{0}</span><span class="s1">	mvgg0 [uGal/cm] </span><span class="si">{0}</span><span class="s1">	dg0 [uGal] </span><span class="si">{0}</span><span class="s1">	mdg0 [uGal]&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;effective_height_corr&#39;</span><span class="p">:</span> <span class="s2">&quot;&quot;&quot;Drop</span><span class="si">{0}</span><span class="s2"> EffHeight</span><span class="si">{0}</span><span class="s2"> CorToEffHeight&#39;</span>
+<span class="s2">                             </span><span class="si">{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2">mm&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;matlog&#39;</span><span class="p">:</span> <span class="s2">&quot;&quot;&quot;Campaign</span><span class="si">{0}</span><span class="s2">Gravimeter-type</span><span class="si">{0}</span><span class="s2">Gravimeter-SN</span><span class="si">{0}</span><span class="s2">Sitename</span><span class="si">{0}</span><span class="s2">Sitecode</span><span class="si">{0}</span><span class="s2">Latitude</span><span class="si">{0}</span><span class="s2">Longitude</span><span class="si">{0}</span><span class="s2">Elevation</span><span class="si">{0}</span><span class="s2">P_norm</span><span class="si">{0}</span><span class="s2">baro admit.</span><span class="si">{0}</span><span class="s2">VGG</span><span class="si">{0}</span><span class="s2">WEO-IE</span><span class="si">{0}</span><span class="s2">WEO-fmod</span><span class="si">{0}</span><span class="s2">Clock-10MHz</span><span class="si">{0}</span><span class="s2">L_parasit</span><span class="si">{0}</span><span class="s2">Ksol</span><span class="si">{0}</span><span class="s2">Ksae</span><span class="si">{0}</span><span class="s2">Kdis</span><span class="si">{0}</span><span class="s2">Kimp</span><span class="si">{0}</span><span class="s2">kpar</span><span class="si">{0}</span><span class="s2">L_TTLcable</span><span class="si">{0}</span><span class="s2">Start Fringe</span><span class="si">{0}</span><span class="s2">Final Fringe</span><span class="si">{0}</span><span class="s2">x_pole</span><span class="si">{0}</span><span class="s2">y_pole</span><span class="si">{0}</span><span class="s2">Sets</span><span class="si">{0}</span><span class="s2">Drops/Set</span><span class="si">{0}</span><span class="s2">Year</span><span class="si">{0}</span><span class="s2">Month</span><span class="si">{0}</span><span class="s2">Day</span><span class="si">{0}</span><span class="s2">Hour</span><span class="si">{0}</span><span class="s2">Minute</span><span class="si">{0}</span><span class="s2">MJD</span><span class="si">{0}</span><span class="s2">Duration</span><span class="si">{0}</span><span class="s2">Ave_P</span><span class="si">{0}</span><span class="s2">dP(MAX-MIN)</span><span class="si">{0}</span><span class="s2">Ave_tide</span><span class="si">{0}</span><span class="s2">Tide(MAX-MIN)</span><span class="si">{0}</span><span class="s2">Tstud</span><span class="si">{0}</span><span class="s2">Drops_accept</span><span class="si">{0}</span><span class="s2">Ef.h t0</span><span class="si">{0}</span><span class="s2">Ef.h.TOD</span><span class="si">{0}</span><span class="s2">STD</span><span class="si">{0}</span><span class="s2">H.ef.ins</span><span class="si">{0}</span><span class="s2">g@H.ef.ins</span><span class="si">{0}</span><span class="s2">STD</span><span class="si">{0}</span><span class="s2">STD-Start</span><span class="si">{0}</span><span class="s2">STD-final</span><span class="si">{0}</span><span class="s2">VGG_AG</span><span class="si">{0}</span><span class="s2">STD</span>
+<span class="s2">    </span><span class="si">{0}{0}{0}{0}{0}</span><span class="s2">deg</span><span class="si">{0}</span><span class="s2">deg</span><span class="si">{0}</span><span class="s2">m</span><span class="si">{0}</span><span class="s2">hPa</span><span class="si">{0}</span><span class="s2">uGal/hPa</span><span class="si">{0}</span><span class="s2">uGal/m</span><span class="si">{0}</span><span class="s2">nm</span><span class="si">{0}</span><span class="s2">Hz</span><span class="si">{0}</span><span class="s2">Hz</span><span class="si">{0}</span><span class="s2">m</span><span class="si">{0}{0}</span><span class="s2">0/1</span><span class="si">{0}</span><span class="s2">0/1</span><span class="si">{0}</span><span class="s2">0/1</span><span class="si">{0}</span><span class="s2">0/1</span><span class="si">{0}</span><span class="s2">m</span><span class="si">{0}{0}{0}</span><span class="s2">arcsec</span><span class="si">{0}</span><span class="s2">arcsec</span><span class="si">{0}{0}{0}{0}{0}{0}{0}{0}{0}</span><span class="s2">hour</span><span class="si">{0}</span><span class="s2">hPa</span><span class="si">{0}</span><span class="s2">hPa</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">%</span><span class="si">{0}{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2">mm</span><span class="si">{0}</span><span class="s2">m</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">uGal</span><span class="si">{0}</span><span class="s2">uGal/cm</span><span class="si">{0}</span><span class="s2">uGal/cm&quot;&quot;&quot;</span>
+
+<span class="p">}</span>
+
+<span class="n">round_line_ind</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;drops&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">]],</span>
+    <span class="s1">&#39;allan&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s1">&#39;residuals_final&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]],</span>
+    <span class="s1">&#39;residuals_sets&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]],</span>
+    <span class="s1">&#39;residuals_final1000&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]],</span>
+    <span class="s1">&#39;spectrum&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]],</span>
+    <span class="s1">&#39;estim&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+              <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">]],</span>
+    <span class="s1">&#39;effHeightCorr_Graph&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">]],</span>
+    <span class="s1">&#39;estim_grad&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">19</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">5</span><span class="p">]],</span>
+    <span class="s1">&#39;res_vgg&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]],</span>
+    <span class="s1">&#39;vgg_per_sets0&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]],</span>
+    <span class="s1">&#39;matlogsets&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">5</span><span class="p">]]</span>
+<span class="p">}</span>
+<span class="c1"># increase index of floated number due to adding date/time to estim file</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">round_line_ind</span><span class="p">[</span><span class="s1">&#39;estim&#39;</span><span class="p">])):</span>
+    <span class="n">round_line_ind</span><span class="p">[</span><span class="s1">&#39;estim&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">round_line_ind</span><span class="p">[</span><span class="s1">&#39;estim&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">round_line_ind</span><span class="p">[</span><span class="s1">&#39;estim&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
+
+<span class="n">warning_window</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;import_data&#39;</span><span class="p">:</span> <span class="s1">&#39;Import data behind&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;project&#39;</span><span class="p">:</span> <span class="s1">&#39;The project does not exist&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;internet&#39;</span><span class="p">:</span> <span class="s1">&#39;Internet connection fail&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;split_set&#39;</span><span class="p">:</span> <span class="s1">&#39;Choose count of sets&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;pole_corr&#39;</span><span class="p">:</span> <span class="s1">&#39;Choose polar correction&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;cannot_write_file&#39;</span><span class="p">:</span> <span class="s1">&#39;Cannot write file due statistic is not computed&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comparison&#39;</span><span class="p">:</span> <span class="s1">&#39;Files successfully compared&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;pole_corr_service&#39;</span><span class="p">:</span> <span class="s1">&#39;Choose polar corrections service&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;locked_database&#39;</span><span class="p">:</span> <span class="s1">&#39;Database is locked. Close DB Browser!&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;commits&#39;</span><span class="p">:</span> <span class="s1">&#39;New commits are available&#39;</span>
+<span class="p">}</span>
+
+<span class="c1"># colors = [&#39;b&#39;, &#39;g&#39;, &#39;r&#39;, ]</span>
+
+<span class="n">SAE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.006</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.077</span><span class="p">,</span> <span class="mf">0.92</span><span class="p">,</span> <span class="mf">0.087</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.177</span><span class="p">,</span> <span class="mf">1.65</span><span class="p">,</span> <span class="mf">0.200</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.215</span><span class="p">,</span> <span class="mf">2.20</span><span class="p">,</span> <span class="mf">0.228</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.243</span><span class="p">,</span> <span class="mf">1.70</span><span class="p">,</span> <span class="mf">0.262</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span>
+       <span class="mf">0.277</span><span class="p">,</span> <span class="mf">2.250</span><span class="p">,</span> <span class="mf">0.317</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">0.322</span><span class="p">,</span> <span class="mf">3.11</span><span class="p">,</span> <span class="mf">0.335</span><span class="p">,</span> <span class="mf">3.38</span><span class="p">,</span> <span class="mf">0.362</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">0.377</span><span class="p">,</span> <span class="mf">4.34</span><span class="p">,</span> <span class="mf">0.397</span><span class="p">,</span> <span class="mf">4.74</span><span class="p">]</span>
+
+<span class="n">tau</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span>
+               <span class="mi">900</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">1200</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1400</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="mi">1600</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">1800</span><span class="p">,</span> <span class="mi">1900</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2100</span><span class="p">,</span> <span class="mi">2200</span><span class="p">,</span> <span class="mi">2300</span><span class="p">,</span> <span class="mi">2400</span><span class="p">,</span> <span class="mi">2500</span><span class="p">]</span>
+
+<span class="n">sh1</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&quot;BG&quot; - Bulgarian</span>
+<span class="s2">&quot;CS&quot; - Czech</span>
+<span class="s2">&quot;DA&quot; - Danish</span>
+<span class="s2">&quot;DE&quot; - German</span>
+<span class="s2">&quot;EL&quot; - Greek</span>
+<span class="s2">&quot;EN-GB&quot; - English</span>
+<span class="s2">&quot;ES&quot; - Spanish</span>
+<span class="s2">&quot;ET&quot; - Estonian</span>
+<span class="s2">&quot;FI&quot; - Finnish</span>
+<span class="s2">&quot;FR&quot; - French</span>
+<span class="s2">&quot;HU&quot; - Hungarian</span>
+<span class="s2">&quot;ID&quot; - Indonesian</span>
+<span class="s2">&quot;IT&quot; - Italian</span>
+<span class="s2">&quot;JA&quot; - Japanese</span>
+<span class="s2">&quot;LT&quot; - Lithuanian</span>
+<span class="s2">&quot;LV&quot; - Latvian</span>
+<span class="s2">&quot;NL&quot; - Dutch</span>
+<span class="s2">&quot;PL&quot; - Polish</span>
+<span class="s2">&quot;PT-BR&quot; - Brazilian Portuguese</span>
+<span class="s2">&quot;RO&quot; - Romanian</span>
+<span class="s2">&quot;RU&quot; - Russian</span>
+<span class="s2">&quot;SK&quot; - Slovak</span>
+<span class="s2">&quot;SL&quot; - Slovenian</span>
+<span class="s2">&quot;SV&quot; - Swedish</span>
+<span class="s2">&quot;TR&quot; - Turkish</span>
+<span class="s2">&quot;ZH&quot; - Chinese&quot;&quot;&quot;</span>
+
+<span class="n">languages</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sh1</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;- &#39;</span><span class="p">)</span>
+    <span class="n">languages</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">l</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Jakub Simek.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

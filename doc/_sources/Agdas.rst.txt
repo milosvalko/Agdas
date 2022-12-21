@@ -1,0 +1,93 @@
+Agdas package
+=============
+
+Submodules
+----------
+
+Agdas.CONFIG module
+-------------------
+
+.. automodule:: Agdas.CONFIG
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.classes module
+--------------------
+
+.. automodule:: Agdas.classes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.compute module
+--------------------
+
+.. automodule:: Agdas.compute
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.functions module
+----------------------
+
+.. automodule:: Agdas.functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.install\_requiremets\_windows module
+------------------------------------------
+
+.. automodule:: Agdas.install_requiremets_windows
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.main module
+-----------------
+
+.. automodule:: Agdas.main
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.newProject module
+-----------------------
+
+.. automodule:: Agdas.newProject
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.run module
+----------------
+
+.. automodule:: Agdas.run
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.sumarize module
+---------------------
+
+.. automodule:: Agdas.sumarize
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Agdas.warning module
+--------------------
+
+.. automodule:: Agdas.warning
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: Agdas
+   :members:
+   :undoc-members:
+   :show-inheritance:

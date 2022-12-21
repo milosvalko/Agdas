@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agdas.main &mdash; Agdas 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Agdas
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Agdas</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">Agdas.main</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for Agdas.main</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">winapps</span>
+<span class="kn">from</span> <span class="nn">PyQt5</span> <span class="kn">import</span> <span class="n">uic</span><span class="p">,</span> <span class="n">QtWidgets</span>
+<span class="c1"># from newProject import NewProject</span>
+<span class="c1"># from compute import Compute</span>
+<span class="c1"># from warning import Warning</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtCore</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QSplashScreen</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtGui</span> <span class="kn">import</span> <span class="n">QIcon</span><span class="p">,</span> <span class="n">QPixmap</span>
+<span class="c1"># from CONFIG import logo, wel, logo_picture, warning_window, picture_unchecked</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="c1"># from functions import printDict, read_last_version, get_date_last_version</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">subprocess</span><span class="o">,</span><span class="nn">platform</span>
+
+<span class="n">script_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+<span class="n">PATH</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">uic</span><span class="o">.</span><span class="n">loadUiType</span><span class="p">(</span><span class="n">script_path</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\gui\main.ui&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Main"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main">[docs]</a><span class="k">class</span> <span class="nc">Main</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="p">,</span> <span class="n">PATH</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main page of Agdas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">splashScreen</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">logo</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">wel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowIcon</span><span class="p">(</span><span class="n">QIcon</span><span class="p">(</span><span class="n">logo_picture</span><span class="p">))</span>
+
+        <span class="c1"># show opened/closed picture</span>
+        <span class="n">pixmap</span> <span class="o">=</span> <span class="n">QPixmap</span><span class="p">(</span><span class="n">picture_unchecked</span><span class="p">)</span>
+        <span class="n">pixmap</span> <span class="o">=</span> <span class="n">pixmap</span><span class="o">.</span><span class="n">scaled</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="o">.</span><span class="n">setPixmap</span><span class="p">(</span><span class="n">pixmap</span><span class="p">)</span>
+
+        <span class="c1"># connect buttons with method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">newProject</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_Project</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computing</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Computing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closeProject</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">closeproject</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">newproject</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_Project</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">finals_folder</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_version</span><span class="p">()</span>
+
+        <span class="c1"># self.Import_data.triggered.connect(self.importdata)</span>
+
+<div class="viewcode-block" id="Main.last_version"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.last_version">[docs]</a>    <span class="k">def</span> <span class="nf">last_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Show if new commits are available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">get_date_last_version</span><span class="p">()</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">read_last_version</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">last</span> <span class="o">!=</span> <span class="n">file</span><span class="p">:</span>
+            <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">warning_window</span><span class="p">[</span><span class="s1">&#39;commits&#39;</span><span class="p">],</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Main.finals_folder"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.finals_folder">[docs]</a>    <span class="k">def</span> <span class="nf">finals_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method just creates &#39;finals&#39; folder.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s1">&#39;finals&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Main.set_info"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.set_info">[docs]</a>    <span class="k">def</span> <span class="nf">set_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set some information about campaign on the main page.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">campaign</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">stationData</span><span class="p">[</span><span class="s1">&#39;ProjName&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sitecode</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">stationData</span><span class="p">[</span><span class="s1">&#39;SiteCode&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trasnferheight</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">stationData</span><span class="p">[</span><span class="s1">&#39;transferHeight&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="s1">&#39;transferHeight&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gradient</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">stationData</span><span class="p">[</span><span class="s1">&#39;gradient&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="s1">&#39;gradient&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totaldrops</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">processingResults</span><span class="p">[</span><span class="s1">&#39;setsCollected&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">processingResults</span><span class="p">[</span><span class="s1">&#39;dropsInSet&#39;</span><span class="p">])))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gravity</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">processingResults</span><span class="p">[</span><span class="s1">&#39;gravity&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="s1">&#39;gravity&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setscatter</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">processingResults</span><span class="p">[</span><span class="s1">&#39;setScatter&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="s1">&#39;setScatter&#39;</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="Main.splashScreen"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.splashScreen">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">splashScreen</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create splash screen with apple during starting of Agdas.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">splash_pix</span> <span class="o">=</span> <span class="n">QPixmap</span><span class="p">(</span><span class="n">logo_picture</span><span class="p">)</span>
+        <span class="n">splash</span> <span class="o">=</span> <span class="n">QSplashScreen</span><span class="p">(</span><span class="n">splash_pix</span><span class="p">,</span> <span class="n">Qt</span><span class="o">.</span><span class="n">WindowStaysOnTopHint</span><span class="p">)</span>
+        <span class="n">splash</span><span class="o">.</span><span class="n">setWindowFlags</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">WindowStaysOnTopHint</span> <span class="o">|</span> <span class="n">Qt</span><span class="o">.</span><span class="n">FramelessWindowHint</span><span class="p">)</span>
+        <span class="n">splash</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="n">splash</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;&lt;h1&gt;&lt;font color=&#39;white&#39;&gt;Welcome to the Agdas!&lt;/font&gt;&lt;/h1&gt;&quot;</span><span class="p">,</span> <span class="n">Qt</span><span class="o">.</span><span class="n">AlignTop</span> <span class="o">|</span> <span class="n">Qt</span><span class="o">.</span><span class="n">AlignCenter</span><span class="p">,</span>
+                           <span class="n">Qt</span><span class="o">.</span><span class="n">black</span><span class="p">)</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">splash</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span></div>
+
+    <span class="c1"># def open_project(self):</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     path = QtWidgets.QFileDialog.getExistingDirectory()</span>
+    <span class="c1">#     self.newProjectWin = NewProject().accept()</span>
+
+<div class="viewcode-block" id="Main.new_Project"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.new_Project">[docs]</a>    <span class="k">def</span> <span class="nf">new_Project</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method serves for creating of new project.</span>
+<span class="sd">        Open New project dialog.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Open newproject dialog</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span> <span class="o">=</span> <span class="n">NewProject</span><span class="p">()</span>
+
+        <span class="c1"># If newproject was created successfully</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">succ</span><span class="p">:</span>
+            <span class="c1"># Load check picture to main page</span>
+            <span class="n">pixmap</span> <span class="o">=</span> <span class="n">QPixmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\picture\checked.png&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="o">.</span><span class="n">setPixmap</span><span class="p">(</span><span class="n">pixmap</span><span class="p">)</span>
+
+            <span class="c1"># Set name of campaign</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_info</span><span class="p">()</span>
+
+            <span class="c1"># Info about successfully upload</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">succ_upload</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;Following input files have been uploaded successfully!&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Main.Computing"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.Computing">[docs]</a>    <span class="k">def</span> <span class="nf">Computing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method serves for creating of Compute.</span>
+<span class="sd">        Open Compute dialog and set input data through constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Open Compute dialog</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">Compute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">stationData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">stationData</span><span class="p">,</span>
+                                  <span class="n">instrumentData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">instrumentData</span><span class="p">,</span>
+                                  <span class="n">processingResults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">processingResults</span><span class="p">,</span>
+                                  <span class="n">gravityCorrections</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">gravityCorrections</span><span class="p">,</span>
+                                  <span class="n">header2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">header2</span><span class="p">,</span> <span class="n">rawlines</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">rawlines</span><span class="p">,</span>
+                                  <span class="n">header1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">header1</span><span class="p">,</span> <span class="n">projDirPath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">pathDir</span><span class="p">,</span>
+                                  <span class="n">setFile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">setFile</span><span class="p">)</span>
+            <span class="c1"># self.result.Run()</span>
+
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">warning_window</span><span class="p">[</span><span class="s1">&#39;import_data&#39;</span><span class="p">],</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Main.viewData"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.viewData">[docs]</a>    <span class="k">def</span> <span class="nf">viewData</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is for viewing of processed data by DB Browser for SQLite.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># For windows system</span>
+            <span class="k">if</span> <span class="s1">&#39;Win&#39;</span> <span class="ow">in</span> <span class="n">platform</span><span class="o">.</span><span class="n">platform</span><span class="p">():</span>
+                <span class="c1"># Find install location of DB browser</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">winapps</span><span class="o">.</span><span class="n">list_installed</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="s1">&#39;DB Browser&#39;</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                        <span class="n">browser_path</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">install_location</span>
+                        <span class="n">browser_name</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
+
+                <span class="c1"># Open DB browser in another thread</span>
+                <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">browser_path</span><span class="p">,</span> <span class="n">browser_name</span><span class="p">)),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span><span class="o">.</span><span class="n">pathDir</span><span class="p">,</span> <span class="s1">&#39;data.db&#39;</span><span class="p">))]</span>
+                <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="s1">&#39;Support for Linux is in process!&#39;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If DB browser is not installed</span>
+        <span class="k">except</span> <span class="ne">UnboundLocalError</span><span class="p">:</span>
+            <span class="n">url_link</span> <span class="o">=</span> <span class="s2">&quot;&lt;a href=</span><span class="se">\&quot;</span><span class="s2">https://sqlitebrowser.org/dl/</span><span class="se">\&quot;</span><span class="s2">&gt;Click this link to go to DB Browser for SQLite &quot;</span> \
+                       <span class="s2">&quot;Download&lt;/a&gt; &quot;</span>
+            <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">url_link</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If project is not opened</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="s1">&#39;Opened project is necessary!&#39;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Main.closeproject"><a class="viewcode-back" href="../../Agdas.html#Agdas.main.Main.closeproject">[docs]</a>    <span class="k">def</span> <span class="nf">closeproject</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method delete self.newProjectWin variable and change main page.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">newProjectWin</span>
+            <span class="n">pixmap</span> <span class="o">=</span> <span class="n">QPixmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;\picture\unchecked.png&#39;</span><span class="p">)</span>
+            <span class="n">pixmap</span> <span class="o">=</span> <span class="n">pixmap</span><span class="o">.</span><span class="n">scaled</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="o">.</span><span class="n">setPixmap</span><span class="p">(</span><span class="n">pixmap</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">campaign</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">succ_upload</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;Upload data for measurement campaign&#39;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="ne">Warning</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">warning_window</span><span class="p">[</span><span class="s1">&#39;project&#39;</span><span class="p">],</span> <span class="n">icon</span><span class="o">=</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Warning&#39;</span><span class="p">)</span></div></div>
+        <span class="c1"># self.__del__()</span>
+
+    <span class="c1"># def __del__(self):</span>
+    <span class="c1">#     pass</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="p">([])</span>
+    <span class="n">main</span> <span class="o">=</span> <span class="n">Main</span><span class="p">()</span>
+    <span class="n">main</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Jakub Simek.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

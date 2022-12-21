@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agdas.functions &mdash; Agdas 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Agdas
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Agdas</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">Agdas.functions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for Agdas.functions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">floor</span><span class="p">,</span> <span class="n">trunc</span>
+<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="allan"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.allan">[docs]</a><span class="k">def</span> <span class="nf">allan</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allan standard deviation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : list</span>
+<span class="sd">        list with data [x1,...xn]</span>
+<span class="sd">    tau : list</span>
+<span class="sd">        list with numbers of intervals</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res : list</span>
+<span class="sd">        [[allan, std, count], ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">tau</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">int</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">se</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">:</span><span class="n">k</span> <span class="o">+</span> <span class="n">f</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">se</span><span class="p">)</span> <span class="o">==</span> <span class="n">f</span><span class="p">:</span>
+                <span class="nb">int</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">se</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="n">it</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">int</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+            <span class="n">k</span> <span class="o">+=</span> <span class="n">f</span>
+            <span class="n">it</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">floor</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">f</span><span class="p">))</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">v</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="printDict"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.printDict">[docs]</a><span class="k">def</span> <span class="nf">printDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Just print dictionary in json format in form:</span>
+<span class="sd">    {</span>
+<span class="sd">    key_1 : value_1</span>
+<span class="sd">    .</span>
+<span class="sd">    .</span>
+<span class="sd">    key_n : value_n</span>
+<span class="sd">    }</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dict : dict</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="roundList"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.roundList">[docs]</a><span class="k">def</span> <span class="nf">roundList</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Round list for printing into text files.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    l : list</span>
+<span class="sd">        line for rounding</span>
+<span class="sd">    index : list</span>
+<span class="sd">        information for rounding, [[position1, number_of_decimal_places1],[position2, number_of_decimal_places2], ...]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    l : list</span>
+<span class="sd">        rounded list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;{:.&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;f}&#39;</span>
+        <span class="k">if</span> <span class="n">l</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">l</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+    <span class="k">return</span> <span class="n">l</span></div>
+
+
+<div class="viewcode-block" id="date_to_mjd"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.date_to_mjd">[docs]</a><span class="k">def</span> <span class="nf">date_to_mjd</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :Author: Matt Davis</span>
+<span class="sd">    :Website: http://github.com/jiffyclub</span>
+
+<span class="sd">    Change to returning modified Julian date</span>
+
+<span class="sd">    Convert a date to Julian Day.</span>
+
+<span class="sd">    Algorithm from &#39;Practical Astronomy with your Calculator or Spreadsheet&#39;,</span>
+<span class="sd">        4th ed., Duffet-Smith and Zwart, 2011.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    year : int</span>
+<span class="sd">        Year as integer. Years preceding 1 A.D. should be 0 or negative.</span>
+<span class="sd">        The year before 1 A.D. is 0, 10 B.C. is year -9.</span>
+
+<span class="sd">    month : int</span>
+<span class="sd">        Month as integer, Jan = 1, Feb. = 2, etc.</span>
+
+<span class="sd">    day : float</span>
+<span class="sd">        Day, may contain fractional part.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mjd : float</span>
+<span class="sd">        modified Julian Day</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Convert 6 a.m., February 17, 1985 to Julian Day</span>
+
+<span class="sd">    &gt;&gt;&gt; date_to_mjd(1985,2,17.25)</span>
+<span class="sd">    2446113.75</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">yearp</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">monthp</span> <span class="o">=</span> <span class="n">month</span> <span class="o">+</span> <span class="mi">12</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">yearp</span> <span class="o">=</span> <span class="n">year</span>
+        <span class="n">monthp</span> <span class="o">=</span> <span class="n">month</span>
+
+    <span class="c1"># this checks where we are in relation to October 15, 1582, the beginning</span>
+    <span class="c1"># of the Gregorian calendar.</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">year</span> <span class="o">&lt;</span> <span class="mi">1582</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">year</span> <span class="o">==</span> <span class="mi">1582</span> <span class="ow">and</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">year</span> <span class="o">==</span> <span class="mi">1582</span> <span class="ow">and</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="mi">15</span><span class="p">)):</span>
+        <span class="c1"># before start of Gregorian calendar</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># after start of Gregorian calendar</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">yearp</span> <span class="o">/</span> <span class="mf">100.</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">trunc</span><span class="p">(</span><span class="n">A</span> <span class="o">/</span> <span class="mf">4.</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">yearp</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">((</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">yearp</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.75</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">yearp</span><span class="p">)</span>
+
+    <span class="n">D</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">30.6001</span> <span class="o">*</span> <span class="p">(</span><span class="n">monthp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">jd</span> <span class="o">=</span> <span class="n">B</span> <span class="o">+</span> <span class="n">C</span> <span class="o">+</span> <span class="n">D</span> <span class="o">+</span> <span class="n">day</span> <span class="o">+</span> <span class="mf">1720994.5</span>
+
+    <span class="k">return</span> <span class="n">jd</span> <span class="o">-</span> <span class="mf">2400000.5</span></div>
+
+
+<div class="viewcode-block" id="mjd_to_jd"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.mjd_to_jd">[docs]</a><span class="k">def</span> <span class="nf">mjd_to_jd</span><span class="p">(</span><span class="n">mjd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :Author: Matt Davis</span>
+<span class="sd">    :Website: http://github.com/jiffyclub</span>
+<span class="sd">    Convert Modified Julian Day to Julian Day.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mjd : float</span>
+<span class="sd">        Modified Julian Day</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    jd : float</span>
+<span class="sd">        Julian Day</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">mjd</span> <span class="o">+</span> <span class="mf">2400000.5</span></div>
+
+
+<div class="viewcode-block" id="jd_to_date"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.jd_to_date">[docs]</a><span class="k">def</span> <span class="nf">jd_to_date</span><span class="p">(</span><span class="n">jd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :Author: Matt Davis</span>
+<span class="sd">    :Website: http://github.com/jiffyclub</span>
+<span class="sd">    Convert Julian Day to date.</span>
+
+<span class="sd">    Algorithm from &#39;Practical Astronomy with your Calculator or Spreadsheet&#39;,</span>
+<span class="sd">        4th ed., Duffet-Smith and Zwart, 2011.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    jd : float</span>
+<span class="sd">        Julian Day</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    year : int</span>
+<span class="sd">        Year as integer. Years preceding 1 A.D. should be 0 or negative.</span>
+<span class="sd">        The year before 1 A.D. is 0, 10 B.C. is year -9.</span>
+
+<span class="sd">    month : int</span>
+<span class="sd">        Month as integer, Jan = 1, Feb. = 2, etc.</span>
+
+<span class="sd">    day : float</span>
+<span class="sd">        Day, may contain fractional part.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Convert Julian Day 2446113.75 to year, month, and day.</span>
+
+<span class="sd">    &gt;&gt;&gt; jd_to_date(2446113.75)</span>
+<span class="sd">    (1985, 2, 17.25)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">jd</span> <span class="o">=</span> <span class="n">jd</span> <span class="o">+</span> <span class="mf">0.5</span>
+
+    <span class="n">F</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">modf</span><span class="p">(</span><span class="n">jd</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">I</span><span class="p">)</span>
+
+    <span class="n">A</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">((</span><span class="n">I</span> <span class="o">-</span> <span class="mf">1867216.25</span><span class="p">)</span> <span class="o">/</span> <span class="mf">36524.25</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">I</span> <span class="o">&gt;</span> <span class="mi">2299160</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">A</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">(</span><span class="n">A</span> <span class="o">/</span> <span class="mf">4.</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">I</span>
+
+    <span class="n">C</span> <span class="o">=</span> <span class="n">B</span> <span class="o">+</span> <span class="mi">1524</span>
+
+    <span class="n">D</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">((</span><span class="n">C</span> <span class="o">-</span> <span class="mf">122.1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+
+    <span class="n">E</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">(</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">D</span><span class="p">)</span>
+
+    <span class="n">G</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">((</span><span class="n">C</span> <span class="o">-</span> <span class="n">E</span><span class="p">)</span> <span class="o">/</span> <span class="mf">30.6001</span><span class="p">)</span>
+
+    <span class="n">day</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">E</span> <span class="o">+</span> <span class="n">F</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">trunc</span><span class="p">(</span><span class="mf">30.6001</span> <span class="o">*</span> <span class="n">G</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">G</span> <span class="o">&lt;</span> <span class="mf">13.5</span><span class="p">:</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">G</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">G</span> <span class="o">-</span> <span class="mi">13</span>
+
+    <span class="k">if</span> <span class="n">month</span> <span class="o">&gt;</span> <span class="mf">2.5</span><span class="p">:</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">D</span> <span class="o">-</span> <span class="mi">4716</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">D</span> <span class="o">-</span> <span class="mi">4715</span>
+
+    <span class="n">hour</span> <span class="o">=</span> <span class="p">(</span><span class="n">day</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">day</span><span class="p">))</span> <span class="o">*</span> <span class="mi">24</span>
+    <span class="n">minut</span> <span class="o">=</span> <span class="p">(</span><span class="n">hour</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">hour</span><span class="p">))</span> <span class="o">*</span> <span class="mi">60</span>
+    <span class="n">sec</span> <span class="o">=</span> <span class="p">(</span><span class="n">minut</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">minut</span><span class="p">))</span> <span class="o">*</span> <span class="mi">60</span>
+
+    <span class="k">return</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">day</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">hour</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">minut</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">sec</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rssq"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.rssq">[docs]</a><span class="k">def</span> <span class="nf">rssq</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Root sum of squares.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : np.array</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res : list</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+
+        <span class="n">square_sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">square_sum</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+
+        <span class="c1"># print(np.sqrt(square_sum))</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">square_sum</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="movingAverage"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.movingAverage">[docs]</a><span class="k">def</span> <span class="nf">movingAverage</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return moving average with floating window.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : list</span>
+<span class="sd">        list with data</span>
+<span class="sd">    n : int</span>
+<span class="sd">        range for moving average (kernel), with n = 50 will be average from 101 values</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res : list</span>
+<span class="sd">        moving averages</span>
+<span class="sd">    plot_range : list</span>
+<span class="sd">        range for plotting</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">plot_range</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">n</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">plot_range</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">plot_range</span></div>
+
+
+<div class="viewcode-block" id="get_date_last_version"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.get_date_last_version">[docs]</a><span class="k">def</span> <span class="nf">get_date_last_version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check date of last commit.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    date of last commit, 0 in case that connection failed</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">repo</span> <span class="o">=</span> <span class="s1">&#39;jakubsimek97/Agdas&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://api.github.com/repos/</span><span class="si">{0}</span><span class="s1">/commits?per_page=1&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;commit&#39;</span><span class="p">][</span><span class="s1">&#39;author&#39;</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ConnectionError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="write_last_version"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.write_last_version">[docs]</a><span class="k">def</span> <span class="nf">write_last_version</span><span class="p">(</span><span class="n">version_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write last version of repository to last_version.txt</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    version_date : str</span>
+<span class="sd">        last version date</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">script_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;last_version.txt&#39;</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">version_date</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="read_last_version"><a class="viewcode-back" href="../../Agdas.html#Agdas.functions.read_last_version">[docs]</a><span class="k">def</span> <span class="nf">read_last_version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return date of last version from last_version.txt.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    r : str</span>
+<span class="sd">        date of last version</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">script_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;last_version.txt&#39;</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">r</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Jakub Simek.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
