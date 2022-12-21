@@ -671,8 +671,8 @@ class Compute(QtWidgets.QDialog, PATH):
             except AttributeError:
                 Warning(error='Select polar coordinates file!', icon='critical', title='Warning')
                 return
-            
-        # count of the fringes
+
+        # number of the fringes
         self.nfringe = int(self.header1[-1])
 
         # load kalpha
