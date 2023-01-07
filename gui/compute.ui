@@ -1309,6 +1309,11 @@ p, li { white-space: pre-wrap; }
        <string>IERS</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Naval Observatory</string>
+      </property>
+     </item>
     </widget>
     <widget class="QPushButton" name="load_pole_file">
      <property name="geometry">

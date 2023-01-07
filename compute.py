@@ -139,7 +139,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         # self.setMouseTracking(True)
 
-        # self.service.addItem('Naval Observatory')
+        self.service.addItem('Naval Observatory')
 
         self.show()
         self.exec()
@@ -447,7 +447,7 @@ class Compute(QtWidgets.QDialog, PATH):
 
         i = 0
         for l in reversed(file):
-            d = ['20' + l[:3].split()[0], l[2:4].split()[0].zfill(2), l[4:6].split()[0].zfill(2)]
+            d = ['20' + l[:2].split()[0], l[2:4].split()[0].zfill(2), l[4:6].split()[0].zfill(2)]
             if d == date:
                 break
 
@@ -670,6 +670,9 @@ class Compute(QtWidgets.QDialog, PATH):
                 self.downloadPole()
             except AttributeError:
                 Warning(error='Select polar coordinates file!', icon='critical', title='Warning')
+                return
+            except TypeError:
+                Warning(error='Selected file for different service!', icon='critical', title='Warning')
                 return
 
         # number of the fringes
